@@ -1,5 +1,5 @@
-import { insertJournal, getJournal as getJournalFromDb, updateJournal as updateJournalInDb, deleteJournal as deleteJournalFromDb } from './db';
-import { ensureJournalDirectory, createJournalFile, readJournalFile, updateJournalFile, deleteJournalFile } from './fileStorage';
+import { insertJournal, getJournal as getJournalFromDb, updateJournal as updateJournalInDb, deleteJournal as deleteJournalFromDb, getAllJournals as getAllJournalsFromDb } from './db';
+import { createJournalFile, readJournalFile, updateJournalFile, deleteJournalFile } from './fileStorage';
 
 async function createJournal(file_path: string, prompt: string, virtues: string) {
   await createJournalFile(file_path);
@@ -29,4 +29,8 @@ async function deleteJournal(file_path: string) {
   await deleteJournalFromDb(file_path);
 }
 
-export { createJournal, getJournalInfo, getJournalContent, updateJournal, deleteJournal };
+async function getAllJournals() {
+  return await getAllJournalsFromDb();
+}
+
+export { createJournal, getJournalInfo, getJournalContent, updateJournal, deleteJournal, getAllJournals };
