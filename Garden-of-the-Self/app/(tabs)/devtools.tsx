@@ -5,7 +5,18 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Collapsible } from '@/components/ui/collapsible';
 import { getAllJournals, createJournal, updateJournal } from '@/services/journalManager';
-import { insertQuest, deleteAllQuests, getAllQuests, getAllQuestHistory, getQuestVirtueDisplayNames, type QuestRow, type QuestHistoryRow } from '@/services/db';
+import {
+  insertQuest,
+  deleteAllQuests,
+  getAllQuests,
+  getAllQuestHistory,
+  getQuestVirtueDisplayNames,
+  resetDatabase,
+  getAllFromTable,
+  type QuestRow,
+  type QuestHistoryRow,
+  type TableName,
+} from '@/services/db';
 import { Directory, Paths, File } from 'expo-file-system';
 import * as SQLite from 'expo-sqlite';
 
@@ -13,7 +24,7 @@ type JournalItem = {
   id: number;
   file_path: string;
   prompt: string | null;
-  virtues: string | null;
+  virtues: Record<string, number>;
   created_at: string;
   updated_at: string;
 };
@@ -27,6 +38,8 @@ export default function DevToolsScreen() {
   const [queryResult, setQueryResult] = useState<any>(null);
   const [customQuery, setCustomQuery] = useState('SELECT * FROM journals LIMIT 10;');
   const [fileSystemInfo, setFileSystemInfo] = useState<any>(null);
+  const [selectedTable, setSelectedTable] = useState<TableName | null>(null);
+  const [tableRows, setTableRows] = useState<any[] | null>(null);
 
   const loadJournals = async () => {
     try {
@@ -239,7 +252,7 @@ export default function DevToolsScreen() {
   const createDummyQuests = async () => {
     Alert.alert(
       'Create Dummy Quests',
-      'This will create 5 dummy quests with sample prompts and virtues. Continue?',
+      'This will create 6 dummy quests with sample prompts and virtues. Continue?',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -253,6 +266,7 @@ export default function DevToolsScreen() {
                 'Show kindness to someone you meet',
                 'Spend 10 minutes in curious learning',
                 'Collaborate on something with another person',
+                'Notice three surprising things with curiosity',
               ];
               const virtuePairs: Record<string, number>[] = [
                 { Courage: 3, Resilience: 2, Empathy: 1 },
@@ -260,16 +274,17 @@ export default function DevToolsScreen() {
                 { Kindness: 3, Empathy: 2, Respectfulness: 1 },
                 { Curiosity: 3, 'Proper Ambition': 2 },
                 { Collaboration: 3, Tolerance: 2, Respectfulness: 1 },
+                 { Curiosity: 5 },
               ];
 
-              for (let i = 0; i < 5; i++) {
+              for (let i = 0; i < dummyPrompts.length; i++) {
                 await insertQuest(dummyPrompts[i], virtuePairs[i]);
               }
 
               await loadDbInfo();
               await loadQuests();
 
-              Alert.alert('Success', 'Created 5 dummy quests.');
+              Alert.alert('Success', `Created ${dummyPrompts.length} dummy quests.`);
             } catch (error) {
               Alert.alert('Error', `Failed to create dummy quests: ${error}`);
             } finally {
@@ -310,18 +325,17 @@ export default function DevToolsScreen() {
 
   const clearDatabase = async () => {
     Alert.alert(
-      'Clear Database',
-      'Are you sure you want to delete all journals from the database? This cannot be undone.',
+      'Reset Database',
+      'Are you sure you want to reset the entire local database? This will drop and recreate all tables.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Delete',
+          text: 'Reset',
           style: 'destructive',
           onPress: async () => {
             try {
               setLoading(true);
-              const db = await SQLite.openDatabaseAsync('garden-of-the-self.db');
-              await db.runAsync('DELETE FROM journals');
+              await resetDatabase();
               await loadDbInfo();
               await loadJournals();
               Alert.alert('Success', 'Database cleared');
@@ -343,6 +357,20 @@ export default function DevToolsScreen() {
     loadDbInfo();
     loadFileSystemInfo();
   }, []);
+
+  async function handleLoadTableRows(table: TableName) {
+    try {
+      setLoading(true);
+      const rows = await getAllFromTable(table);
+      setSelectedTable(table);
+      setTableRows(rows);
+    } catch (error) {
+      console.error('Failed to load table rows:', error);
+      Alert.alert('Error', `Failed to load table rows: ${error}`);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const formatBytes = (bytes: number) => {
     if (bytes === 0) return '0 B';
@@ -387,6 +415,30 @@ export default function DevToolsScreen() {
                   <ThemedText type="defaultSemiBold">Database Size: </ThemedText>
                   {formatBytes(dbInfo.totalSize)}
                 </ThemedText>
+                <ThemedText style={styles.infoRow}>
+                  <ThemedText type="defaultSemiBold">Inspect Table: </ThemedText>
+                </ThemedText>
+                <ThemedView style={styles.queryPresetRow}>
+                  {(['journals','journal_virtues','quests','quest_virtues','quest_history','quest_history_virtues','virtues'] as TableName[]).map((t) => (
+                    <TouchableOpacity
+                      key={t}
+                      style={styles.queryPresetButton}
+                      onPress={() => handleLoadTableRows(t)}
+                    >
+                      <ThemedText style={styles.queryPresetText}>{t}</ThemedText>
+                    </TouchableOpacity>
+                  ))}
+                </ThemedView>
+                {selectedTable && tableRows && (
+                  <ThemedView style={styles.queryResult}>
+                    <ThemedText type="defaultSemiBold" style={styles.resultTitle}>
+                      {selectedTable} ({tableRows.length} rows)
+                    </ThemedText>
+                    <ThemedText style={styles.resultText}>
+                      {JSON.stringify(tableRows, null, 2)}
+                    </ThemedText>
+                  </ThemedView>
+                )}
                 <TouchableOpacity style={styles.button} onPress={loadDbInfo}>
                   <ThemedText style={styles.buttonText}>Refresh</ThemedText>
                 </TouchableOpacity>

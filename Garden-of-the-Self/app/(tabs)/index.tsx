@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -13,7 +13,9 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useJournalStyles, spacing } from '@/utils/styles';
 import { Colors, Fonts } from '@/constants/theme';
+import { getVirtueTotals } from '@/services/db';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useFocusEffect } from 'expo-router';
 
 const STAGE_MS = 500;
 const LINES = 10;
@@ -111,9 +113,30 @@ export default function GardenScreen() {
   const journalStyles = useJournalStyles();
   const colorScheme = useColorScheme();
   const textColor = Colors[colorScheme ?? 'light'].text;
+  const [curiosityPoints, setCuriosityPoints] = useState<number | null>(null);
 
   const { stage, animatedStyle } = useGrowthAnimation(PINE_STAGES.length);
   const displayArt = padStage(PINE_STAGES[stage]);
+
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      (async () => {
+        try {
+          const totals = await getVirtueTotals();
+          if (!cancelled) {
+            const value = totals['Curiosity'] ?? 0;
+            setCuriosityPoints(value);
+          }
+        } catch (e) {
+          console.warn('Failed to load virtue totals', e);
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [])
+  );
 
   return (
     <SafeAreaView style={journalStyles.container} edges={['top']}>
@@ -121,6 +144,12 @@ export default function GardenScreen() {
         <ThemedText type="title" style={styles.title}>
           Your Garden
         </ThemedText>
+
+        {curiosityPoints !== null && (
+          <ThemedText style={styles.curiosity}>
+            Curiosity points: {curiosityPoints}
+          </ThemedText>
+        )}
 
         <Animated.View style={[styles.asciiWrapper, animatedStyle]}>
           <Text
@@ -148,6 +177,10 @@ const styles = StyleSheet.create({
   },
   title: {
     marginBottom: spacing.lg,
+    textAlign: 'center',
+  },
+  curiosity: {
+    marginBottom: spacing.md,
     textAlign: 'center',
   },
   asciiWrapper: {
