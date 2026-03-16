@@ -5,6 +5,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Collapsible } from '@/components/ui/collapsible';
 import { getAllJournals, createJournal, updateJournal } from '@/services/journalManager';
+import { insertQuest } from '@/services/db';
 import { Directory, Paths, File } from 'expo-file-system';
 import * as SQLite from 'expo-sqlite';
 
@@ -203,6 +204,56 @@ export default function DevToolsScreen() {
     );
   };
 
+  const createDummyQuests = async () => {
+    Alert.alert(
+      'Create Dummy Quests',
+      'This will create 5 dummy quests with sample prompts and virtues. Continue?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Create',
+          onPress: async () => {
+            try {
+              setLoading(true);
+              const dummyPrompts = [
+                'Reflect on one act of courage today',
+                'Practice patience in a difficult moment',
+                'Show kindness to someone you meet',
+                'Spend 10 minutes in curious learning',
+                'Collaborate on something with another person',
+              ];
+              const virtuePairs: [string, string | null, string | null][] = [
+                ['Courage', 'Resilience', 'Empathy'],
+                ['Patience', 'Temperance', null],
+                ['Kindness', 'Empathy', 'Respectfulness'],
+                ['Curiosity', 'Proper Ambition', null],
+                ['Collaboration', 'Tolerance', 'Respectfulness'],
+              ];
+
+              for (let i = 0; i < 5; i++) {
+                const [primary, secondary, tertiary] = virtuePairs[i];
+                await insertQuest(
+                  dummyPrompts[i],
+                  primary,
+                  secondary,
+                  tertiary
+                );
+              }
+
+              await loadDbInfo();
+
+              Alert.alert('Success', 'Created 5 dummy quests.');
+            } catch (error) {
+              Alert.alert('Error', `Failed to create dummy quests: ${error}`);
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const clearDatabase = async () => {
     Alert.alert(
       'Clear Database',
@@ -387,6 +438,12 @@ export default function DevToolsScreen() {
             <TouchableOpacity style={styles.button} onPress={createDummyJournals}>
               <ThemedText style={styles.buttonText}>Create Dummy Journals</ThemedText>
             </TouchableOpacity>
+            <ThemedText style={[styles.infoRow, styles.infoRowTop]}>
+              Create dummy quests for testing. This will create 5 quests with sample prompts and primary/secondary/tertiary virtues.
+            </ThemedText>
+            <TouchableOpacity style={styles.button} onPress={createDummyQuests}>
+              <ThemedText style={styles.buttonText}>Create Dummy Quests</ThemedText>
+            </TouchableOpacity>
           </ThemedView>
         </Collapsible>
 
@@ -429,6 +486,9 @@ const styles = StyleSheet.create({
   infoRow: {
     marginBottom: 8,
     fontSize: 14,
+  },
+  infoRowTop: {
+    marginTop: 16,
   },
   pathText: {
     fontSize: 12,

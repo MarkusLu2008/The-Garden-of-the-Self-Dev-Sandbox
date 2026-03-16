@@ -16,6 +16,20 @@ export default function TabLayout() {
         tabBarButton: HapticTab,
       }}>
       <Tabs.Screen
+        name="quests"
+        options={{
+          title: 'Quests',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="flag.checkered" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Garden',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="leaf.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="journals"
         options={{
           title: 'Journals',
