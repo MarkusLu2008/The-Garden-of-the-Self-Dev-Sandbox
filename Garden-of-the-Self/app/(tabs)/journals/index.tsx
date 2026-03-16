@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -37,9 +37,11 @@ export default function JournalsScreen() {
     }
   };
 
-  useEffect(() => {
-    loadJournals();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadJournals();
+    }, [])
+  );
 
   const handleNewJournal = () => {
     router.push('/(tabs)/journals/create');
