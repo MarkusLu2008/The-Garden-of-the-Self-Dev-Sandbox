@@ -1,4 +1,12 @@
 import * as SQLite from 'expo-sqlite';
+import virtues from '@/constants/virtues';
+
+/** Virtue display name -> DB column name (snake_case) */
+function virtueToColumn(name: string): string {
+  return name.toLowerCase().replace(/\s+/g, '_');
+}
+
+const VIRTUE_COLUMNS = virtues.map(virtueToColumn);
 
 let db: SQLite.SQLiteDatabase | null = null;
 let initPromise: Promise<SQLite.SQLiteDatabase> | null = null;
@@ -36,15 +44,30 @@ async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
       "SELECT name FROM sqlite_master WHERE type='table' AND name='quests'"
     );
 
-    if (!questsResult) {
+    if (questsResult) {
+      // Migration: detect old schema (primary_virtue column) and recreate quests table
+      const tableInfo = await db.getAllAsync<{ name: string }>(
+        "SELECT name FROM pragma_table_info('quests')"
+      );
+      const columnNames = tableInfo.map((r) => r.name);
+      const hasOldSchema = columnNames.includes('primary_virtue');
+      if (hasOldSchema) {
+        await db.execAsync('DROP TABLE quests');
+      }
+    }
+
+    const questsExistsAfterMigration = await db.getFirstAsync<{ name: string }>(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='quests'"
+    );
+
+    if (!questsExistsAfterMigration) {
+      const virtueCols = VIRTUE_COLUMNS.map((c) => `${c} INTEGER NOT NULL DEFAULT 0`).join(',\n          ');
       await db.execAsync(`
         CREATE TABLE quests (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           completed INTEGER NOT NULL DEFAULT 0,
           prompt TEXT NOT NULL,
-          primary_virtue TEXT NOT NULL,
-          secondary_virtue TEXT,
-          tertiary_virtue TEXT,
+          ${virtueCols},
           created_at TEXT NOT NULL,
           updated_at TEXT NOT NULL
         );
@@ -110,28 +133,29 @@ async function deleteJournal(file_path: string) {
   );
 }
 
+/** Integer value per virtue (column names are snake_case from virtue names) */
+export type QuestVirtueValues = Record<string, number>;
+
 export type QuestRow = {
   id: number;
   completed: number;
   prompt: string;
-  primary_virtue: string;
-  secondary_virtue: string | null;
-  tertiary_virtue: string | null;
   created_at: string;
   updated_at: string;
-};
+} & Record<string, number>;
 
-async function insertQuest(
-  prompt: string,
-  primary_virtue: string,
-  secondary_virtue: string | null,
-  tertiary_virtue: string | null
-) {
+/** Virtue values keyed by display name (e.g. "Courage", "Proper Ambition"). Missing virtues default to 0. */
+async function insertQuest(prompt: string, virtueValues: QuestVirtueValues = {}) {
   const database = await getDatabase();
+  const cols = ['completed', 'prompt', ...VIRTUE_COLUMNS, 'created_at', 'updated_at'].join(', ');
+  const placeholders = ['0', '?', ...VIRTUE_COLUMNS.map(() => '?'), "datetime('now')", "datetime('now')"].join(', ');
+  const values = VIRTUE_COLUMNS.map((col) => {
+    const displayName = virtues.find((v) => virtueToColumn(v) === col);
+    return displayName != null && virtueValues[displayName] != null ? virtueValues[displayName] : 0;
+  });
   return database.runAsync(
-    `INSERT INTO quests (completed, prompt, primary_virtue, secondary_virtue, tertiary_virtue, created_at, updated_at)
-     VALUES (0, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
-    [prompt, primary_virtue, secondary_virtue ?? null, tertiary_virtue ?? null]
+    `INSERT INTO quests (${cols}) VALUES (${placeholders})`,
+    [prompt, ...values]
   );
 }
 
@@ -155,10 +179,7 @@ async function updateQuest(
   updates: {
     completed?: number;
     prompt?: string;
-    primary_virtue?: string;
-    secondary_virtue?: string | null;
-    tertiary_virtue?: string | null;
-  }
+  } & Partial<QuestVirtueValues>
 ) {
   const database = await getDatabase();
   const quest = await getQuest(id);
@@ -166,13 +187,16 @@ async function updateQuest(
 
   const completed = updates.completed ?? quest.completed;
   const prompt = updates.prompt ?? quest.prompt;
-  const primary_virtue = updates.primary_virtue ?? quest.primary_virtue;
-  const secondary_virtue = updates.secondary_virtue !== undefined ? updates.secondary_virtue : quest.secondary_virtue;
-  const tertiary_virtue = updates.tertiary_virtue !== undefined ? updates.tertiary_virtue : quest.tertiary_virtue;
+  const setVirtues = VIRTUE_COLUMNS.map((col) => `${col} = ?`);
+  const virtueValues = VIRTUE_COLUMNS.map((col) => {
+    const displayName = virtues.find((v) => virtueToColumn(v) === col);
+    const fromUpdates = displayName != null && updates[displayName] != null ? updates[displayName] : undefined;
+    return fromUpdates !== undefined ? fromUpdates : (quest[col] as number);
+  });
 
   await database.runAsync(
-    `UPDATE quests SET completed = ?, prompt = ?, primary_virtue = ?, secondary_virtue = ?, tertiary_virtue = ?, updated_at = datetime('now') WHERE id = ?`,
-    [completed, prompt, primary_virtue, secondary_virtue, tertiary_virtue, id]
+    `UPDATE quests SET completed = ?, prompt = ?, ${setVirtues.join(', ')}, updated_at = datetime('now') WHERE id = ?`,
+    [completed, prompt, ...virtueValues, id]
   );
 }
 
@@ -181,5 +205,17 @@ async function deleteQuest(id: number) {
   return database.runAsync(`DELETE FROM quests WHERE id = ?`, [id]);
 }
 
+async function deleteAllQuests() {
+  const database = await getDatabase();
+  return database.runAsync(`DELETE FROM quests`);
+}
+
+/** Returns virtue display names that have a value > 0 on the quest, sorted by value descending (primary first) */
+export function getQuestVirtueDisplayNames(quest: QuestRow): string[] {
+  return virtues
+    .filter((v) => (quest[virtueToColumn(v)] as number) > 0)
+    .sort((a, b) => (quest[virtueToColumn(b)] as number) - (quest[virtueToColumn(a)] as number));
+}
+
 export { insertJournal, getJournal, getAllJournals, updateJournal, deleteJournal };
-export { insertQuest, getQuest, getAllQuests, updateQuest, deleteQuest };
+export { insertQuest, getQuest, getAllQuests, updateQuest, deleteQuest, deleteAllQuests };

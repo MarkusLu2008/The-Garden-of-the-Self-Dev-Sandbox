@@ -5,7 +5,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Collapsible } from '@/components/ui/collapsible';
 import { getAllJournals, createJournal, updateJournal } from '@/services/journalManager';
-import { insertQuest } from '@/services/db';
+import { insertQuest, deleteAllQuests, getAllQuests, getQuestVirtueDisplayNames, type QuestRow } from '@/services/db';
 import { Directory, Paths, File } from 'expo-file-system';
 import * as SQLite from 'expo-sqlite';
 
@@ -20,6 +20,7 @@ type JournalItem = {
 
 export default function DevToolsScreen() {
   const [journals, setJournals] = useState<JournalItem[]>([]);
+  const [quests, setQuests] = useState<QuestRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [dbInfo, setDbInfo] = useState<any>(null);
   const [queryResult, setQueryResult] = useState<any>(null);
@@ -49,6 +50,9 @@ export default function DevToolsScreen() {
       const journalCount = await db.getFirstAsync<{ count: number }>(
         'SELECT COUNT(*) as count FROM journals'
       );
+      const questCountResult = await db.getFirstAsync<{ count: number }>(
+        'SELECT COUNT(*) as count FROM quests'
+      );
       const totalSize = await db.getFirstAsync<{ size: number }>(
         "SELECT page_count * page_size as size FROM pragma_page_count(), pragma_page_size()"
       );
@@ -56,11 +60,25 @@ export default function DevToolsScreen() {
       setDbInfo({
         tables: tables.map(t => t.name),
         journalCount: journalCount?.count || 0,
+        questCount: questCountResult?.count ?? 0,
         totalSize: totalSize?.size || 0,
       });
     } catch (error) {
       console.error('Failed to load DB info:', error);
       Alert.alert('Error', `Failed to load DB info: ${error}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadQuests = async () => {
+    try {
+      setLoading(true);
+      const allQuests = await getAllQuests();
+      setQuests(allQuests);
+    } catch (error) {
+      console.error('Failed to load quests:', error);
+      Alert.alert('Error', `Failed to load quests: ${error}`);
     } finally {
       setLoading(false);
     }
@@ -222,29 +240,51 @@ export default function DevToolsScreen() {
                 'Spend 10 minutes in curious learning',
                 'Collaborate on something with another person',
               ];
-              const virtuePairs: [string, string | null, string | null][] = [
-                ['Courage', 'Resilience', 'Empathy'],
-                ['Patience', 'Temperance', null],
-                ['Kindness', 'Empathy', 'Respectfulness'],
-                ['Curiosity', 'Proper Ambition', null],
-                ['Collaboration', 'Tolerance', 'Respectfulness'],
+              const virtuePairs: Record<string, number>[] = [
+                { Courage: 3, Resilience: 2, Empathy: 1 },
+                { Patience: 3, Temperance: 2 },
+                { Kindness: 3, Empathy: 2, Respectfulness: 1 },
+                { Curiosity: 3, 'Proper Ambition': 2 },
+                { Collaboration: 3, Tolerance: 2, Respectfulness: 1 },
               ];
 
               for (let i = 0; i < 5; i++) {
-                const [primary, secondary, tertiary] = virtuePairs[i];
-                await insertQuest(
-                  dummyPrompts[i],
-                  primary,
-                  secondary,
-                  tertiary
-                );
+                await insertQuest(dummyPrompts[i], virtuePairs[i]);
               }
 
               await loadDbInfo();
+              await loadQuests();
 
               Alert.alert('Success', 'Created 5 dummy quests.');
             } catch (error) {
               Alert.alert('Error', `Failed to create dummy quests: ${error}`);
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const clearAllQuests = () => {
+    Alert.alert(
+      'Clear All Quests',
+      'Delete all quests from the database? This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setLoading(true);
+              await deleteAllQuests();
+              await loadDbInfo();
+              await loadQuests();
+              Alert.alert('Success', 'All quests cleared.');
+            } catch (error) {
+              Alert.alert('Error', `Failed to clear quests: ${error}`);
             } finally {
               setLoading(false);
             }
@@ -284,6 +324,7 @@ export default function DevToolsScreen() {
 
   useEffect(() => {
     loadJournals();
+    loadQuests();
     loadDbInfo();
     loadFileSystemInfo();
   }, []);
@@ -322,6 +363,10 @@ export default function DevToolsScreen() {
                 <ThemedText style={styles.infoRow}>
                   <ThemedText type="defaultSemiBold">Journal Count: </ThemedText>
                   {dbInfo.journalCount}
+                </ThemedText>
+                <ThemedText style={styles.infoRow}>
+                  <ThemedText type="defaultSemiBold">Quest Count: </ThemedText>
+                  {dbInfo.questCount}
                 </ThemedText>
                 <ThemedText style={styles.infoRow}>
                   <ThemedText type="defaultSemiBold">Database Size: </ThemedText>
@@ -377,18 +422,18 @@ export default function DevToolsScreen() {
               <ThemedText style={styles.buttonText}>Refresh</ThemedText>
             </TouchableOpacity>
             {journals.length > 0 && (
-              <ThemedView style={styles.journalList}>
+              <ThemedView style={styles.list}>
                 {journals.slice(0, 5).map((journal) => (
-                  <ThemedView key={journal.id} style={styles.journalItem}>
-                    <ThemedText style={styles.journalText}>
+                  <ThemedView key={journal.id} style={styles.listItem}>
+                    <ThemedText style={styles.listItemText}>
                       <ThemedText type="defaultSemiBold">ID: </ThemedText>
                       {journal.id}
                     </ThemedText>
-                    <ThemedText style={styles.journalText}>
+                    <ThemedText style={styles.listItemText}>
                       <ThemedText type="defaultSemiBold">Path: </ThemedText>
                       {journal.file_path}
                     </ThemedText>
-                    <ThemedText style={styles.journalText}>
+                    <ThemedText style={styles.listItemText}>
                       <ThemedText type="defaultSemiBold">Created: </ThemedText>
                       {journal.created_at}
                     </ThemedText>
@@ -397,6 +442,51 @@ export default function DevToolsScreen() {
                 {journals.length > 5 && (
                   <ThemedText style={styles.moreText}>
                     ... and {journals.length - 5} more
+                  </ThemedText>
+                )}
+              </ThemedView>
+            )}
+          </ThemedView>
+        </Collapsible>
+
+        <Collapsible title="Quests List">
+          <ThemedView style={styles.section}>
+            <ThemedText style={styles.infoRow}>
+              <ThemedText type="defaultSemiBold">Total Quests: </ThemedText>
+              {quests.length}
+            </ThemedText>
+            <TouchableOpacity style={styles.button} onPress={loadQuests}>
+              <ThemedText style={styles.buttonText}>Refresh</ThemedText>
+            </TouchableOpacity>
+            {quests.length > 0 && (
+              <ThemedView style={styles.list}>
+                {quests.slice(0, 5).map((quest) => (
+                  <ThemedView key={quest.id} style={styles.listItem}>
+                    <ThemedText style={styles.listItemText}>
+                      <ThemedText type="defaultSemiBold">ID: </ThemedText>
+                      {quest.id}
+                    </ThemedText>
+                    <ThemedText style={styles.listItemText}>
+                      <ThemedText type="defaultSemiBold">Prompt: </ThemedText>
+                      {quest.prompt.slice(0, 40)}{quest.prompt.length > 40 ? '…' : ''}
+                    </ThemedText>
+                    <ThemedText style={styles.listItemText}>
+                      <ThemedText type="defaultSemiBold">Completed: </ThemedText>
+                      {quest.completed ? 'Yes' : 'No'}
+                    </ThemedText>
+                    <ThemedText style={styles.listItemText}>
+                      <ThemedText type="defaultSemiBold">Virtues: </ThemedText>
+                      {getQuestVirtueDisplayNames(quest).join(', ') || '—'}
+                    </ThemedText>
+                    <ThemedText style={styles.listItemText}>
+                      <ThemedText type="defaultSemiBold">Created: </ThemedText>
+                      {quest.created_at}
+                    </ThemedText>
+                  </ThemedView>
+                ))}
+                {quests.length > 5 && (
+                  <ThemedText style={styles.moreText}>
+                    ... and {quests.length - 5} more
                   </ThemedText>
                 )}
               </ThemedView>
@@ -414,6 +504,20 @@ export default function DevToolsScreen() {
               placeholderTextColor="#999"
               multiline
             />
+            <ThemedView style={styles.queryPresetRow}>
+              <TouchableOpacity
+                style={styles.queryPresetButton}
+                onPress={() => setCustomQuery('SELECT * FROM journals LIMIT 10;')}
+              >
+                <ThemedText style={styles.queryPresetText}>Journals</ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.queryPresetButton}
+                onPress={() => setCustomQuery('SELECT * FROM quests LIMIT 10;')}
+              >
+                <ThemedText style={styles.queryPresetText}>Quests</ThemedText>
+              </TouchableOpacity>
+            </ThemedView>
             <TouchableOpacity style={styles.button} onPress={executeCustomQuery}>
               <ThemedText style={styles.buttonText}>Execute Query</ThemedText>
             </TouchableOpacity>
@@ -439,7 +543,7 @@ export default function DevToolsScreen() {
               <ThemedText style={styles.buttonText}>Create Dummy Journals</ThemedText>
             </TouchableOpacity>
             <ThemedText style={[styles.infoRow, styles.infoRowTop]}>
-              Create dummy quests for testing. This will create 5 quests with sample prompts and primary/secondary/tertiary virtues.
+              Create dummy quests for testing. This will create 5 quests with sample prompts and virtue values.
             </ThemedText>
             <TouchableOpacity style={styles.button} onPress={createDummyQuests}>
               <ThemedText style={styles.buttonText}>Create Dummy Quests</ThemedText>
@@ -449,7 +553,10 @@ export default function DevToolsScreen() {
 
         <Collapsible title="Danger Zone">
           <ThemedView style={styles.section}>
-            <TouchableOpacity style={styles.dangerButton} onPress={clearDatabase}>
+            <TouchableOpacity style={styles.dangerButton} onPress={clearAllQuests}>
+              <ThemedText style={styles.dangerButtonText}>Clear All Quests</ThemedText>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.dangerButton, styles.dangerButtonSpaced]} onPress={clearDatabase}>
               <ThemedText style={styles.dangerButtonText}>Clear All Journals</ThemedText>
             </TouchableOpacity>
           </ThemedView>
@@ -512,26 +619,43 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
-    marginTop: 8,
     alignItems: 'center',
+  },
+  dangerButtonSpaced: {
+    marginTop: 8,
   },
   dangerButtonText: {
     color: '#fff',
     fontWeight: '600',
   },
-  journalList: {
+  list: {
     marginTop: 12,
   },
-  journalItem: {
+  listItem: {
     padding: 12,
     marginBottom: 8,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#e0e0e0',
   },
-  journalText: {
+  listItemText: {
     fontSize: 12,
     marginBottom: 4,
+  },
+  queryPresetRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 8,
+  },
+  queryPresetButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    backgroundColor: '#e8e8e8',
+  },
+  queryPresetText: {
+    fontSize: 13,
+    color: '#333',
   },
   moreText: {
     fontSize: 12,

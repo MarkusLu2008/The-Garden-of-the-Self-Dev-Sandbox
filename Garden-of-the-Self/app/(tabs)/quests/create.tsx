@@ -35,9 +35,13 @@ export default function CreateQuestScreen() {
       Alert.alert('Missing virtue', 'Select a primary virtue.');
       return;
     }
+    const virtueValues: Record<string, number> = {};
+    if (primaryVirtue) virtueValues[primaryVirtue] = 3;
+    if (secondaryVirtue) virtueValues[secondaryVirtue] = Math.max(virtueValues[secondaryVirtue] ?? 0, 2);
+    if (tertiaryVirtue) virtueValues[tertiaryVirtue] = Math.max(virtueValues[tertiaryVirtue] ?? 0, 1);
     try {
       setIsCreating(true);
-      await insertQuest(trimmed, primaryVirtue, secondaryVirtue, tertiaryVirtue);
+      await insertQuest(trimmed, virtueValues);
       router.back();
     } catch (error) {
       console.error('Failed to create quest:', error);

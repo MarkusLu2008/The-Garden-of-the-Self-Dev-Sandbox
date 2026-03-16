@@ -1,4 +1,5 @@
-const virtues = ["Courage",
+const virtues = [
+     "Courage",
      "Temperance", 
      "Patience", 
      "Kindness", 
@@ -9,6 +10,7 @@ const virtues = ["Courage",
      "Curiosity", 
      "Respectfulness", 
      "Tolerance", 
-     "Collaboration"];
+     "Collaboration",
+     "Discipline"];
 
 export default virtues;

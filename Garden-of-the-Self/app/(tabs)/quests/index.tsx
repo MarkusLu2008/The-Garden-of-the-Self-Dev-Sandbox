@@ -15,6 +15,7 @@ import {
   getAllQuests,
   updateQuest,
   deleteQuest,
+  getQuestVirtueDisplayNames,
   type QuestRow,
 } from '@/services/db';
 import { useJournalStyles, spacing, borderRadius } from '@/utils/styles';
@@ -83,10 +84,7 @@ export default function QuestsScreen() {
   };
 
   const renderQuestItem = ({ item }: { item: QuestRow }) => {
-    const virtues = [item.primary_virtue]
-      .concat(item.secondary_virtue ? [item.secondary_virtue] : [])
-      .concat(item.tertiary_virtue ? [item.tertiary_virtue] : [])
-      .join(' · ');
+    const virtueNames = getQuestVirtueDisplayNames(item).join(' · ');
 
     return (
       <TouchableOpacity
@@ -104,7 +102,7 @@ export default function QuestsScreen() {
             {item.prompt}
           </ThemedText>
           <ThemedText style={styles.virtuesText} numberOfLines={1}>
-            ⭐ {virtues}
+            ⭐ {virtueNames}
           </ThemedText>
           {item.completed ? (
             <ThemedText style={styles.completedBadge}>Completed</ThemedText>
