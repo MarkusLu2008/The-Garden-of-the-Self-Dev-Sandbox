@@ -74,6 +74,34 @@ async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
       `);
     }
 
+    const questHistoryResult = await db.getFirstAsync<{ name: string }>(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='quest_history'"
+    );
+    if (questHistoryResult) {
+      const tableInfo = await db.getAllAsync<{ name: string }>(
+        "SELECT name FROM pragma_table_info('quest_history')"
+      );
+      const hasPrompt = tableInfo.some((r) => r.name === 'prompt');
+      if (hasPrompt) {
+        await db.execAsync('DROP TABLE quest_history');
+      }
+    }
+    const questHistoryExistsAfterMigration = await db.getFirstAsync<{ name: string }>(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='quest_history'"
+    );
+    if (!questHistoryExistsAfterMigration) {
+      const virtueColsHistory = VIRTUE_COLUMNS.map((c) => `${c} INTEGER NOT NULL DEFAULT 0`).join(',\n          ');
+      await db.execAsync(`
+        CREATE TABLE quest_history (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          quest_id INTEGER NOT NULL,
+          ${virtueColsHistory},
+          completed_at TEXT NOT NULL,
+          event TEXT NOT NULL DEFAULT 'completed'
+        );
+      `);
+    }
+
     return db;
   })();
 
@@ -144,6 +172,13 @@ export type QuestRow = {
   updated_at: string;
 } & Record<string, number>;
 
+export type QuestHistoryRow = {
+  id: number;
+  quest_id: number;
+  completed_at: string;
+  event: string;
+} & Record<string, number>;
+
 /** Virtue values keyed by display name (e.g. "Courage", "Proper Ambition"). Missing virtues default to 0. */
 async function insertQuest(prompt: string, virtueValues: QuestVirtueValues = {}) {
   const database = await getDatabase();
@@ -194,6 +229,10 @@ async function updateQuest(
     return fromUpdates !== undefined ? fromUpdates : (quest[col] as number);
   });
 
+  if (quest.completed === 0 && completed === 1) {
+    await recordQuestCompleted(quest);
+  }
+
   await database.runAsync(
     `UPDATE quests SET completed = ?, prompt = ?, ${setVirtues.join(', ')}, updated_at = datetime('now') WHERE id = ?`,
     [completed, prompt, ...virtueValues, id]
@@ -210,6 +249,32 @@ async function deleteAllQuests() {
   return database.runAsync(`DELETE FROM quests`);
 }
 
+async function recordQuestCompleted(quest: QuestRow) {
+  const database = await getDatabase();
+  const cols = ['quest_id', ...VIRTUE_COLUMNS, 'completed_at', 'event'].join(', ');
+  const placeholders = ['?', ...VIRTUE_COLUMNS.map(() => '?'), "datetime('now')", '?'].join(', ');
+  const virtueValues = VIRTUE_COLUMNS.map((col) => (quest[col] as number) ?? 0);
+  return database.runAsync(
+    `INSERT INTO quest_history (${cols}) VALUES (${placeholders})`,
+    [quest.id, ...virtueValues, 'completed']
+  );
+}
+
+async function getAllQuestHistory() {
+  const database = await getDatabase();
+  return database.getAllAsync<QuestHistoryRow>(
+    `SELECT * FROM quest_history ORDER BY completed_at DESC`
+  );
+}
+
+async function getQuestHistory(limit: number) {
+  const database = await getDatabase();
+  return database.getAllAsync<QuestHistoryRow>(
+    `SELECT * FROM quest_history ORDER BY completed_at DESC LIMIT ?`,
+    [limit]
+  );
+}
+
 /** Returns virtue display names that have a value > 0 on the quest, sorted by value descending (primary first) */
 export function getQuestVirtueDisplayNames(quest: QuestRow): string[] {
   return virtues
@@ -219,3 +284,4 @@ export function getQuestVirtueDisplayNames(quest: QuestRow): string[] {
 
 export { insertJournal, getJournal, getAllJournals, updateJournal, deleteJournal };
 export { insertQuest, getQuest, getAllQuests, updateQuest, deleteQuest, deleteAllQuests };
+export { getAllQuestHistory, getQuestHistory };

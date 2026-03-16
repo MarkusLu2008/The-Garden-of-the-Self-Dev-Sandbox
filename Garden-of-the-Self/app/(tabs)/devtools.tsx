@@ -5,7 +5,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Collapsible } from '@/components/ui/collapsible';
 import { getAllJournals, createJournal, updateJournal } from '@/services/journalManager';
-import { insertQuest, deleteAllQuests, getAllQuests, getQuestVirtueDisplayNames, type QuestRow } from '@/services/db';
+import { insertQuest, deleteAllQuests, getAllQuests, getAllQuestHistory, getQuestVirtueDisplayNames, type QuestRow, type QuestHistoryRow } from '@/services/db';
 import { Directory, Paths, File } from 'expo-file-system';
 import * as SQLite from 'expo-sqlite';
 
@@ -21,6 +21,7 @@ type JournalItem = {
 export default function DevToolsScreen() {
   const [journals, setJournals] = useState<JournalItem[]>([]);
   const [quests, setQuests] = useState<QuestRow[]>([]);
+  const [questHistory, setQuestHistory] = useState<QuestHistoryRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [dbInfo, setDbInfo] = useState<any>(null);
   const [queryResult, setQueryResult] = useState<any>(null);
@@ -79,6 +80,19 @@ export default function DevToolsScreen() {
     } catch (error) {
       console.error('Failed to load quests:', error);
       Alert.alert('Error', `Failed to load quests: ${error}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadQuestHistory = async () => {
+    try {
+      setLoading(true);
+      const all = await getAllQuestHistory();
+      setQuestHistory(all);
+    } catch (error) {
+      console.error('Failed to load quest history:', error);
+      Alert.alert('Error', `Failed to load quest history: ${error}`);
     } finally {
       setLoading(false);
     }
@@ -325,6 +339,7 @@ export default function DevToolsScreen() {
   useEffect(() => {
     loadJournals();
     loadQuests();
+    loadQuestHistory();
     loadDbInfo();
     loadFileSystemInfo();
   }, []);
@@ -494,6 +509,49 @@ export default function DevToolsScreen() {
           </ThemedView>
         </Collapsible>
 
+        <Collapsible title="Quest History">
+          <ThemedView style={styles.section}>
+            <ThemedText style={styles.infoRow}>
+              <ThemedText type="defaultSemiBold">Total History Entries: </ThemedText>
+              {questHistory.length}
+            </ThemedText>
+            <TouchableOpacity style={styles.button} onPress={loadQuestHistory}>
+              <ThemedText style={styles.buttonText}>Refresh</ThemedText>
+            </TouchableOpacity>
+            {questHistory.length > 0 && (
+              <ThemedView style={styles.list}>
+                {questHistory.slice(0, 10).map((entry) => (
+                  <ThemedView key={entry.id} style={styles.listItem}>
+                    <ThemedText style={styles.listItemText}>
+                      <ThemedText type="defaultSemiBold">ID: </ThemedText>
+                      {entry.id}
+                      <ThemedText type="defaultSemiBold"> · Quest ID: </ThemedText>
+                      {entry.quest_id}
+                    </ThemedText>
+                    <ThemedText style={styles.listItemText}>
+                      <ThemedText type="defaultSemiBold">Virtues: </ThemedText>
+                      {getQuestVirtueDisplayNames(entry as unknown as QuestRow).join(', ') || '—'}
+                    </ThemedText>
+                    <ThemedText style={styles.listItemText}>
+                      <ThemedText type="defaultSemiBold">Completed at: </ThemedText>
+                      {entry.completed_at}
+                    </ThemedText>
+                    <ThemedText style={styles.listItemText}>
+                      <ThemedText type="defaultSemiBold">Event: </ThemedText>
+                      {entry.event}
+                    </ThemedText>
+                  </ThemedView>
+                ))}
+                {questHistory.length > 10 && (
+                  <ThemedText style={styles.moreText}>
+                    ... and {questHistory.length - 10} more
+                  </ThemedText>
+                )}
+              </ThemedView>
+            )}
+          </ThemedView>
+        </Collapsible>
+
         <Collapsible title="Custom SQL Query">
           <ThemedView style={styles.section}>
             <TextInput
@@ -516,6 +574,12 @@ export default function DevToolsScreen() {
                 onPress={() => setCustomQuery('SELECT * FROM quests LIMIT 10;')}
               >
                 <ThemedText style={styles.queryPresetText}>Quests</ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.queryPresetButton}
+                onPress={() => setCustomQuery('SELECT * FROM quest_history ORDER BY completed_at DESC LIMIT 10;')}
+              >
+                <ThemedText style={styles.queryPresetText}>Quest History</ThemedText>
               </TouchableOpacity>
             </ThemedView>
             <TouchableOpacity style={styles.button} onPress={executeCustomQuery}>
