@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useCallback } from "react";
-import { StyleSheet, ActivityIndicator, View, TouchableOpacity } from "react-native";
+import { StyleSheet, ActivityIndicator, View, TouchableOpacity, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { RichEditor, RichToolbar } from "react-native-pell-rich-editor";
@@ -177,7 +177,12 @@ export default function EditorScreen() {
           <ActivityIndicator size="large" />
         </ThemedView>
       ) : (
-        <>
+        <ScrollView
+          style={styles.editorContainer}
+          contentContainerStyle={styles.editorContent}
+          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
+        >
           <RichToolbar editor={richText} />
           <RichEditor
             ref={richText}
@@ -185,7 +190,7 @@ export default function EditorScreen() {
             onChange={checkAndSaveContent}
             style={[styles.editor, { backgroundColor: journalStyles.colors.background }]}
           />
-        </>
+        </ScrollView>
       )}
     </SafeAreaView>
   );
@@ -225,6 +230,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  editorContainer: {
+    flex: 1,
+  },
+  editorContent: {
+    flexGrow: 1,
+
   },
   editor: {
     flex: 1,

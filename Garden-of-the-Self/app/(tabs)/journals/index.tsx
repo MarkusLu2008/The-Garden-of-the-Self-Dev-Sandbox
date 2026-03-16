@@ -6,6 +6,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { getAllJournals } from '@/services/journalManager';
+import type { JournalVirtueValues } from '@/services/db';
 import { formatDateForDisplay } from '@/utils/dateUtils';
 import { useJournalStyles, spacing, borderRadius } from '@/utils/styles';
 
@@ -13,7 +14,7 @@ type JournalItem = {
   id: number;
   file_path: string;
   prompt: string | null;
-  virtues: string | null;
+  virtues: JournalVirtueValues;
   created_at: string;
   updated_at: string;
 };
@@ -51,29 +52,41 @@ export default function JournalsScreen() {
     router.push(`/(tabs)/journals/editor?date=${file_path}`);
   };
 
-  const renderJournalItem = ({ item }: { item: JournalItem }) => (
-    <TouchableOpacity
-      style={styles.journalItem}
-      onPress={() => handleJournalPress(item.file_path)}
-      activeOpacity={0.7}
-    >
-      <ThemedView style={[journalStyles.border, styles.journalContent]}>
-        <ThemedText type="defaultSemiBold" style={styles.journalDate}>
-          {formatDateForDisplay(item.file_path)}
-        </ThemedText>
-        {item.prompt && (
-          <ThemedText style={styles.promptText} numberOfLines={1}>
-            💭 {item.prompt}
+  const renderJournalItem = ({ item }: { item: JournalItem }) => {
+    const promptText = typeof item.prompt === 'string' ? item.prompt : '';
+    const virtueNames =
+      item.virtues && typeof item.virtues === 'object'
+        ? Object.entries(item.virtues)
+            .filter(([, value]) => typeof value === 'number' && value > 0)
+            .sort(([, a], [, b]) => (b as number) - (a as number))
+            .map(([name]) => name)
+        : [];
+    const virtuesText = virtueNames.join(', ');
+
+    return (
+      <TouchableOpacity
+        style={styles.journalItem}
+        onPress={() => handleJournalPress(item.file_path)}
+        activeOpacity={0.7}
+      >
+        <ThemedView style={[journalStyles.border, styles.journalContent]}>
+          <ThemedText type="defaultSemiBold" style={styles.journalDate}>
+            {formatDateForDisplay(item.file_path)}
           </ThemedText>
-        )}
-        {item.virtues && (
-          <ThemedText style={styles.virtuesText} numberOfLines={1}>
-            ⭐ {item.virtues}
-          </ThemedText>
-        )}
-      </ThemedView>
-    </TouchableOpacity>
-  );
+          {promptText ? (
+            <ThemedText style={styles.promptText} numberOfLines={1}>
+              💭 {promptText}
+            </ThemedText>
+          ) : null}
+          {virtuesText ? (
+            <ThemedText style={styles.virtuesText} numberOfLines={1}>
+              ⭐ {virtuesText}
+            </ThemedText>
+          ) : null}
+        </ThemedView>
+      </TouchableOpacity>
+    );
+  };
 
   const renderEmptyState = () => (
     <ThemedView style={styles.emptyContainer}>
