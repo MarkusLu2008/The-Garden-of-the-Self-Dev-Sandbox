@@ -16,7 +16,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { createJournal } from '@/services/journalManager';
 import { generateJournalId } from '@/utils/dateUtils';
-import { useJournalStyles, spacing } from '@/utils/styles';
+import { journalStyles, spacing } from '@/utils/styles';
 import virtues from '@/constants/virtues';
 import { distributeJournalVirtuePoints } from '@/utils/virtuePoints';
 
@@ -26,8 +26,6 @@ export default function CreateJournalModal() {
   const [intention, setIntention] = useState('');
   const [selectedVirtues, setSelectedVirtues] = useState<string[]>([]);
   const [validationError, setValidationError] = useState<string | null>(null);
-  const journalStyles = useJournalStyles();
-
   const toggleVirtue = (virtue: string) => {
     setValidationError(null);
     setSelectedVirtues((current) => {
@@ -157,17 +155,17 @@ export default function CreateJournalModal() {
 
           <View style={styles.buttonContainer}>
             <TouchableOpacity
-              style={[journalStyles.button.secondary, styles.buttonBase]}
+              style={[journalStyles.buttonSecondary, styles.buttonBase]}
               onPress={handleCancel}
               disabled={isCreating}
             >
-              <ThemedText style={journalStyles.button.secondaryText}>
+              <ThemedText style={journalStyles.buttonSecondaryText}>
                 Cancel
               </ThemedText>
             </TouchableOpacity>
             <TouchableOpacity
               style={[
-                journalStyles.button.primary,
+                journalStyles.buttonPrimary,
                 styles.buttonBase,
                 isCreating && styles.createButtonDisabled,
               ]}
@@ -177,7 +175,7 @@ export default function CreateJournalModal() {
               {isCreating ? (
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
-                <ThemedText style={journalStyles.button.primaryText}>
+                <ThemedText style={journalStyles.buttonPrimaryText}>
                   Create
                 </ThemedText>
               )}

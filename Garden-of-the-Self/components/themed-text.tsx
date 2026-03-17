@@ -1,6 +1,5 @@
 import { StyleSheet, Text, type TextProps } from 'react-native';
-
-import { useThemeColor } from '@/hooks/use-theme-color';
+import { UnistylesRuntime, useUnistyles } from 'react-native-unistyles';
 
 export type ThemedTextProps = TextProps & {
   lightColor?: string;
@@ -15,7 +14,12 @@ export function ThemedText({
   type = 'default',
   ...rest
 }: ThemedTextProps) {
-  const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
+  const { theme } = useUnistyles();
+  const themeName = UnistylesRuntime.themeName;
+  const color =
+    (themeName === 'light' && lightColor) ||
+    (themeName === 'dark' && darkColor) ||
+    theme.colors.text;
 
   return (
     <Text

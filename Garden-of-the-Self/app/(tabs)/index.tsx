@@ -20,10 +20,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { useJournalStyles, spacing } from '@/utils/styles';
-import { Colors, Fonts } from '@/constants/theme';
+import { useUnistyles } from 'react-native-unistyles';
+import { journalStyles, spacing } from '@/utils/styles';
+import { Fonts } from '@/constants/theme';
 import { getVirtueTotals } from '@/services/db';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useFocusEffect } from 'expo-router';
 import virtues from '@/constants/virtues';
 import { VIRTUE_TREE_IMAGES, treeScoreToStage } from '@/constants/virtueTreeImages';
@@ -151,9 +151,8 @@ function VirtueGardenPage({
 const isWeb = Platform.OS === 'web';
 
 export default function GardenScreen() {
-  const journalStyles = useJournalStyles();
-  const colorScheme = useColorScheme();
-  const textColor = Colors[colorScheme ?? 'light'].text;
+  const { theme } = useUnistyles();
+  const textColor = theme.colors.text;
   const { width: windowWidth } = useWindowDimensions();
 
   const [virtueTotals, setVirtueTotals] = useState<Record<string, number> | null>(null);

@@ -8,7 +8,8 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { getAllJournals } from '@/services/journalManager';
 import type { JournalVirtueValues } from '@/services/db';
 import { formatDateForDisplay } from '@/utils/dateUtils';
-import { useJournalStyles, spacing, borderRadius } from '@/utils/styles';
+import { useUnistyles } from 'react-native-unistyles';
+import { journalStyles, spacing, borderRadius } from '@/utils/styles';
 
 type JournalItem = {
   id: number;
@@ -23,7 +24,7 @@ export default function JournalsScreen() {
   const [journals, setJournals] = useState<JournalItem[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const journalStyles = useJournalStyles();
+  const { theme } = useUnistyles();
 
   const loadJournals = async () => {
     try {
@@ -90,15 +91,15 @@ export default function JournalsScreen() {
 
   const renderEmptyState = () => (
     <ThemedView style={styles.emptyContainer}>
-      <IconSymbol name="book.fill" size={64} color={journalStyles.colors.icon} style={styles.emptyIcon} />
+      <IconSymbol name="book.fill" size={64} color={theme.colors.icon} style={styles.emptyIcon} />
       <ThemedText type="subtitle" style={styles.emptyTitle}>
         No journals yet
       </ThemedText>
       <ThemedText style={styles.emptyText}>
         Start your journey by creating your first journal entry
       </ThemedText>
-      <TouchableOpacity style={journalStyles.button.primary} onPress={handleNewJournal}>
-        <ThemedText style={journalStyles.button.primaryText}>Create First Journal</ThemedText>
+      <TouchableOpacity style={journalStyles.buttonPrimary} onPress={handleNewJournal}>
+        <ThemedText style={journalStyles.buttonPrimaryText}>Create First Journal</ThemedText>
       </TouchableOpacity>
     </ThemedView>
   );
@@ -114,7 +115,7 @@ export default function JournalsScreen() {
           onPress={handleNewJournal}
           activeOpacity={0.7}
         >
-          <IconSymbol name="plus.circle.fill" size={28} color={journalStyles.colors.primary} />
+          <IconSymbol name="plus.circle.fill" size={28} color={theme.colors.tint} />
         </TouchableOpacity>
       </ThemedView>
 

@@ -14,7 +14,8 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { insertQuest } from '@/services/db';
 import virtues from '@/constants/virtues';
-import { useJournalStyles, spacing } from '@/utils/styles';
+import { useUnistyles } from 'react-native-unistyles';
+import { journalStyles, spacing } from '@/utils/styles';
 
 export default function CreateQuestScreen() {
   const router = useRouter();
@@ -23,7 +24,7 @@ export default function CreateQuestScreen() {
   const [secondaryVirtue, setSecondaryVirtue] = useState<string | null>(null);
   const [tertiaryVirtue, setTertiaryVirtue] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
-  const journalStyles = useJournalStyles();
+  const { theme } = useUnistyles();
 
   const handleCreate = async () => {
     const trimmed = prompt.trim();
@@ -64,12 +65,12 @@ export default function CreateQuestScreen() {
       style={[
         styles.chip,
         journalStyles.border,
-        selected && [journalStyles.button.primary, styles.chipSelected],
+        selected && [journalStyles.buttonPrimary, styles.chipSelected],
       ]}
       onPress={onPress}
     >
       <ThemedText
-        style={selected ? journalStyles.button.primaryText : undefined}
+        style={selected ? journalStyles.buttonPrimaryText : undefined}
         numberOfLines={1}
       >
         {virtue}
@@ -92,7 +93,7 @@ export default function CreateQuestScreen() {
         <TextInput
           style={[styles.input, journalStyles.border]}
           placeholder="What will you do?"
-          placeholderTextColor={journalStyles.colors.icon}
+          placeholderTextColor={theme.colors.icon}
           value={prompt}
           onChangeText={setPrompt}
           multiline
@@ -115,14 +116,14 @@ export default function CreateQuestScreen() {
               styles.chip,
               journalStyles.border,
               secondaryVirtue === null && [
-                journalStyles.button.primary,
+                journalStyles.buttonPrimary,
                 styles.chipSelected,
               ],
             ]}
             onPress={() => setSecondaryVirtue(null)}
           >
             <ThemedText
-              style={secondaryVirtue === null ? journalStyles.button.primaryText : undefined}
+              style={secondaryVirtue === null ? journalStyles.buttonPrimaryText : undefined}
             >
               None
             </ThemedText>
@@ -141,14 +142,14 @@ export default function CreateQuestScreen() {
               styles.chip,
               journalStyles.border,
               tertiaryVirtue === null && [
-                journalStyles.button.primary,
+                journalStyles.buttonPrimary,
                 styles.chipSelected,
               ],
             ]}
             onPress={() => setTertiaryVirtue(null)}
           >
             <ThemedText
-              style={tertiaryVirtue === null ? journalStyles.button.primaryText : undefined}
+              style={tertiaryVirtue === null ? journalStyles.buttonPrimaryText : undefined}
             >
               None
             </ThemedText>
@@ -162,17 +163,17 @@ export default function CreateQuestScreen() {
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity
-            style={[journalStyles.button.secondary, styles.buttonBase]}
+            style={[journalStyles.buttonSecondary, styles.buttonBase]}
             onPress={handleCancel}
             disabled={isCreating}
           >
-            <ThemedText style={journalStyles.button.secondaryText}>
+            <ThemedText style={journalStyles.buttonSecondaryText}>
               Cancel
             </ThemedText>
           </TouchableOpacity>
           <TouchableOpacity
             style={[
-              journalStyles.button.primary,
+              journalStyles.buttonPrimary,
               styles.buttonBase,
               isCreating && styles.createButtonDisabled,
             ]}
@@ -182,7 +183,7 @@ export default function CreateQuestScreen() {
             {isCreating ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
-              <ThemedText style={journalStyles.button.primaryText}>
+              <ThemedText style={journalStyles.buttonPrimaryText}>
                 Create Quest
               </ThemedText>
             )}

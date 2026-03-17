@@ -7,11 +7,13 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { getJournalContent, getJournalInfo, createJournal, updateJournal } from "@/services/journalManager";
 import { formatDateForDisplay } from "@/utils/dateUtils";
-import { useJournalStyles, spacing } from "@/utils/styles";
+import { useUnistyles } from "react-native-unistyles";
+import { journalStyles, spacing } from "@/utils/styles";
 
 export default function EditorScreen() {
   const richText = useRef<RichEditor>(null);
   const router = useRouter();
+  const { theme } = useUnistyles();
   const { date } = useLocalSearchParams<{ date: string }>();
   const [content, setContent] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -19,7 +21,6 @@ export default function EditorScreen() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isSavingRef = useRef(false);
-  const journalStyles = useJournalStyles();
 
   // Load existing journal content
   useEffect(() => {
@@ -151,7 +152,7 @@ export default function EditorScreen() {
     <SafeAreaView style={journalStyles.container} edges={["top"]}>
       <ThemedView style={[styles.header, journalStyles.headerBorder]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ThemedText style={[styles.backButtonText, { color: journalStyles.colors.primary }]}>
+          <ThemedText style={[styles.backButtonText, { color: theme.colors.tint }]}>
             ← Back
           </ThemedText>
         </TouchableOpacity>
@@ -188,7 +189,7 @@ export default function EditorScreen() {
             ref={richText}
             initialContentHTML={content || "<p>Start typing...</p>"}
             onChange={checkAndSaveContent}
-            style={[styles.editor, { backgroundColor: journalStyles.colors.background }]}
+            style={[styles.editor, { backgroundColor: theme.colors.background }]}
           />
         </ScrollView>
       )}

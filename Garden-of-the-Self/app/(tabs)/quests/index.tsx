@@ -18,13 +18,14 @@ import {
   getQuestVirtueDisplayNames,
   type QuestRow,
 } from '@/services/db';
-import { useJournalStyles, spacing, borderRadius } from '@/utils/styles';
+import { useUnistyles } from 'react-native-unistyles';
+import { journalStyles, spacing, borderRadius } from '@/utils/styles';
 
 export default function QuestsScreen() {
   const [quests, setQuests] = useState<QuestRow[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const journalStyles = useJournalStyles();
+  const { theme } = useUnistyles();
 
   const loadQuests = useCallback(async (showLoader = true) => {
     try {
@@ -117,7 +118,7 @@ export default function QuestsScreen() {
       <IconSymbol
         name="flag.checkered"
         size={64}
-        color={journalStyles.colors.icon}
+        color={theme.colors.icon}
         style={styles.emptyIcon}
       />
       <ThemedText type="subtitle" style={styles.emptyTitle}>
@@ -126,8 +127,8 @@ export default function QuestsScreen() {
       <ThemedText style={styles.emptyText}>
         Add a quest to grow your virtues
       </ThemedText>
-      <TouchableOpacity style={journalStyles.button.primary} onPress={handleAddQuest}>
-        <ThemedText style={journalStyles.button.primaryText}>Add Quest</ThemedText>
+      <TouchableOpacity style={journalStyles.buttonPrimary} onPress={handleAddQuest}>
+        <ThemedText style={journalStyles.buttonPrimaryText}>Add Quest</ThemedText>
       </TouchableOpacity>
     </ThemedView>
   );
@@ -146,7 +147,7 @@ export default function QuestsScreen() {
           <IconSymbol
             name="plus.circle.fill"
             size={28}
-            color={journalStyles.colors.primary}
+            color={theme.colors.tint}
           />
         </TouchableOpacity>
       </ThemedView>

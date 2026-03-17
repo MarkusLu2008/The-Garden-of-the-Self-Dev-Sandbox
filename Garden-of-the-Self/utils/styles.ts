@@ -1,8 +1,7 @@
-import { StyleSheet } from 'react-native';
-import { useThemeColor } from '@/hooks/use-theme-color';
+import { StyleSheet } from 'react-native-unistyles';
 
 /**
- * Common spacing values
+ * Common spacing values (also available on theme.spacing)
  */
 export const spacing = {
   xs: 4,
@@ -16,7 +15,7 @@ export const spacing = {
 };
 
 /**
- * Common border radius values
+ * Common border radius values (also available on theme.borderRadius)
  */
 export const borderRadius = {
   sm: 8,
@@ -25,64 +24,44 @@ export const borderRadius = {
 };
 
 /**
- * Hook to get theme-aware styles and colors
+ * Theme-aware styles for journals/quests. Use with Unistyles theme;
+ * for raw colors (e.g. primary, border) use useUnistyles().theme.colors.
+ * Flattened keys for Unistyles compatibility.
  */
-export function useJournalStyles() {
-  const primary = useThemeColor({}, 'tint');
-  const border = useThemeColor({}, 'selection');
-  const icon = useThemeColor({}, 'icon');
-  const background = useThemeColor({}, 'background');
-  const text = useThemeColor({}, 'text');
-
-  return {
-    colors: {
-      primary,
-      border,
-      icon,
-      background,
-      text,
-    },
-    // Common button styles
-    button: {
-      primary: {
-        backgroundColor: primary,
-        paddingVertical: spacing.md,
-        paddingHorizontal: spacing.xl,
-        borderRadius: borderRadius.sm,
-        alignItems: 'center' as const,
-        justifyContent: 'center' as const,
-      },
-      primaryText: {
-        color: '#fff',
-        fontWeight: '600' as const,
-      },
-      secondary: {
-        paddingVertical: spacing.md,
-        paddingHorizontal: spacing.xl,
-        borderRadius: borderRadius.sm,
-        borderWidth: 1,
-        borderColor: border,
-        alignItems: 'center' as const,
-      },
-      secondaryText: {
-        fontWeight: '600' as const,
-      },
-    },
-    // Common container styles
-    container: {
-      flex: 1,
-    },
-    // Common border styles
-    border: {
-      borderWidth: 1,
-      borderColor: border,
-      borderRadius: borderRadius.md,
-    },
-    // Common header border
-    headerBorder: {
-      borderBottomWidth: 1,
-      borderBottomColor: border,
-    },
-  };
-}
-
+export const journalStyles = StyleSheet.create((theme) => ({
+  buttonPrimary: {
+    backgroundColor: theme.colors.tint,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.xl,
+    borderRadius: theme.borderRadius.sm,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
+  buttonPrimaryText: {
+    color: '#fff',
+    fontWeight: '600' as const,
+  },
+  buttonSecondary: {
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.xl,
+    borderRadius: theme.borderRadius.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.selection,
+    alignItems: 'center' as const,
+  },
+  buttonSecondaryText: {
+    fontWeight: '600' as const,
+  },
+  container: {
+    flex: 1,
+  },
+  border: {
+    borderWidth: 1,
+    borderColor: theme.colors.selection,
+    borderRadius: theme.borderRadius.md,
+  },
+  headerBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.selection,
+  },
+}));
