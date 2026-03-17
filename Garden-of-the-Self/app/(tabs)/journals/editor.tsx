@@ -38,15 +38,10 @@ export default function EditorScreen() {
           setContent(existingContent);
           richText.current?.setContentHTML(existingContent);
         } else {
-          const defaultContent = "<p>Start typing...</p>";
-          setContent(defaultContent);
-          richText.current?.setContentHTML(defaultContent);
+          richText.current?.setContentHTML("");
         }
       } catch (error) {
         console.error("Failed to load journal:", error);
-        const defaultContent = "<p>Start typing...</p>";
-        setContent(defaultContent);
-        richText.current?.setContentHTML(defaultContent);
       } finally {
         setIsLoading(false);
       }
@@ -187,7 +182,8 @@ export default function EditorScreen() {
           <RichToolbar editor={richText} />
           <RichEditor
             ref={richText}
-            initialContentHTML={content || "<p>Start typing...</p>"}
+            initialContentHTML={content}
+            placeholder="Start typing..."
             onChange={checkAndSaveContent}
             style={[styles.editor, { backgroundColor: theme.colors.background }]}
           />
