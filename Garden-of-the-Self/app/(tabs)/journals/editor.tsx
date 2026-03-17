@@ -69,12 +69,12 @@ export default function EditorScreen() {
       
       // Get or use default prompt and virtues
       let prompt = "";
-      let virtues = "";
+      let virtues: Record<string, number> = {};
       
       try {
         const journalInfo = await getJournalInfo(date);
         prompt = journalInfo?.prompt || "";
-        virtues = journalInfo?.virtues || "";
+        virtues = journalInfo?.virtues || {};
       } catch {
         // Journal doesn't exist yet, will create new one
       }

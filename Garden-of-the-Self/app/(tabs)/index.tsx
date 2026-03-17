@@ -1,5 +1,12 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import React, { useState, useCallback, useEffect } from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  Platform,
+  ScrollView,
+  useWindowDimensions,
+} from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -8,7 +15,9 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
+import PagerView from 'react-native-pager-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useJournalStyles, spacing } from '@/utils/styles';
@@ -16,10 +25,12 @@ import { Colors, Fonts } from '@/constants/theme';
 import { getVirtueTotals } from '@/services/db';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useFocusEffect } from 'expo-router';
+import virtues from '@/constants/virtues';
+import { VIRTUE_TREE_IMAGES, treeScoreToStage } from '@/constants/virtueTreeImages';
 
-const STAGE_MS = 500;
 const LINES = 10;
 const WIDTH = 20;
+const STAGE_THRESHOLD = 25;
 
 // Pine: 5 stages from seed → full tree (tip and trunk centered)
 const PINE_STAGES: string[] = [
@@ -51,8 +62,12 @@ const PINE_STAGES: string[] = [
      |||`,
 ];
 
+function scoreToStage(score: number, stageCount: number): number {
+  if (score <= 0) return 0;
+  return Math.min(Math.floor(score / STAGE_THRESHOLD), stageCount - 1);
+}
+
 function padStage(art: string): string {
-  // Only strip leading/trailing newlines so we keep intentional spaces in the art
   const lines = art.replace(/^\n+|\n+$/g, '').split('\n');
   const w = Math.max(WIDTH, ...lines.map((l) => l.length));
   const padded = lines.map((l) => {
@@ -66,31 +81,8 @@ function padStage(art: string): string {
   return padded.slice(0, LINES).join('\n');
 }
 
-function useGrowthAnimation(stageCount: number) {
+function useBreathingAnimation() {
   const breathe = useSharedValue(1);
-  const [stage, setStage] = useState(0);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => {
-    setStage(0);
-    if (intervalRef.current) clearInterval(intervalRef.current);
-
-    intervalRef.current = setInterval(() => {
-      setStage((prev) => {
-        const next = Math.min(prev + 1, stageCount - 1);
-        if (next >= stageCount - 1 && intervalRef.current) {
-          clearInterval(intervalRef.current);
-          intervalRef.current = null;
-        }
-        return next;
-      });
-    }, STAGE_MS);
-
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [stageCount]);
-
   useEffect(() => {
     breathe.value = withRepeat(
       withSequence(
@@ -101,22 +93,73 @@ function useGrowthAnimation(stageCount: number) {
       true
     );
   }, [breathe]);
-
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: breathe.value }],
   }));
-
-  return { stage, animatedStyle };
+  return animatedStyle;
 }
+
+type VirtueGardenPageProps = {
+  virtueName: string;
+  score: number;
+  textColor: string;
+  animatedStyle: ReturnType<typeof useAnimatedStyle>;
+};
+
+function VirtueGardenPage({
+  virtueName,
+  score,
+  textColor,
+  animatedStyle,
+}: VirtueGardenPageProps) {
+  const treeImages = VIRTUE_TREE_IMAGES[virtueName];
+  const hasTreeImages = treeImages != null && treeImages.length > 0;
+  const treeStage = hasTreeImages ? treeScoreToStage(score, treeImages.length) : 0;
+  const pineStage = scoreToStage(score, PINE_STAGES.length);
+  const displayArt = padStage(PINE_STAGES[pineStage]);
+
+  return (
+    <View style={styles.page}>
+      <ThemedText type="subtitle" style={styles.virtueName}>
+        {virtueName}
+      </ThemedText>
+      <ThemedText style={styles.scoreText}>
+        {virtueName} points: {score}
+      </ThemedText>
+      <Animated.View
+        style={[styles.asciiWrapper, animatedStyle] as React.ComponentProps<typeof Animated.View>['style']}
+      >
+        {hasTreeImages ? (
+          <Image
+            source={treeImages[treeStage]}
+            style={styles.treeImage}
+            contentFit="contain"
+          />
+        ) : (
+          <Text
+            style={[styles.asciiArt, { color: textColor }]}
+            selectable={false}
+          >
+            {displayArt}
+          </Text>
+        )}
+      </Animated.View>
+    </View>
+  );
+}
+
+const isWeb = Platform.OS === 'web';
 
 export default function GardenScreen() {
   const journalStyles = useJournalStyles();
   const colorScheme = useColorScheme();
   const textColor = Colors[colorScheme ?? 'light'].text;
-  const [curiosityPoints, setCuriosityPoints] = useState<number | null>(null);
+  const { width: windowWidth } = useWindowDimensions();
 
-  const { stage, animatedStyle } = useGrowthAnimation(PINE_STAGES.length);
-  const displayArt = padStage(PINE_STAGES[stage]);
+  const [virtueTotals, setVirtueTotals] = useState<Record<string, number> | null>(null);
+  const [pageIndex, setPageIndex] = useState(0);
+
+  const breathingStyle = useBreathingAnimation();
 
   useFocusEffect(
     useCallback(() => {
@@ -124,10 +167,7 @@ export default function GardenScreen() {
       (async () => {
         try {
           const totals = await getVirtueTotals();
-          if (!cancelled) {
-            const value = totals['Curiosity'] ?? 0;
-            setCuriosityPoints(value);
-          }
+          if (!cancelled) setVirtueTotals(totals);
         } catch (e) {
           console.warn('Failed to load virtue totals', e);
         }
@@ -138,28 +178,79 @@ export default function GardenScreen() {
     }, [])
   );
 
+  const totals = virtueTotals ?? {};
+
+  const pageContent = (
+    <>
+      <ThemedText type="title" style={styles.title}>
+        Your Garden
+      </ThemedText>
+      <ThemedText style={styles.pageIndicator}>
+        {pageIndex + 1} / {virtues.length}
+      </ThemedText>
+    </>
+  );
+
+  if (isWeb) {
+    return (
+      <SafeAreaView style={journalStyles.container} edges={['top']}>
+        <ThemedView style={styles.content}>
+          {pageContent}
+          <ScrollView
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onMomentumScrollEnd={(e) => {
+              const index = Math.round(
+                e.nativeEvent.contentOffset.x / (windowWidth || 1)
+              );
+              setPageIndex(Math.min(index, virtues.length - 1));
+            }}
+            style={styles.webScroll}
+            contentContainerStyle={styles.webScrollContent}
+          >
+            {virtues.map((virtueName) => (
+              <View key={virtueName} style={[styles.webPage, { width: windowWidth }]}>
+                <VirtueGardenPage
+                  virtueName={virtueName}
+                  score={totals[virtueName] ?? 0}
+                  textColor={textColor}
+                  animatedStyle={breathingStyle}
+                />
+              </View>
+            ))}
+          </ScrollView>
+          <ThemedText style={styles.subtitle}>
+            Complete quests to grow your virtues. Your garden will flourish as
+            you tend to it through journaling and reflection.
+          </ThemedText>
+        </ThemedView>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={journalStyles.container} edges={['top']}>
-      <ThemedView style={styles.content}>
-        <ThemedText type="title" style={styles.title}>
-          Your Garden
-        </ThemedText>
-
-        {curiosityPoints !== null && (
-          <ThemedText style={styles.curiosity}>
-            Curiosity points: {curiosityPoints}
-          </ThemedText>
-        )}
-
-        <Animated.View style={[styles.asciiWrapper, animatedStyle]}>
-          <Text
-            style={[styles.asciiArt, { color: textColor }]}
-            selectable={false}
-          >
-            {displayArt}
-          </Text>
-        </Animated.View>
-
+      <ThemedView style={styles.header}>
+        {pageContent}
+      </ThemedView>
+      <PagerView
+        style={styles.pager}
+        initialPage={0}
+        onPageSelected={(e) => setPageIndex(e.nativeEvent.position)}
+      >
+        {virtues.map((virtueName) => (
+          <View key={virtueName} style={styles.pagerPage}>
+            <VirtueGardenPage
+              virtueName={virtueName}
+              score={totals[virtueName] ?? 0}
+              textColor={textColor}
+              animatedStyle={breathingStyle}
+            />
+          </View>
+        ))}
+      </PagerView>
+      <ThemedView style={styles.footer}>
         <ThemedText style={styles.subtitle}>
           Complete quests to grow your virtues. Your garden will flourish as you
           tend to it through journaling and reflection.
@@ -175,11 +266,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: spacing.xxl,
   },
+  header: {
+    alignItems: 'center',
+    paddingHorizontal: spacing.xxl,
+    paddingTop: spacing.lg,
+  },
   title: {
-    marginBottom: spacing.lg,
+    marginBottom: spacing.sm,
     textAlign: 'center',
   },
-  curiosity: {
+  pageIndicator: {
+    marginBottom: spacing.md,
+    fontSize: 14,
+    opacity: 0.8,
+  },
+  pager: {
+    flex: 1,
+  },
+  pagerPage: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  page: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xl,
+  },
+  virtueName: {
+    marginBottom: spacing.xs,
+    textAlign: 'center',
+  },
+  scoreText: {
     marginBottom: spacing.md,
     textAlign: 'center',
   },
@@ -188,6 +307,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 220,
+  },
+  treeImage: {
+    width: 240,
+    height: 280,
   },
   asciiArt: {
     fontFamily: Fonts?.mono ?? 'monospace',
@@ -199,5 +322,22 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     opacity: 0.8,
     maxWidth: 320,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xl,
+  },
+  footer: {
+    paddingBottom: spacing.xl,
+    alignItems: 'center',
+  },
+  webScroll: {
+    flex: 1,
+  },
+  webScrollContent: {
+    flexGrow: 1,
+  },
+  webPage: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

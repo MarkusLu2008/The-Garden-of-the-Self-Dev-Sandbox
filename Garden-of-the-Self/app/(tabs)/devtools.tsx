@@ -13,10 +13,13 @@ import {
   getQuestVirtueDisplayNames,
   resetDatabase,
   getAllFromTable,
+  getVirtueTotals,
+  addVirtuePoints,
   type QuestRow,
   type QuestHistoryRow,
   type TableName,
 } from '@/services/db';
+import virtues from '@/constants/virtues';
 import { Directory, Paths, File } from 'expo-file-system';
 import * as SQLite from 'expo-sqlite';
 
@@ -40,6 +43,9 @@ export default function DevToolsScreen() {
   const [fileSystemInfo, setFileSystemInfo] = useState<any>(null);
   const [selectedTable, setSelectedTable] = useState<TableName | null>(null);
   const [tableRows, setTableRows] = useState<any[] | null>(null);
+  const [virtueTotals, setVirtueTotals] = useState<Record<string, number>>({});
+  const [addVirtueSelected, setAddVirtueSelected] = useState<string>(virtues[0]);
+  const [addVirtuePointsInput, setAddVirtuePointsInput] = useState('');
 
   const loadJournals = async () => {
     try {
@@ -111,6 +117,38 @@ export default function DevToolsScreen() {
     }
   };
 
+  const loadVirtueTotals = async () => {
+    try {
+      setLoading(true);
+      const totals = await getVirtueTotals();
+      setVirtueTotals(totals);
+    } catch (error) {
+      console.error('Failed to load virtue totals:', error);
+      Alert.alert('Error', `Failed to load virtue totals: ${error}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddVirtuePoints = async () => {
+    const points = parseInt(addVirtuePointsInput, 10);
+    if (Number.isNaN(points) || points <= 0) {
+      Alert.alert('Invalid amount', 'Enter a positive number of points.');
+      return;
+    }
+    try {
+      setLoading(true);
+      await addVirtuePoints({ [addVirtueSelected]: points });
+      await loadVirtueTotals();
+      setAddVirtuePointsInput('');
+      Alert.alert('Done', `Added ${points} point${points !== 1 ? 's' : ''} to ${addVirtueSelected}.`);
+    } catch (error) {
+      Alert.alert('Error', `Failed to add virtue points: ${error}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const loadFileSystemInfo = async () => {
     try {
       setLoading(true);
@@ -174,13 +212,6 @@ export default function DevToolsScreen() {
                 'What challenged me today?',
                 'What made me smile today?',
               ];
-              const dummyVirtues = [
-                'Courage, Wisdom, Justice',
-                'Temperance, Wisdom, Courage',
-                'Justice, Wisdom, Temperance',
-                'Courage, Justice, Wisdom',
-                'Temperance, Courage, Justice',
-              ];
               const dummyContents = [
                 `# Today's Reflection\n\nToday was a wonderful day filled with learning and growth. I'm grateful for the opportunities that came my way.\n\n## Highlights\n- Spent time in nature\n- Had a meaningful conversation\n- Completed an important task`,
                 `# Learning Journal\n\nToday I learned something new about myself and the world around me.\n\n## Key Insights\n- Understanding comes with patience\n- Every experience teaches us something\n- Growth happens gradually`,
@@ -212,7 +243,7 @@ export default function DevToolsScreen() {
                   await createJournal(
                     file_path,
                     dummyPrompts[i],
-                    dummyVirtues[i]
+                    {}
                   );
 
                   // Update with content
@@ -220,7 +251,7 @@ export default function DevToolsScreen() {
                     file_path,
                     dummyContents[i],
                     dummyPrompts[i],
-                    dummyVirtues[i]
+                    {}
                   );
 
                   created++;
@@ -356,6 +387,7 @@ export default function DevToolsScreen() {
     loadQuestHistory();
     loadDbInfo();
     loadFileSystemInfo();
+    loadVirtueTotals();
   }, []);
 
   async function handleLoadTableRows(table: TableName) {
@@ -604,6 +636,71 @@ export default function DevToolsScreen() {
           </ThemedView>
         </Collapsible>
 
+        <Collapsible title="Add Virtue Points">
+          <ThemedView style={styles.section}>
+            <ThemedText style={styles.infoRow}>
+              <ThemedText type="defaultSemiBold">Current totals: </ThemedText>
+            </ThemedText>
+            {Object.keys(virtueTotals).length > 0 ? (
+              <ThemedView style={styles.virtueTotalsRow}>
+                {virtues.map((name) => (
+                  <ThemedText key={name} style={styles.virtueTotalItem}>
+                    {name}: {virtueTotals[name] ?? 0}
+                  </ThemedText>
+                ))}
+              </ThemedView>
+            ) : null}
+            <TouchableOpacity style={styles.button} onPress={loadVirtueTotals}>
+              <ThemedText style={styles.buttonText}>Refresh totals</ThemedText>
+            </TouchableOpacity>
+            <ThemedText style={[styles.infoRow, styles.infoRowTop]}>
+              <ThemedText type="defaultSemiBold">Virtue: </ThemedText>
+            </ThemedText>
+            <ThemedView style={styles.virtueChipsRow}>
+              {virtues.map((name) => (
+                <TouchableOpacity
+                  key={name}
+                  style={[
+                    styles.queryPresetButton,
+                    addVirtueSelected === name && styles.virtueSelected,
+                  ]}
+                  onPress={() => setAddVirtueSelected(name)}
+                >
+                  <ThemedText
+                    style={[
+                      styles.queryPresetText,
+                      addVirtueSelected === name && styles.virtueSelectedText,
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {name}
+                  </ThemedText>
+                </TouchableOpacity>
+              ))}
+            </ThemedView>
+            <ThemedText style={[styles.infoRow, styles.infoRowTop]}>
+              <ThemedText type="defaultSemiBold">Points to add: </ThemedText>
+            </ThemedText>
+            <TextInput
+              style={styles.pointsInput}
+              value={addVirtuePointsInput}
+              onChangeText={setAddVirtuePointsInput}
+              placeholder="e.g. 5"
+              placeholderTextColor="#999"
+              keyboardType="number-pad"
+            />
+            <TouchableOpacity
+              style={styles.button}
+              onPress={handleAddVirtuePoints}
+              disabled={!addVirtuePointsInput.trim()}
+            >
+              <ThemedText style={styles.buttonText}>
+                Add points to {addVirtueSelected}
+              </ThemedText>
+            </TouchableOpacity>
+          </ThemedView>
+        </Collapsible>
+
         <Collapsible title="Custom SQL Query">
           <ThemedView style={styles.section}>
             <TextInput
@@ -786,6 +883,37 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'monospace',
     minHeight: 80,
+    marginBottom: 8,
+    color: '#000',
+  },
+  virtueTotalsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 8,
+  },
+  virtueTotalItem: {
+    fontSize: 12,
+  },
+  virtueSelected: {
+    backgroundColor: '#0a7ea4',
+  },
+  virtueSelectedText: {
+    color: '#fff',
+  },
+  virtueChipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 8,
+  },
+  pointsInput: {
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    fontFamily: 'monospace',
+    minHeight: 44,
     marginBottom: 8,
     color: '#000',
   },

@@ -8,8 +8,7 @@ import {
 } from './db';
 import { createJournalFile, readJournalFile, updateJournalFile, deleteJournalFile } from './fileStorage';
 
-async function createJournal(file_path: string, prompt: string, virtues: string) {
-  const virtueValues: JournalVirtueValues = {};
+async function createJournal(file_path: string, prompt: string, virtueValues: JournalVirtueValues) {
   await createJournalFile(file_path);
   await insertJournal(file_path, prompt, virtueValues);
 }
@@ -17,8 +16,8 @@ async function createJournal(file_path: string, prompt: string, virtues: string)
 async function getJournalInfo(file_path: string) {
   const journal = await getJournalFromDb(file_path);
   return {
-    prompt: journal?.prompt,
-    virtues: '', // normalized DB stores structured virtues; keep legacy string empty for now
+    prompt: journal?.prompt ?? '',
+    virtues: (journal?.virtues as JournalVirtueValues | undefined) ?? {},
     created_at: journal?.created_at,
     updated_at: journal?.updated_at,
   };
@@ -27,8 +26,7 @@ async function getJournalInfo(file_path: string) {
 async function getJournalContent(file_path: string) {
   return await readJournalFile(file_path);
 }
-async function updateJournal(file_path: string, content: string, prompt: string, virtues: string) {
-  const virtueValues: JournalVirtueValues = {};
+async function updateJournal(file_path: string, content: string, prompt: string, virtueValues: JournalVirtueValues) {
   await updateJournalFile(file_path, content);
   await updateJournalInDb(file_path, prompt, virtueValues);
 }

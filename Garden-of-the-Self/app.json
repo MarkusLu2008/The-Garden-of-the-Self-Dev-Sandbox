@@ -13,7 +13,8 @@
       "infoPlist": {
         "UIFileSharingEnabled": true,
         "LSSupportsOpeningDocumentsInPlace": true
-      }
+      },
+      "bundleIdentifier": "com.anonymous.Garden-of-the-Self"
     },
     "android": {
       "adaptiveIcon": {

@@ -180,6 +180,7 @@ async function insertJournal(file_path: string, prompt: string, virtueValues: Jo
   if (!journal) return;
 
   await upsertJournalVirtues(database, journal.id, virtueValues);
+  await applyVirtueDeltas(database, virtueValues, +1);
 }
 
 async function upsertJournalVirtues(
@@ -568,6 +569,12 @@ async function applyVirtueDeltas(
       );
     }
   }
+}
+
+/** Add points directly to virtue totals (e.g. for devtools). */
+export async function addVirtuePoints(deltas: QuestVirtueValues): Promise<void> {
+  const database = await getDatabase();
+  await applyVirtueDeltas(database, deltas, 1);
 }
 
 async function getVirtueTotals(): Promise<QuestVirtueValues> {
