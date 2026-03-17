@@ -1,6 +1,6 @@
-import { Tabs } from 'expo-router';
-import { BottomTabBar, type BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useUnistyles } from '@/lib/unistyles-compat';
+import { BottomTabBar, type BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { Tabs } from 'expo-router';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -29,6 +29,11 @@ export default function TabLayout() {
       tabBar={(props) => <FilteredTabBar {...props} />}
       screenOptions={{
         tabBarActiveTintColor: theme.colors.tint,
+        tabBarInactiveTintColor: theme.colors.icon,
+        tabBarStyle: {
+          backgroundColor: theme.colors.background,
+          borderTopColor: theme.colors.selection,
+        },
         headerShown: false,
         tabBarButton: HapticTab,
       }}>

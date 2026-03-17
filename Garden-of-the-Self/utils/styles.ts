@@ -39,7 +39,7 @@ export const journalStyles = StyleSheet.create((theme) => ({
     justifyContent: 'center' as const,
   },
   buttonPrimaryText: {
-    color: '#fff',
+    color: theme.colors.background,
     fontWeight: '600' as const,
   },
   buttonSecondary: {
@@ -55,6 +55,7 @@ export const journalStyles = StyleSheet.create((theme) => ({
   },
   container: {
     flex: 1,
+    backgroundColor: theme.colors.background,
   },
   border: {
     borderWidth: 1,

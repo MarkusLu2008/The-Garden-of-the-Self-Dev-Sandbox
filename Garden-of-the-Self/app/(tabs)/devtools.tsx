@@ -1,5 +1,7 @@
+import '@/lib/unistyles';
 import { useState, useEffect } from 'react';
-import { StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator, TextInput } from 'react-native';
+import { ScrollView, TouchableOpacity, Alert, ActivityIndicator, TextInput } from 'react-native';
+import { StyleSheet, useUnistyles } from '@/lib/unistyles-compat';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
@@ -34,6 +36,7 @@ type JournalItem = {
 };
 
 export default function DevToolsScreen() {
+  const { theme } = useUnistyles();
   const [journals, setJournals] = useState<JournalItem[]>([]);
   const [quests, setQuests] = useState<QuestRow[]>([]);
   const [questHistory, setQuestHistory] = useState<QuestHistoryRow[]>([]);
@@ -693,7 +696,7 @@ export default function DevToolsScreen() {
               value={addVirtuePointsInput}
               onChangeText={setAddVirtuePointsInput}
               placeholder="e.g. 5"
-              placeholderTextColor="#999"
+              placeholderTextColor={theme.colors.icon}
               keyboardType="number-pad"
             />
             <TouchableOpacity
@@ -715,7 +718,7 @@ export default function DevToolsScreen() {
               value={customQuery}
               onChangeText={setCustomQuery}
               placeholder="Enter SQL query"
-              placeholderTextColor="#999"
+              placeholderTextColor={theme.colors.icon}
               multiline
             />
             <ThemedView style={styles.queryPresetRow}>
@@ -786,36 +789,37 @@ export default function DevToolsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = StyleSheet.create((theme) => ({
   container: {
     flex: 1,
+    backgroundColor: theme.colors.background,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: theme.spacing.xl,
+    paddingVertical: theme.spacing.lg,
   },
   title: {
     flex: 1,
   },
   loadingContainer: {
-    padding: 10,
+    padding: theme.spacing.sm,
     alignItems: 'center',
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    padding: 16,
+    padding: theme.spacing.lg,
   },
   section: {
-    padding: 12,
+    padding: theme.spacing.md,
   },
   infoRow: {
-    marginBottom: 8,
+    marginBottom: theme.spacing.sm,
     fontSize: 14,
   },
   infoRowTop: {
-    marginTop: 16,
+    marginTop: theme.spacing.lg,
   },
   pathText: {
     fontSize: 12,
@@ -823,40 +827,40 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   button: {
-    backgroundColor: '#0a7ea4',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-    marginTop: 8,
+    backgroundColor: theme.colors.tint,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.sm,
+    marginTop: theme.spacing.sm,
     alignItems: 'center',
   },
   buttonText: {
-    color: '#fff',
+    color: theme.colors.background,
     fontWeight: '600',
   },
   dangerButton: {
-    backgroundColor: '#dc3545',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
+    backgroundColor: theme.colors.error,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.sm,
     alignItems: 'center',
   },
   dangerButtonSpaced: {
-    marginTop: 8,
+    marginTop: theme.spacing.sm,
   },
   dangerButtonText: {
-    color: '#fff',
+    color: theme.colors.background,
     fontWeight: '600',
   },
   list: {
-    marginTop: 12,
+    marginTop: theme.spacing.md,
   },
   listItem: {
-    padding: 12,
-    marginBottom: 8,
-    borderRadius: 8,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
+    borderRadius: theme.borderRadius.sm,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: theme.colors.selection,
   },
   listItemText: {
     fontSize: 12,
@@ -864,79 +868,79 @@ const styles = StyleSheet.create({
   },
   queryPresetRow: {
     flexDirection: 'row',
-    gap: 8,
-    marginBottom: 8,
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
   },
   queryPresetButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    backgroundColor: '#e8e8e8',
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.sm,
+    backgroundColor: theme.colors.selection,
   },
   queryPresetText: {
     fontSize: 13,
-    color: '#333',
+    color: theme.colors.text,
   },
   moreText: {
     fontSize: 12,
     opacity: 0.7,
     fontStyle: 'italic',
-    marginTop: 8,
+    marginTop: theme.spacing.sm,
   },
   queryInput: {
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: theme.colors.selection,
+    borderRadius: theme.borderRadius.sm,
+    padding: theme.spacing.md,
     fontSize: 14,
     fontFamily: 'monospace',
     minHeight: 80,
-    marginBottom: 8,
-    color: '#000',
+    marginBottom: theme.spacing.sm,
+    color: theme.colors.text,
   },
   virtueTotalsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 8,
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
   },
   virtueTotalItem: {
     fontSize: 12,
   },
   virtueSelected: {
-    backgroundColor: '#0a7ea4',
+    backgroundColor: theme.colors.tint,
   },
   virtueSelectedText: {
-    color: '#fff',
+    color: theme.colors.background,
   },
   virtueChipsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 8,
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
   },
   pointsInput: {
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: theme.colors.selection,
+    borderRadius: theme.borderRadius.sm,
+    padding: theme.spacing.md,
     fontSize: 14,
     fontFamily: 'monospace',
     minHeight: 44,
-    marginBottom: 8,
-    color: '#000',
+    marginBottom: theme.spacing.sm,
+    color: theme.colors.text,
   },
   queryResult: {
-    marginTop: 12,
-    padding: 12,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
+    marginTop: theme.spacing.md,
+    padding: theme.spacing.md,
+    backgroundColor: theme.colors.selection,
+    borderRadius: theme.borderRadius.sm,
   },
   resultTitle: {
-    marginBottom: 8,
+    marginBottom: theme.spacing.sm,
   },
   resultText: {
     fontSize: 11,
     fontFamily: 'monospace',
-    color: '#000',
+    color: theme.colors.text,
   },
-});
+}));
 

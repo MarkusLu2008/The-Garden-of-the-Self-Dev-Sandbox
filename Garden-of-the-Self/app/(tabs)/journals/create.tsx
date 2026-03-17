@@ -1,6 +1,6 @@
+import '@/lib/unistyles';
 import { useState } from 'react';
 import {
-  StyleSheet,
   TouchableOpacity,
   View,
   ActivityIndicator,
@@ -10,6 +10,7 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
 } from 'react-native';
+import { StyleSheet, useUnistyles } from '@/lib/unistyles-compat';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
@@ -22,6 +23,7 @@ import { distributeJournalVirtuePoints } from '@/utils/virtuePoints';
 
 export default function CreateJournalModal() {
   const router = useRouter();
+  const { theme } = useUnistyles();
   const [isCreating, setIsCreating] = useState(false);
   const [intention, setIntention] = useState('');
   const [selectedVirtues, setSelectedVirtues] = useState<string[]>([]);
@@ -100,7 +102,7 @@ export default function CreateJournalModal() {
               value={intention}
               onChangeText={setIntention}
               placeholder="What is your intention for this journal entry?"
-              placeholderTextColor="#999"
+              placeholderTextColor={theme.colors.icon}
               multiline
               blurOnSubmit
               returnKeyType="done"
@@ -173,7 +175,7 @@ export default function CreateJournalModal() {
               disabled={isCreating}
             >
               {isCreating ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color={theme.colors.background} />
               ) : (
                 <ThemedText style={journalStyles.buttonPrimaryText}>
                   Create
@@ -188,7 +190,7 @@ export default function CreateJournalModal() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = StyleSheet.create((theme) => ({
   scrollContent: {
     flexGrow: 1,
   },
@@ -217,7 +219,9 @@ const styles = StyleSheet.create({
   },
   intentionInput: {
     borderWidth: 1,
-    borderRadius: 8,
+    borderColor: theme.colors.selection,
+    color: theme.colors.text,
+    borderRadius: theme.borderRadius.sm,
     padding: spacing.md,
     minHeight: 80,
     textAlignVertical: 'top',
@@ -238,14 +242,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   virtueChipSelected: {
-    backgroundColor: '#0a7ea4',
-    borderColor: '#0a7ea4',
+    backgroundColor: theme.colors.tint,
+    borderColor: theme.colors.tint,
   },
   virtueChipText: {
     fontSize: 14,
   },
   virtueChipTextSelected: {
-    color: '#fff',
+    color: theme.colors.background,
   },
   previewText: {
     marginTop: spacing.sm,
@@ -254,7 +258,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     marginTop: spacing.xs,
-    color: '#dc3545',
+    color: theme.colors.error,
     fontSize: 13,
   },
   buttonContainer: {
@@ -269,4 +273,4 @@ const styles = StyleSheet.create({
   createButtonDisabled: {
     opacity: 0.6,
   },
-});
+}));

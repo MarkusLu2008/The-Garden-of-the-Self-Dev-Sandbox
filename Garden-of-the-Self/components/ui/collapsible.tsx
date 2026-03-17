@@ -1,6 +1,7 @@
+import '@/lib/unistyles';
 import { PropsWithChildren, useState } from 'react';
-import { StyleSheet, TouchableOpacity } from 'react-native';
-import { useUnistyles } from '@/lib/unistyles-compat';
+import { TouchableOpacity } from 'react-native';
+import { StyleSheet, useUnistyles } from '@/lib/unistyles-compat';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -31,14 +32,14 @@ export function Collapsible({ children, title }: PropsWithChildren & { title: st
   );
 }
 
-const styles = StyleSheet.create({
+const styles = StyleSheet.create((theme) => ({
   heading: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: theme.spacing.sm,
   },
   content: {
-    marginTop: 6,
-    marginLeft: 24,
+    marginTop: theme.spacing.sm,
+    marginLeft: theme.spacing.xxl,
   },
-});
+}));

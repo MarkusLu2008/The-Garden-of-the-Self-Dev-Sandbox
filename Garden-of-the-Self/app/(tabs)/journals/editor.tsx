@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
   statusContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: spacing.xs,
   },
   statusIndicator: {
     marginRight: spacing.xs,

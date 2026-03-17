@@ -15,7 +15,7 @@ import { ThemedView } from '@/components/themed-view';
 import { insertQuest } from '@/services/db';
 import virtues from '@/constants/virtues';
 import { useUnistyles } from '@/lib/unistyles-compat';
-import { journalStyles, spacing } from '@/utils/styles';
+import { journalStyles, spacing, borderRadius } from '@/utils/styles';
 
 export default function CreateQuestScreen() {
   const router = useRouter();
@@ -181,7 +181,7 @@ export default function CreateQuestScreen() {
             disabled={isCreating}
           >
             {isCreating ? (
-              <ActivityIndicator size="small" color="#fff" />
+              <ActivityIndicator size="small" color={theme.colors.background} />
             ) : (
               <ThemedText style={journalStyles.buttonPrimaryText}>
                 Create Quest
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
   chip: {
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
-    borderRadius: 8,
+    borderRadius: borderRadius.sm,
   },
   chipSelected: {
     borderWidth: 0,

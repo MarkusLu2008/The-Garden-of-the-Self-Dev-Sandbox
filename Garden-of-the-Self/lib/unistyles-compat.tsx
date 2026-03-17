@@ -116,6 +116,11 @@ export const UnistylesRuntime = {
     }
     return fallbackThemeName;
   },
+  setRootViewBackgroundColor(color: string) {
+    if (!isExpoGo && realUnistyles) {
+      realUnistyles.UnistylesRuntime.setRootViewBackgroundColor(color);
+    }
+  },
 };
 
 export const StyleSheet = (() => {
