@@ -1,14 +1,32 @@
 import { Tabs } from 'expo-router';
+import { BottomTabBar, type BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useUnistyles } from '@/lib/unistyles-compat';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+
+const showDevTools = false;
+
+function FilteredTabBar(props: BottomTabBarProps) {
+  const routes = showDevTools
+    ? props.state.routes
+    : props.state.routes.filter((r) => r.name !== 'devtools');
+  const currentRoute = props.state.routes[props.state.index];
+  const index = routes.findIndex((r) => r.key === currentRoute.key);
+  const filteredState = {
+    ...props.state,
+    routes,
+    index: index >= 0 ? index : 0,
+  };
+  return <BottomTabBar {...props} state={filteredState} />;
+}
 
 export default function TabLayout() {
   const { theme } = useUnistyles();
 
   return (
     <Tabs
+      tabBar={(props) => <FilteredTabBar {...props} />}
       screenOptions={{
         tabBarActiveTintColor: theme.colors.tint,
         headerShown: false,

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Collapsible } from '@/components/ui/collapsible';
@@ -46,6 +47,12 @@ export default function DevToolsScreen() {
   const [virtueTotals, setVirtueTotals] = useState<Record<string, number>>({});
   const [addVirtueSelected, setAddVirtueSelected] = useState<string>(virtues[0]);
   const [addVirtuePointsInput, setAddVirtuePointsInput] = useState('');
+
+  useEffect(() => {
+    if (!__DEV__) {
+      router.replace('/(tabs)');
+    }
+  }, []);
 
   const loadJournals = async () => {
     try {
