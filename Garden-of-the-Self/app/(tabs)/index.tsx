@@ -20,7 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { useUnistyles } from 'react-native-unistyles';
+import { useUnistyles } from '@/lib/unistyles-compat';
 import { journalStyles, spacing } from '@/utils/styles';
 import { Fonts } from '@/constants/theme';
 import { getVirtueTotals } from '@/services/db';

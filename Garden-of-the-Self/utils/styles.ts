@@ -1,4 +1,5 @@
-import { StyleSheet } from 'react-native-unistyles';
+import '@/lib/unistyles';
+import { StyleSheet } from '@/lib/unistyles-compat';
 
 /**
  * Common spacing values (also available on theme.spacing)

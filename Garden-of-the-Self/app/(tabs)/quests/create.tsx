@@ -14,7 +14,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { insertQuest } from '@/services/db';
 import virtues from '@/constants/virtues';
-import { useUnistyles } from 'react-native-unistyles';
+import { useUnistyles } from '@/lib/unistyles-compat';
 import { journalStyles, spacing } from '@/utils/styles';
 
 export default function CreateQuestScreen() {

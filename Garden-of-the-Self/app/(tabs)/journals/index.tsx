@@ -8,7 +8,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { getAllJournals } from '@/services/journalManager';
 import type { JournalVirtueValues } from '@/services/db';
 import { formatDateForDisplay } from '@/utils/dateUtils';
-import { useUnistyles } from 'react-native-unistyles';
+import { useUnistyles } from '@/lib/unistyles-compat';
 import { journalStyles, spacing, borderRadius } from '@/utils/styles';
 
 type JournalItem = {

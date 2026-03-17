@@ -18,7 +18,7 @@ import {
   getQuestVirtueDisplayNames,
   type QuestRow,
 } from '@/services/db';
-import { useUnistyles } from 'react-native-unistyles';
+import { useUnistyles } from '@/lib/unistyles-compat';
 import { journalStyles, spacing, borderRadius } from '@/utils/styles';
 
 export default function QuestsScreen() {

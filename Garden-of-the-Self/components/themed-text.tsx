@@ -1,5 +1,5 @@
 import { StyleSheet, Text, type TextProps } from 'react-native';
-import { UnistylesRuntime, useUnistyles } from 'react-native-unistyles';
+import { UnistylesRuntime, useUnistyles } from '@/lib/unistyles-compat';
 
 export type ThemedTextProps = TextProps & {
   lightColor?: string;

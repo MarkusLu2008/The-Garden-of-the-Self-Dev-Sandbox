@@ -1,5 +1,5 @@
 import { View, type ViewProps } from 'react-native';
-import { UnistylesRuntime, useUnistyles } from 'react-native-unistyles';
+import { UnistylesRuntime, useUnistyles } from '@/lib/unistyles-compat';
 
 export type ThemedViewProps = ViewProps & {
   lightColor?: string;

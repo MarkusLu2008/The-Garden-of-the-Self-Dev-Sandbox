@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native-unistyles';
+import { StyleSheet } from '@/lib/unistyles-compat';
 import { Colors } from '@/constants/theme';
 
 const spacing = {

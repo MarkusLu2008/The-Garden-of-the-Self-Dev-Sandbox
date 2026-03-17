@@ -7,7 +7,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { getJournalContent, getJournalInfo, createJournal, updateJournal } from "@/services/journalManager";
 import { formatDateForDisplay } from "@/utils/dateUtils";
-import { useUnistyles } from "react-native-unistyles";
+import { useUnistyles } from '@/lib/unistyles-compat';
 import { journalStyles, spacing } from "@/utils/styles";
 
 export default function EditorScreen() {
