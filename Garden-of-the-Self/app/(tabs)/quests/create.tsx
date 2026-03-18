@@ -1,21 +1,20 @@
-import { useState } from 'react';
-import {
-  StyleSheet,
-  TouchableOpacity,
-  View,
-  ActivityIndicator,
-  Alert,
-  TextInput,
-  ScrollView,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { insertQuest } from '@/services/db';
 import virtues from '@/constants/virtues';
 import { useUnistyles } from '@/lib/unistyles-compat';
-import { journalStyles, spacing, borderRadius } from '@/utils/styles';
+import { insertQuest } from '@/services/db';
+import { borderRadius, journalStyles, spacing } from '@/utils/styles';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CreateQuestScreen() {
   const router = useRouter();

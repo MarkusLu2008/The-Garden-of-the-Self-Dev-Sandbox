@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { UnistylesProvider, UnistylesRuntime, useUnistyles } from '@/lib/unistyles-compat';
 import { Colors } from '@/constants/theme';
+import { DateOverrideProvider } from '@/contexts/DateOverrideContext';
 import 'react-native-reanimated';
 
 import '@/lib/unistyles';
@@ -66,7 +67,9 @@ function RootLayoutContent() {
 export default function RootLayout() {
   return (
     <UnistylesProvider>
-      <RootLayoutContent />
+      <DateOverrideProvider>
+        <RootLayoutContent />
+      </DateOverrideProvider>
     </UnistylesProvider>
   );
 }

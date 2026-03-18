@@ -7,6 +7,8 @@ import { router } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Collapsible } from '@/components/ui/collapsible';
+import { useDateOverride } from '@/contexts/DateOverrideContext';
+import { getTodayDateString, formatDateForDisplay } from '@/utils/dateUtils';
 import { getAllJournals, createJournal, updateJournal } from '@/services/journalManager';
 import {
   insertQuest,
@@ -39,6 +41,7 @@ type JournalItem = {
 
 export default function DevToolsScreen() {
   const { theme } = useUnistyles();
+  const { overrideDate, setOverrideDate } = useDateOverride();
   const [journals, setJournals] = useState<JournalItem[]>([]);
   const [quests, setQuests] = useState<QuestRow[]>([]);
   const [questHistory, setQuestHistory] = useState<QuestHistoryRow[]>([]);
@@ -166,15 +169,11 @@ export default function DevToolsScreen() {
       setLoading(true);
       const journalDirectory = new Directory(Paths.document, 'journals');
       let fileCount = 0;
-      let exists = false;
+      const exists = journalDirectory.exists;
 
-      try {
+      if (exists) {
         const files = await journalDirectory.list();
-        exists = true;
-        // Count only files (not directories)
         fileCount = files.filter(item => item instanceof File).length;
-      } catch {
-        exists = false;
       }
 
       setFileSystemInfo({
@@ -435,6 +434,17 @@ export default function DevToolsScreen() {
     loadVirtueTotals();
   }, []);
 
+  function stepDate(days: number) {
+    const base = overrideDate
+      ? new Date(`${overrideDate}T12:00:00`)
+      : new Date();
+    base.setDate(base.getDate() + days);
+    const y = base.getFullYear();
+    const m = String(base.getMonth() + 1).padStart(2, '0');
+    const d = String(base.getDate()).padStart(2, '0');
+    setOverrideDate(`${y}-${m}-${d}`);
+  }
+
   async function handleLoadTableRows(table: TableName) {
     try {
       setLoading(true);
@@ -472,6 +482,33 @@ export default function DevToolsScreen() {
       )}
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        <Collapsible title="Date Override">
+          <ThemedView style={styles.section}>
+            <ThemedText style={styles.infoRow}>
+              <ThemedText type="defaultSemiBold">Current date: </ThemedText>
+              {overrideDate
+                ? `${formatDateForDisplay(overrideDate)} (${overrideDate})`
+                : `${getTodayDateString()} (Real date)`}
+            </ThemedText>
+            <ThemedView style={styles.dateStepRow}>
+              <TouchableOpacity style={styles.dateStepButton} onPress={() => stepDate(-1)}>
+                <ThemedText style={styles.dateStepText}>-1 Day</ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.dateStepButton} onPress={() => stepDate(1)}>
+                <ThemedText style={styles.dateStepText}>+1 Day</ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.dateStepButton} onPress={() => stepDate(7)}>
+                <ThemedText style={styles.dateStepText}>+1 Week</ThemedText>
+              </TouchableOpacity>
+            </ThemedView>
+            {overrideDate && (
+              <TouchableOpacity style={styles.dangerButton} onPress={() => setOverrideDate(null)}>
+                <ThemedText style={styles.dangerButtonText}>Reset to Real Date</ThemedText>
+              </TouchableOpacity>
+            )}
+          </ThemedView>
+        </Collapsible>
+
         <Collapsible title="Database Information">
           <ThemedView style={styles.section}>
             {dbInfo ? (
@@ -906,6 +943,23 @@ const styles = StyleSheet.create((theme) => ({
   listItemText: {
     fontSize: 12,
     marginBottom: 4,
+  },
+  dateStepRow: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
+  },
+  dateStepButton: {
+    flex: 1,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.sm,
+    backgroundColor: theme.colors.tint,
+    alignItems: 'center',
+  },
+  dateStepText: {
+    color: theme.colors.background,
+    fontWeight: '600',
+    fontSize: 13,
   },
   queryPresetRow: {
     flexDirection: 'row',
