@@ -471,6 +471,20 @@ async function getAllQuests() {
   return result;
 }
 
+function getPrimaryVirtueNameFromValues(virtueValues: QuestVirtueValues): string | null {
+  let primaryVirtueName: string | null = null;
+  let highestValue = Number.NEGATIVE_INFINITY;
+
+  for (const [name, value] of Object.entries(virtueValues)) {
+    if (value > highestValue) {
+      primaryVirtueName = name;
+      highestValue = value;
+    }
+  }
+
+  return highestValue > 0 ? primaryVirtueName : null;
+}
+
 /**
  * Return today's configured daily quests. If quests have already been assigned
  * for today (via quest_history), return those. Otherwise pick up to the
@@ -499,7 +513,15 @@ async function getDailyQuests(dateString: string): Promise<QuestRow[]> {
   const dailyQuestCount = gameConfig.quests.dailyQuestCount;
   // No assignments yet — pick up to configured daily quest count.
   const all = await getAllQuests();
-  const pool = all.filter((q) => !q.completed);
+  const unlockedRows = await database.getAllAsync<{ name: string }>(
+    'SELECT name FROM virtues WHERE unlocked_at IS NOT NULL'
+  );
+  const unlockedVirtues = new Set(unlockedRows.map((row) => row.name));
+  const pool = all.filter((q) => {
+    if (q.completed) return false;
+    const primaryVirtue = getPrimaryVirtueNameFromValues(q.virtues);
+    return primaryVirtue != null && unlockedVirtues.has(primaryVirtue);
+  });
   let picked: QuestRow[];
 
   if (pool.length <= dailyQuestCount) {
