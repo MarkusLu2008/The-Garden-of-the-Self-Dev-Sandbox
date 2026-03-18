@@ -12,12 +12,13 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import {
-  getAllQuests,
+  getDailyQuests,
   updateQuest,
   deleteQuest,
   getQuestVirtueDisplayNames,
   type QuestRow,
 } from '@/services/db';
+import { getTodayDateString } from '@/utils/dateUtils';
 import { useUnistyles } from '@/lib/unistyles-compat';
 import { journalStyles, spacing, borderRadius } from '@/utils/styles';
 
@@ -30,8 +31,9 @@ export default function QuestsScreen() {
   const loadQuests = useCallback(async (showLoader = true) => {
     try {
       if (showLoader) setLoading(true);
-      const all = await getAllQuests();
-      setQuests(all);
+      const today = getTodayDateString();
+      const daily = await getDailyQuests(today);
+      setQuests(daily);
     } catch (error) {
       console.error('Failed to load quests:', error);
       Alert.alert('Error', 'Failed to load quests');
@@ -137,7 +139,7 @@ export default function QuestsScreen() {
     <SafeAreaView style={journalStyles.container} edges={['top']}>
       <ThemedView style={styles.header}>
         <ThemedText type="title" style={styles.title}>
-          Quests
+          Daily Quests
         </ThemedText>
         <TouchableOpacity
           style={styles.addButton}
