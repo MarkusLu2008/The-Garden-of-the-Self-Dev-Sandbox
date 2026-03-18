@@ -54,10 +54,18 @@ export default function QuestsScreen() {
   };
 
   const handleToggleCompleted = async (quest: QuestRow) => {
+    const newCompleted = quest.completed ? 0 : 1;
+    // Optimistically update local state so the list stays fixed
+    setQuests((prev) =>
+      prev.map((q) => (q.id === quest.id ? { ...q, completed: newCompleted } : q))
+    );
     try {
-      await updateQuest(quest.id, { completed: quest.completed ? 0 : 1 });
-      loadQuests(false);
+      await updateQuest(quest.id, { completed: newCompleted });
     } catch (error) {
+      // Revert on failure
+      setQuests((prev) =>
+        prev.map((q) => (q.id === quest.id ? { ...q, completed: quest.completed } : q))
+      );
       console.error('Failed to toggle quest:', error);
       Alert.alert('Error', 'Failed to update quest');
     }
@@ -75,7 +83,7 @@ export default function QuestsScreen() {
           onPress: async () => {
             try {
               await deleteQuest(quest.id);
-              loadQuests(false);
+              setQuests((prev) => prev.filter((q) => q.id !== quest.id));
             } catch (error) {
               console.error('Failed to delete quest:', error);
               Alert.alert('Error', 'Failed to delete quest');

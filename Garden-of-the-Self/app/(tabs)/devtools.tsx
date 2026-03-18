@@ -699,12 +699,12 @@ export default function DevToolsScreen() {
                       {getQuestVirtueDisplayNames(entry as unknown as QuestRow).join(', ') || '—'}
                     </ThemedText>
                     <ThemedText style={styles.listItemText}>
-                      <ThemedText type="defaultSemiBold">Completed at: </ThemedText>
-                      {entry.completed_at}
+                      <ThemedText type="defaultSemiBold">Assigned: </ThemedText>
+                      {entry.assigned_at}
                     </ThemedText>
                     <ThemedText style={styles.listItemText}>
-                      <ThemedText type="defaultSemiBold">Event: </ThemedText>
-                      {entry.event}
+                      <ThemedText type="defaultSemiBold">Completed: </ThemedText>
+                      {entry.completed_at ?? '—'}
                     </ThemedText>
                   </ThemedView>
                 ))}
@@ -808,7 +808,7 @@ export default function DevToolsScreen() {
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.queryPresetButton}
-                onPress={() => setCustomQuery('SELECT * FROM quest_history ORDER BY completed_at DESC LIMIT 10;')}
+                onPress={() => setCustomQuery('SELECT * FROM quest_history ORDER BY assigned_at DESC LIMIT 10;')}
               >
                 <ThemedText style={styles.queryPresetText}>Quest History</ThemedText>
               </TouchableOpacity>

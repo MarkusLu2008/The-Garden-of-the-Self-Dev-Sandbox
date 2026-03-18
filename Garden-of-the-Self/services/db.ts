@@ -67,10 +67,10 @@ async function initializeOrMigrateSchema(database: SQLite.SQLiteDatabase): Promi
 
     CREATE TABLE IF NOT EXISTS quest_history (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      quest_id INTEGER NOT NULL,
-      completed_at TEXT NOT NULL,
-      event TEXT NOT NULL DEFAULT 'completed',
-      FOREIGN KEY (quest_id) REFERENCES quests(id) ON DELETE CASCADE
+      quest_id INTEGER,
+      assigned_at TEXT NOT NULL,
+      completed_at TEXT,
+      FOREIGN KEY (quest_id) REFERENCES quests(id) ON DELETE SET NULL
     );
 
     CREATE TABLE IF NOT EXISTS quest_history_virtues (
@@ -362,9 +362,9 @@ export type QuestRow = {
 
 export type QuestHistoryRow = {
   id: number;
-  quest_id: number;
-  completed_at: string;
-  event: string;
+  quest_id: number | null;
+  assigned_at: string;
+  completed_at: string | null;
   virtues: QuestVirtueValues;
 };
 
@@ -459,45 +459,70 @@ async function getAllQuests() {
 }
 
 /**
- * Pick up to 3 quests for today from the pool of incomplete quests.
- * Uses a simple date-seeded shuffle so the same 3 are shown all day.
- * Quests completed today are included so the user can see their progress.
+ * Return today's 3 daily quests. If quests have already been assigned for
+ * today (via quest_history), return those. Otherwise pick up to 3 from the
+ * full pool using a date-seeded shuffle and persist the assignment.
  */
 async function getDailyQuests(dateString: string): Promise<QuestRow[]> {
-  const all = await getAllQuests();
+  const database = await getDatabase();
 
-  // Split into incomplete and completed-today
-  const incomplete = all.filter((q) => !q.completed);
-  const completedToday = all.filter(
-    (q) => q.completed && q.updated_at.startsWith(dateString)
+  // Check for existing assignments today
+  const assigned = await database.getAllAsync<{ quest_id: number | null }>(
+    `SELECT quest_id FROM quest_history WHERE assigned_at = ? AND quest_id IS NOT NULL`,
+    [dateString]
   );
 
-  if (incomplete.length <= 3) {
-    // Show all incomplete quests + any completed today (up to 3 total)
-    const remaining = 3 - incomplete.length;
-    return [...incomplete, ...completedToday.slice(0, remaining)];
+  if (assigned.length > 0) {
+    const ids = assigned.map((r) => r.quest_id!);
+    const result: QuestRow[] = [];
+    for (const id of ids) {
+      const quest = await getQuest(id);
+      if (quest) result.push(quest);
+    }
+    return result;
   }
 
-  // Deterministic seed from date string
-  let seed = 0;
-  for (let i = 0; i < dateString.length; i++) {
-    seed = (seed * 31 + dateString.charCodeAt(i)) | 0;
+  // No assignments yet — pick up to 3
+  const all = await getAllQuests();
+  const pool = all.filter((q) => !q.completed);
+  let picked: QuestRow[];
+
+  if (pool.length <= 3) {
+    picked = pool;
+  } else {
+    // Deterministic seed from date string
+    let seed = 0;
+    for (let i = 0; i < dateString.length; i++) {
+      seed = (seed * 31 + dateString.charCodeAt(i)) | 0;
+    }
+    const shuffled = [...pool];
+    const nextSeed = () => {
+      seed = (seed * 1664525 + 1013904223) | 0;
+      return (seed >>> 0) / 0x100000000;
+    };
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(nextSeed() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    picked = shuffled.slice(0, 3);
   }
 
-  // Seeded shuffle (Fisher-Yates with simple LCG)
-  const pool = [...incomplete];
-  const nextSeed = () => {
-    seed = (seed * 1664525 + 1013904223) | 0;
-    return (seed >>> 0) / 0x100000000;
-  };
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(nextSeed() * (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
+  // Persist assignments
+  for (const quest of picked) {
+    await database.runAsync(
+      `INSERT INTO quest_history (quest_id, assigned_at) VALUES (?, ?)`,
+      [quest.id, dateString]
+    );
+    // Copy virtue values to history
+    const history = await database.getFirstAsync<{ id: number }>(
+      'SELECT id FROM quest_history WHERE rowid = last_insert_rowid()'
+    );
+    if (history) {
+      await upsertQuestHistoryVirtues(database, history.id, quest.virtues);
+    }
   }
 
-  const picked = pool.slice(0, 3);
-  // Also include any quests completed today that were in today's selection
-  return [...completedToday, ...picked].slice(0, 3);
+  return picked;
 }
 
 async function updateQuest(
@@ -551,18 +576,35 @@ async function deleteAllQuests() {
 
 async function recordQuestCompleted(quest: QuestRow) {
   const database = await getDatabase();
-  await database.runAsync(
-    `INSERT INTO quest_history (quest_id, completed_at, event)
-     VALUES (?, datetime('now'), ?)`,
-    [quest.id, 'completed']
-  );
 
+  // Find the existing assigned history row for this quest
   const history = await database.getFirstAsync<{ id: number }>(
-    'SELECT id FROM quest_history WHERE rowid = last_insert_rowid()'
+    `SELECT id FROM quest_history WHERE quest_id = ? AND completed_at IS NULL ORDER BY assigned_at DESC LIMIT 1`,
+    [quest.id]
   );
-  if (!history) return;
 
-  await upsertQuestHistoryVirtues(database, history.id, quest.virtues);
+  if (history) {
+    // Update the existing assignment row
+    await database.runAsync(
+      `UPDATE quest_history SET completed_at = datetime('now') WHERE id = ?`,
+      [history.id]
+    );
+    await upsertQuestHistoryVirtues(database, history.id, quest.virtues);
+  } else {
+    // Fallback: insert a new row (e.g. quest completed outside daily flow)
+    const today = new Date().toISOString().slice(0, 10);
+    await database.runAsync(
+      `INSERT INTO quest_history (quest_id, assigned_at, completed_at)
+       VALUES (?, ?, datetime('now'))`,
+      [quest.id, today]
+    );
+    const newHistory = await database.getFirstAsync<{ id: number }>(
+      'SELECT id FROM quest_history WHERE rowid = last_insert_rowid()'
+    );
+    if (!newHistory) return;
+    await upsertQuestHistoryVirtues(database, newHistory.id, quest.virtues);
+  }
+
   await applyVirtueDeltas(database, quest.virtues, +1);
 }
 
@@ -611,10 +653,10 @@ async function getAllQuestHistory() {
   const database = await getDatabase();
   const rows = await database.getAllAsync<{
     id: number;
-    quest_id: number;
-    completed_at: string;
-    event: string;
-  }>('SELECT * FROM quest_history ORDER BY completed_at DESC');
+    quest_id: number | null;
+    assigned_at: string;
+    completed_at: string | null;
+  }>('SELECT * FROM quest_history ORDER BY assigned_at DESC');
 
   const result: QuestHistoryRow[] = [];
   for (const row of rows) {
@@ -627,7 +669,7 @@ async function getAllQuestHistory() {
 async function deleteQuestHistoryForQuest(questId: number) {
   const database = await getDatabase();
 
-  // Aggregate virtue deltas for all history entries of this quest
+  // Find completed history entries for this quest to reverse virtue points
   const rows = await database.getAllAsync<{
     name: string;
     value: number;
@@ -636,7 +678,7 @@ async function deleteQuestHistoryForQuest(questId: number) {
      FROM quest_history h
      JOIN quest_history_virtues qhv ON qhv.history_id = h.id
      JOIN virtues v ON v.id = qhv.virtue_id
-     WHERE h.quest_id = ?`,
+     WHERE h.quest_id = ? AND h.completed_at IS NOT NULL`,
     [questId]
   );
 
@@ -649,7 +691,11 @@ async function deleteQuestHistoryForQuest(questId: number) {
     await applyVirtueDeltas(database, deltas, -1);
   }
 
-  await database.runAsync('DELETE FROM quest_history WHERE quest_id = ?', [questId]);
+  // Revert to assigned (don't delete — quest stays in today's daily list)
+  await database.runAsync(
+    `UPDATE quest_history SET completed_at = NULL WHERE quest_id = ? AND completed_at IS NOT NULL`,
+    [questId]
+  );
 }
 
 async function applyVirtueDeltas(
