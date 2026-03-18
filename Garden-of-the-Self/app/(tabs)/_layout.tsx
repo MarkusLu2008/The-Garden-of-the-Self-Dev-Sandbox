@@ -5,7 +5,7 @@ import { Tabs } from 'expo-router';
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 
-const showDevTools = true;
+const showDevTools = false;
 
 function FilteredTabBar(props: BottomTabBarProps) {
   const routes = showDevTools

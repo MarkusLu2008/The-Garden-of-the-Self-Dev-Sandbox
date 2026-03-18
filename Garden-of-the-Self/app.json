@@ -12,9 +12,10 @@
       "supportsTablet": true,
       "infoPlist": {
         "UIFileSharingEnabled": true,
-        "LSSupportsOpeningDocumentsInPlace": true
+        "LSSupportsOpeningDocumentsInPlace": true,
+        "ITSAppUsesNonExemptEncryption": false
       },
-      "bundleIdentifier": "com.anonymous.Garden-of-the-Self"
+      "bundleIdentifier": "com.markylu.Garden-of-the-Self"
     },
     "android": {
       "adaptiveIcon": {
@@ -25,7 +26,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.GardenoftheSelf"
+      "package": "com.markylu.GardenoftheSelf"
     },
     "web": {
       "output": "static",
@@ -53,6 +54,18 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "9c4d69f7-d83e-4f38-9a1f-461adf2048da"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/9c4d69f7-d83e-4f38-9a1f-461adf2048da"
     }
   }
 }
