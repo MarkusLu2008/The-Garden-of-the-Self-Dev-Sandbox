@@ -1,8 +1,9 @@
 import { useRef, useState, useEffect, useCallback } from "react";
-import { StyleSheet, ActivityIndicator, View, TouchableOpacity, ScrollView } from "react-native";
+import { StyleSheet, ActivityIndicator, View, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { RichEditor, RichToolbar } from "react-native-pell-rich-editor";
+import { EnrichedTextInput, type EnrichedTextInputInstance, type OnChangeStateEvent } from "react-native-enriched";
+import type { NativeSyntheticEvent } from "react-native";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { getJournalContent, getJournalInfo, createJournal, updateJournal } from "@/services/journalManager";
@@ -10,17 +11,34 @@ import { formatDateForDisplay } from "@/utils/dateUtils";
 import { useUnistyles } from '@/lib/unistyles-compat';
 import { journalStyles, spacing } from "@/utils/styles";
 
+type StyleState = OnChangeStateEvent;
+
+interface ToolbarButton {
+  label: string;
+  style: keyof StyleState;
+  action: (ref: EnrichedTextInputInstance) => void;
+}
+
+const TOOLBAR_BUTTONS: ToolbarButton[] = [
+  { label: "B", style: "bold", action: (r) => r.toggleBold() },
+  { label: "I", style: "italic", action: (r) => r.toggleItalic() },
+  { label: "U", style: "underline", action: (r) => r.toggleUnderline() },
+  { label: "S", style: "strikeThrough", action: (r) => r.toggleStrikeThrough() },
+];
+
 export default function EditorScreen() {
-  const richText = useRef<RichEditor>(null);
+  const richText = useRef<EnrichedTextInputInstance>(null);
   const router = useRouter();
   const { theme } = useUnistyles();
   const { date } = useLocalSearchParams<{ date: string }>();
-  const [content, setContent] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [defaultValue, setDefaultValue] = useState("");
+  const [styleState, setStyleState] = useState<StyleState | null>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isSavingRef = useRef(false);
+  const latestContentRef = useRef("");
 
   // Load existing journal content
   useEffect(() => {
@@ -33,12 +51,10 @@ export default function EditorScreen() {
       try {
         setIsLoading(true);
         const existingContent = await getJournalContent(date);
-        
+
         if (existingContent) {
-          setContent(existingContent);
-          richText.current?.setContentHTML(existingContent);
-        } else {
-          richText.current?.setContentHTML("");
+          setDefaultValue(existingContent);
+          latestContentRef.current = existingContent;
         }
       } catch (error) {
         console.error("Failed to load journal:", error);
@@ -62,11 +78,11 @@ export default function EditorScreen() {
     try {
       setIsSaving(true);
       isSavingRef.current = true;
-      
+
       // Get or use default prompt and virtues
       let prompt = "";
       let virtues: Record<string, number> = {};
-      
+
       try {
         const journalInfo = await getJournalInfo(date);
         prompt = journalInfo?.prompt || "";
@@ -77,7 +93,7 @@ export default function EditorScreen() {
 
       // Check if journal exists by trying to get content
       const existingContent = await getJournalContent(date).catch(() => null);
-      
+
       if (existingContent !== null) {
         // Update existing journal
         await updateJournal(date, htmlContent, prompt, virtues);
@@ -91,7 +107,6 @@ export default function EditorScreen() {
       setLastSaved(new Date());
     } catch (error) {
       console.error("Failed to save journal:", error);
-      // Re-throw to allow callers to handle the error
       throw error;
     } finally {
       setIsSaving(false);
@@ -100,10 +115,8 @@ export default function EditorScreen() {
   }, [date]);
 
   // Handle content change with debounce
-  // onChange callback receives the HTML content directly
   const checkAndSaveContent = useCallback((htmlContent: string) => {
-    // Update content state
-    setContent(htmlContent);
+    latestContentRef.current = htmlContent;
 
     // Clear existing timeout
     if (saveTimeoutRef.current) {
@@ -122,26 +135,30 @@ export default function EditorScreen() {
 
   // Save on unmount if there's unsaved content
   useEffect(() => {
-    // Capture current values for cleanup
-    const currentDate = date;
-    const currentContent = content;
-    
     return () => {
       // Clear any pending timeout
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
         saveTimeoutRef.current = null;
       }
-      
-      // Save content on unmount if we have unsaved changes
-      // Note: We use the content state which is updated via onChange callback
-      if (currentDate && currentContent && currentContent.trim() && !isSavingRef.current) {
+
+      // Save content on unmount using the latest content ref
+      const currentContent = latestContentRef.current;
+      if (date && currentContent && currentContent.trim() && !isSavingRef.current) {
         saveJournal(currentContent).catch((error: unknown) => {
           console.error('Failed to save on unmount:', error);
         });
       }
     };
-  }, [date, content, saveJournal]);
+  }, [date, saveJournal]);
+
+  const handleChangeHtml = useCallback((e: NativeSyntheticEvent<{ value: string }>) => {
+    checkAndSaveContent(e.nativeEvent.value);
+  }, [checkAndSaveContent]);
+
+  const handleChangeState = useCallback((e: NativeSyntheticEvent<OnChangeStateEvent>) => {
+    setStyleState(e.nativeEvent);
+  }, []);
 
   return (
     <SafeAreaView style={journalStyles.container} edges={["top"]}>
@@ -173,21 +190,55 @@ export default function EditorScreen() {
           <ActivityIndicator size="large" />
         </ThemedView>
       ) : (
-        <ScrollView
-          style={styles.editorContainer}
-          contentContainerStyle={styles.editorContent}
-          keyboardDismissMode="on-drag"
-          keyboardShouldPersistTaps="handled"
-        >
-          <RichToolbar editor={richText} />
-          <RichEditor
+        <View style={styles.editorContainer}>
+          <View style={[styles.toolbar, { borderBottomColor: theme.colors.icon }]}>
+            {TOOLBAR_BUTTONS.map((button) => {
+              const isActive = styleState?.[button.style]?.isActive ?? false;
+              return (
+                <TouchableOpacity
+                  key={button.label}
+                  onPress={() => {
+                    if (richText.current) {
+                      button.action(richText.current);
+                    }
+                  }}
+                  style={[
+                    styles.toolbarButton,
+                    isActive && { backgroundColor: theme.colors.tint },
+                  ]}
+                >
+                  <ThemedText
+                    style={[
+                      styles.toolbarButtonText,
+                      button.style === "bold" && { fontWeight: "bold" },
+                      button.style === "italic" && { fontStyle: "italic" },
+                      button.style === "underline" && { textDecorationLine: "underline" },
+                      button.style === "strikeThrough" && { textDecorationLine: "line-through" },
+                      isActive && { color: "#fff" },
+                    ]}
+                  >
+                    {button.label}
+                  </ThemedText>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          <EnrichedTextInput
             ref={richText}
-            initialContentHTML={content}
+            defaultValue={defaultValue}
             placeholder="Start typing..."
-            onChange={checkAndSaveContent}
-            style={[styles.editor, { backgroundColor: theme.colors.background }]}
+            placeholderTextColor={theme.colors.tabIconDefault}
+            onChangeHtml={handleChangeHtml}
+            onChangeState={handleChangeState}
+            style={{
+              flex: 1,
+              backgroundColor: theme.colors.background,
+              color: theme.colors.text,
+              fontSize: 16,
+              padding: spacing.md,
+            }}
           />
-        </ScrollView>
+        </View>
       )}
     </SafeAreaView>
   );
@@ -231,12 +282,19 @@ const styles = StyleSheet.create({
   editorContainer: {
     flex: 1,
   },
-  editorContent: {
-    flexGrow: 1,
-
+  toolbar: {
+    flexDirection: "row",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    gap: spacing.sm,
   },
-  editor: {
-    flex: 1,
+  toolbarButton: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: 6,
+  },
+  toolbarButtonText: {
+    fontSize: 16,
   },
 });
-
