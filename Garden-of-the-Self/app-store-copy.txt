@@ -1,0 +1,10 @@
+Promotional Text:
+
+A private journaling app that tracks 12 character virtues. Complete daily quests, write journal entries, and watch your virtues grow as trees in a personal garden.
+
+
+Description:
+
+Garden of the Self is a journaling app built around 12 character virtues: Courage, Temperance, Patience, Kindness, Proper Ambition, Modesty, Empathy, Resilience, Curiosity, Respectfulness, Tolerance, Collaboration, and Discipline.
+
+Each day you receive quests — small, actionable challenges tied to specific virtues. Completing quests and writing journal entries earns virtue points. As points accumulate, each virtue grows from a seedling into a full tree in your garden.
