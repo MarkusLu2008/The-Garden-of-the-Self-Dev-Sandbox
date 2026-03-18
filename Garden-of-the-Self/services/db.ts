@@ -1,5 +1,6 @@
 import * as SQLite from 'expo-sqlite';
 import virtues from '@/constants/virtues';
+import { getTodayDateString } from '@/utils/dateUtils';
 
 /** Virtue display name -> slug (snake_case) */
 function virtueToSlug(name: string): string {
@@ -86,6 +87,11 @@ async function initializeOrMigrateSchema(database: SQLite.SQLiteDatabase): Promi
       virtue_id INTEGER PRIMARY KEY,
       total_value INTEGER NOT NULL DEFAULT 0,
       FOREIGN KEY (virtue_id) REFERENCES virtues(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS app_meta (
+      key TEXT PRIMARY KEY,
+      value TEXT
     );
   `);
 
@@ -729,6 +735,13 @@ async function applyVirtueDeltas(
         [virtueId, newTotal]
       );
     }
+
+    if (name === 'Curiosity' && newTotal > 5) {
+      await database.runAsync(
+        'INSERT OR REPLACE INTO app_meta (key, value) VALUES (?, ?)',
+        [APP_META_KEY_CURIOSITY_EVER_CROSSED_5, '1']
+      );
+    }
   }
 }
 
@@ -759,10 +772,81 @@ async function getVirtueTotals(): Promise<QuestVirtueValues> {
 export type VirtueTotalsAndUnlocked = {
   totals: QuestVirtueValues;
   unlockedAt: Record<string, string | null>;
+  /** True once Curiosity has crossed 5 points (enables decay and dead tree for Curiosity). */
+  curiosityEverCrossed5: boolean;
 };
+
+const APP_META_KEY_LAST_VIRTUE_DECAY_DATE = 'last_virtue_decay_date';
+const APP_META_KEY_CURIOSITY_EVER_CROSSED_5 = 'curiosity_ever_crossed_5';
+
+/** Apply −1 point per calendar day for each unlocked virtue. Curiosity decays only after it has crossed 5 points once. Uses app date (respects devtools date override). */
+async function applyDailyVirtueDecayIfNeeded(database: SQLite.SQLiteDatabase): Promise<void> {
+  const today = getTodayDateString();
+
+  const row = await database.getFirstAsync<{ value: string | null }>(
+    'SELECT value FROM app_meta WHERE key = ?',
+    [APP_META_KEY_LAST_VIRTUE_DECAY_DATE]
+  );
+  const lastDate = row?.value ?? null;
+
+  if (lastDate === null || lastDate === '') {
+    await database.runAsync(
+      'INSERT OR REPLACE INTO app_meta (key, value) VALUES (?, ?)',
+      [APP_META_KEY_LAST_VIRTUE_DECAY_DATE, today]
+    );
+    return;
+  }
+
+  const last = new Date(lastDate + 'T12:00:00');
+  const curr = new Date(today + 'T12:00:00');
+  const daysSince = Math.max(0, Math.floor((curr.getTime() - last.getTime()) / (24 * 60 * 60 * 1000)));
+
+  if (daysSince === 0) return;
+
+  const curiosityCrossedRow = await database.getFirstAsync<{ value: string | null }>(
+    'SELECT value FROM app_meta WHERE key = ?',
+    [APP_META_KEY_CURIOSITY_EVER_CROSSED_5]
+  );
+  const curiosityEverCrossed5 = curiosityCrossedRow?.value === '1';
+
+  const unlockedRows = await database.getAllAsync<{ id: number; name: string }>(
+    'SELECT id, name FROM virtues WHERE unlocked_at IS NOT NULL'
+  );
+  const virtuesToDecay = unlockedRows.filter(
+    (v) => v.name !== 'Curiosity' || curiosityEverCrossed5
+  );
+
+  for (const v of virtuesToDecay) {
+    const totalRow = await database.getFirstAsync<{ total_value: number }>(
+      'SELECT total_value FROM virtue_totals WHERE virtue_id = ?',
+      [v.id]
+    );
+    const currentTotal = totalRow?.total_value ?? 0;
+    const decay = Math.min(daysSince, currentTotal);
+    if (decay <= 0) continue;
+    const newTotal = currentTotal - decay;
+    if (totalRow) {
+      await database.runAsync(
+        'UPDATE virtue_totals SET total_value = ? WHERE virtue_id = ?',
+        [newTotal, v.id]
+      );
+    } else if (newTotal > 0) {
+      await database.runAsync(
+        'INSERT INTO virtue_totals (virtue_id, total_value) VALUES (?, ?)',
+        [v.id, newTotal]
+      );
+    }
+  }
+
+  await database.runAsync(
+    'INSERT OR REPLACE INTO app_meta (key, value) VALUES (?, ?)',
+    [APP_META_KEY_LAST_VIRTUE_DECAY_DATE, today]
+  );
+}
 
 export async function getVirtueTotalsAndUnlocked(): Promise<VirtueTotalsAndUnlocked> {
   const database = await getDatabase();
+  await applyDailyVirtueDecayIfNeeded(database);
   const rows = await database.getAllAsync<{
     name: string;
     total_value: number;
@@ -779,7 +863,14 @@ export async function getVirtueTotalsAndUnlocked(): Promise<VirtueTotalsAndUnloc
     totals[row.name] = row.total_value;
     unlockedAt[row.name] = row.unlocked_at;
   }
-  return { totals, unlockedAt };
+
+  const curiosityRow = await database.getFirstAsync<{ value: string | null }>(
+    'SELECT value FROM app_meta WHERE key = ?',
+    [APP_META_KEY_CURIOSITY_EVER_CROSSED_5]
+  );
+  const curiosityEverCrossed5 = curiosityRow?.value === '1';
+
+  return { totals, unlockedAt, curiosityEverCrossed5 };
 }
 
 async function getQuestHistory(limit: number) {
@@ -812,10 +903,14 @@ export async function resetDatabase() {
     DROP TABLE IF EXISTS journals;
     DROP TABLE IF EXISTS virtues;
     DROP TABLE IF EXISTS virtue_totals;
+    DROP TABLE IF EXISTS app_meta;
     PRAGMA foreign_keys = ON;
   `);
   await initializeOrMigrateSchema(database);
   await seedVirtuesIfEmpty(database);
+  await database.runAsync(
+    "UPDATE virtues SET unlocked_at = '1970-01-01 00:00:00' WHERE name = 'Curiosity'"
+  );
   virtuesCache = await database.getAllAsync<VirtueRow>('SELECT id, name, slug, unlocked_at FROM virtues');
   virtueIdByName = new Map(virtuesCache.map((v) => [v.name, v.id]));
   virtueIdBySlug = new Map(virtuesCache.map((v) => [v.slug, v.id]));

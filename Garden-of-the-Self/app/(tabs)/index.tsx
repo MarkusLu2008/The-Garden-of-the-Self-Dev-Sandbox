@@ -102,6 +102,8 @@ function useBreathingAnimation() {
 type VirtueGardenPageProps = {
   virtueName: string;
   score: number;
+  isUnlocked: boolean;
+  curiosityEverCrossed5: boolean;
   textColor: string;
   animatedStyle: ReturnType<typeof useAnimatedStyle>;
 };
@@ -109,12 +111,23 @@ type VirtueGardenPageProps = {
 function VirtueGardenPage({
   virtueName,
   score,
+  isUnlocked,
+  curiosityEverCrossed5,
   textColor,
   animatedStyle,
 }: VirtueGardenPageProps) {
   const treeImages = VIRTUE_TREE_IMAGES[virtueName];
   const hasTreeImages = treeImages != null && treeImages.length > 0;
-  const treeStage = hasTreeImages ? treeScoreToStage(score, treeImages.length) : 0;
+  const isDeadTree =
+    hasTreeImages &&
+    isUnlocked &&
+    score < 5 &&
+    (virtueName !== 'Curiosity' || curiosityEverCrossed5);
+  const treeStage = hasTreeImages
+    ? isDeadTree
+      ? treeImages.length - 1
+      : treeScoreToStage(score, treeImages.length)
+    : 0;
   const pineStage = scoreToStage(score, PINE_STAGES.length);
   const displayArt = padStage(PINE_STAGES[pineStage]);
 
@@ -158,6 +171,7 @@ export default function GardenScreen() {
   const [virtueData, setVirtueData] = useState<{
     totals: Record<string, number>;
     unlockedAt: Record<string, string | null>;
+    curiosityEverCrossed5: boolean;
   } | null>(null);
   const [pageIndex, setPageIndex] = useState(0);
 
@@ -182,6 +196,7 @@ export default function GardenScreen() {
 
   const totals = virtueData?.totals ?? {};
   const unlockedAt = virtueData?.unlockedAt ?? {};
+  const curiosityEverCrossed5 = virtueData?.curiosityEverCrossed5 ?? false;
   const visibleVirtues =
     virtueData == null
       ? []
@@ -255,6 +270,8 @@ export default function GardenScreen() {
                 <VirtueGardenPage
                   virtueName={virtueName}
                   score={totals[virtueName] ?? 0}
+                  isUnlocked={unlockedAt[virtueName] != null}
+                  curiosityEverCrossed5={curiosityEverCrossed5}
                   textColor={textColor}
                   animatedStyle={breathingStyle}
                 />
@@ -285,6 +302,8 @@ export default function GardenScreen() {
             <VirtueGardenPage
               virtueName={virtueName}
               score={totals[virtueName] ?? 0}
+              isUnlocked={unlockedAt[virtueName] != null}
+              curiosityEverCrossed5={curiosityEverCrossed5}
               textColor={textColor}
               animatedStyle={breathingStyle}
             />
