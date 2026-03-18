@@ -2,6 +2,7 @@
   "expo": {
     "name": "Garden of the Self",
     "slug": "Garden-of-the-Self",
+    "owner": "garden-of-the-self",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -49,7 +50,8 @@
           }
         }
       ],
-      "expo-sqlite"
+      "expo-sqlite",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
@@ -58,14 +60,14 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "9c4d69f7-d83e-4f38-9a1f-461adf2048da"
+        "projectId": "a0ccdde3-400f-41ee-a823-7e6638046fcb"
       }
     },
     "runtimeVersion": {
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/9c4d69f7-d83e-4f38-9a1f-461adf2048da"
+      "url": "https://u.expo.dev/a0ccdde3-400f-41ee-a823-7e6638046fcb"
     }
   }
 }
