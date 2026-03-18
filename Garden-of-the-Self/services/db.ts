@@ -412,6 +412,48 @@ async function getAllQuests() {
   return result;
 }
 
+/**
+ * Pick up to 3 quests for today from the pool of incomplete quests.
+ * Uses a simple date-seeded shuffle so the same 3 are shown all day.
+ * Quests completed today are included so the user can see their progress.
+ */
+async function getDailyQuests(dateString: string): Promise<QuestRow[]> {
+  const all = await getAllQuests();
+
+  // Split into incomplete and completed-today
+  const incomplete = all.filter((q) => !q.completed);
+  const completedToday = all.filter(
+    (q) => q.completed && q.updated_at.startsWith(dateString)
+  );
+
+  if (incomplete.length <= 3) {
+    // Show all incomplete quests + any completed today (up to 3 total)
+    const remaining = 3 - incomplete.length;
+    return [...incomplete, ...completedToday.slice(0, remaining)];
+  }
+
+  // Deterministic seed from date string
+  let seed = 0;
+  for (let i = 0; i < dateString.length; i++) {
+    seed = (seed * 31 + dateString.charCodeAt(i)) | 0;
+  }
+
+  // Seeded shuffle (Fisher-Yates with simple LCG)
+  const pool = [...incomplete];
+  const nextSeed = () => {
+    seed = (seed * 1664525 + 1013904223) | 0;
+    return (seed >>> 0) / 0x100000000;
+  };
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(nextSeed() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+
+  const picked = pool.slice(0, 3);
+  // Also include any quests completed today that were in today's selection
+  return [...completedToday, ...picked].slice(0, 3);
+}
+
 async function updateQuest(
   id: number,
   updates: {
@@ -678,5 +720,5 @@ export async function getAllFromTable(table: TableName): Promise<any[]> {
 }
 
 export { insertJournal, getJournal, getAllJournals, updateJournal, deleteJournal };
-export { insertQuest, getQuest, getAllQuests, updateQuest, deleteQuest, deleteAllQuests };
+export { insertQuest, getQuest, getAllQuests, getDailyQuests, updateQuest, deleteQuest, deleteAllQuests };
 export { getAllQuestHistory, getQuestHistory, getVirtueTotals };
