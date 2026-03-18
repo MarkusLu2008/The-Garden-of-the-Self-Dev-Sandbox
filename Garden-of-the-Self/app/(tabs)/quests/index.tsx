@@ -7,7 +7,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -25,7 +25,6 @@ import { journalStyles, spacing, borderRadius } from '@/utils/styles';
 export default function QuestsScreen() {
   const [quests, setQuests] = useState<QuestRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
   const { theme } = useUnistyles();
 
   const loadQuests = useCallback(async (showLoader = true) => {
@@ -48,10 +47,6 @@ export default function QuestsScreen() {
       loadQuests(quests.length === 0);
     }, [loadQuests, quests.length])
   );
-
-  const handleAddQuest = () => {
-    router.push('/(tabs)/quests/create');
-  };
 
   const handleToggleCompleted = async (quest: QuestRow) => {
     const newCompleted = quest.completed ? 0 : 1;
@@ -135,11 +130,8 @@ export default function QuestsScreen() {
         No quests yet
       </ThemedText>
       <ThemedText style={styles.emptyText}>
-        Add a quest to grow your virtues
+        No quests for today
       </ThemedText>
-      <TouchableOpacity style={journalStyles.buttonPrimary} onPress={handleAddQuest}>
-        <ThemedText style={journalStyles.buttonPrimaryText}>Add Quest</ThemedText>
-      </TouchableOpacity>
     </ThemedView>
   );
 
@@ -149,17 +141,6 @@ export default function QuestsScreen() {
         <ThemedText type="title" style={styles.title}>
           Daily Quests
         </ThemedText>
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={handleAddQuest}
-          activeOpacity={0.7}
-        >
-          <IconSymbol
-            name="plus.circle.fill"
-            size={28}
-            color={theme.colors.tint}
-          />
-        </TouchableOpacity>
       </ThemedView>
 
       {loading ? (
@@ -192,9 +173,6 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
-  },
-  addButton: {
-    padding: spacing.xs,
   },
   loadingContainer: {
     flex: 1,

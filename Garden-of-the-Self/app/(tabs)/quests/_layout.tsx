@@ -12,13 +12,6 @@ export default function QuestsLayout() {
           title: 'Quests',
         }}
       />
-      <Stack.Screen
-        name="create"
-        options={{
-          title: 'Add Quest',
-          presentation: 'modal',
-        }}
-      />
     </Stack>
   );
 }
