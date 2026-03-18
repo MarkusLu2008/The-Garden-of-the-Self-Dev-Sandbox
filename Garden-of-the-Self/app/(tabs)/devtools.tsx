@@ -18,7 +18,7 @@ import {
   getQuestVirtueDisplayNames,
   resetDatabase,
   getAllFromTable,
-  getVirtueTotals,
+  getVirtueTotalsAndUnlocked,
   addVirtuePoints,
   type QuestRow,
   type QuestHistoryRow,
@@ -26,6 +26,11 @@ import {
 } from '@/services/db';
 import virtues from '@/constants/virtues';
 import { questsSeed } from '@/data/quests-seed';
+import { VIRTUE_SEED_UNLOCK_PRICING } from '@/constants/virtueSeedUnlockPricing';
+import {
+  getVirtueSeedUnlockDebugRows,
+  type VirtueSeedUnlockDebugRow,
+} from '@/utils/virtueGraph';
 import { Directory, Paths, File } from 'expo-file-system';
 import * as SQLite from 'expo-sqlite';
 import { clearAllJournalFiles } from '@/services/fileStorage';
@@ -53,6 +58,8 @@ export default function DevToolsScreen() {
   const [selectedTable, setSelectedTable] = useState<TableName | null>(null);
   const [tableRows, setTableRows] = useState<any[] | null>(null);
   const [virtueTotals, setVirtueTotals] = useState<Record<string, number>>({});
+  const [virtueUnlockedAt, setVirtueUnlockedAt] = useState<Record<string, string | null>>({});
+  const [seedUnlockDebugRows, setSeedUnlockDebugRows] = useState<VirtueSeedUnlockDebugRow[]>([]);
   const [addVirtueSelected, setAddVirtueSelected] = useState<string>(virtues[0]);
   const [addVirtuePointsInput, setAddVirtuePointsInput] = useState('');
 
@@ -135,8 +142,10 @@ export default function DevToolsScreen() {
   const loadVirtueTotals = async () => {
     try {
       setLoading(true);
-      const totals = await getVirtueTotals();
+      const { totals, unlockedAt } = await getVirtueTotalsAndUnlocked();
       setVirtueTotals(totals);
+      setVirtueUnlockedAt(unlockedAt);
+      setSeedUnlockDebugRows(getVirtueSeedUnlockDebugRows(unlockedAt));
     } catch (error) {
       console.error('Failed to load virtue totals:', error);
       Alert.alert('Error', `Failed to load virtue totals: ${error}`);
@@ -783,6 +792,72 @@ export default function DevToolsScreen() {
           </ThemedView>
         </Collapsible>
 
+        <Collapsible title="Virtue Seed Unlock Pricing">
+          <ThemedView style={styles.section}>
+            <ThemedText style={styles.infoRow}>
+              Distance-based exponential unlock prices for stage-1 virtue seeds.
+            </ThemedText>
+            <ThemedText style={styles.infoRow}>
+              <ThemedText type="defaultSemiBold">Formula: </ThemedText>
+              round(basePriceDistance1 * multiplier^(distance - 1))
+            </ThemedText>
+            <ThemedText style={styles.infoRow}>
+              <ThemedText type="defaultSemiBold">Config: </ThemedText>
+              basePriceDistance1={VIRTUE_SEED_UNLOCK_PRICING.basePriceDistance1}, multiplier=
+              {VIRTUE_SEED_UNLOCK_PRICING.multiplier}
+            </ThemedText>
+            <TouchableOpacity style={styles.button} onPress={loadVirtueTotals}>
+              <ThemedText style={styles.buttonText}>Recompute seed unlock prices</ThemedText>
+            </TouchableOpacity>
+            <ThemedView style={styles.list}>
+              {seedUnlockDebugRows.map((row) => {
+                const currentPoints = virtueTotals[row.virtueName] ?? 0;
+                const pointsNeeded = Math.max(0, row.unlockPrice - currentPoints);
+                const canAfford = currentPoints >= row.unlockPrice;
+                return (
+                  <ThemedView key={row.virtueName} style={styles.listItem}>
+                    <ThemedText style={styles.listItemText}>
+                      <ThemedText type="defaultSemiBold">Virtue: </ThemedText>
+                      {row.virtueName}
+                    </ThemedText>
+                    <ThemedText style={styles.listItemText}>
+                      <ThemedText type="defaultSemiBold">Unlocked: </ThemedText>
+                      {row.isUnlocked ? 'Yes' : 'No'}
+                      {row.isUnlocked && virtueUnlockedAt[row.virtueName]
+                        ? ` (${virtueUnlockedAt[row.virtueName]})`
+                        : ''}
+                    </ThemedText>
+                    <ThemedText style={styles.listItemText}>
+                      <ThemedText type="defaultSemiBold">Closest unlocked virtue: </ThemedText>
+                      {row.closestUnlockedVirtue ?? '—'}
+                    </ThemedText>
+                    <ThemedText style={styles.listItemText}>
+                      <ThemedText type="defaultSemiBold">Distance: </ThemedText>
+                      {row.distance ?? '—'}
+                    </ThemedText>
+                    <ThemedText style={styles.listItemText}>
+                      <ThemedText type="defaultSemiBold">Unlock price: </ThemedText>
+                      {row.unlockPrice} {row.virtueName} points
+                    </ThemedText>
+                    <ThemedText style={styles.listItemText}>
+                      <ThemedText type="defaultSemiBold">Current points: </ThemedText>
+                      {currentPoints}
+                    </ThemedText>
+                    <ThemedText style={styles.listItemText}>
+                      <ThemedText type="defaultSemiBold">Status: </ThemedText>
+                      {row.isUnlocked
+                        ? 'Already unlocked'
+                        : canAfford
+                          ? 'Can unlock now'
+                          : `${pointsNeeded} more point${pointsNeeded === 1 ? '' : 's'} needed`}
+                    </ThemedText>
+                  </ThemedView>
+                );
+              })}
+            </ThemedView>
+          </ThemedView>
+        </Collapsible>
+
         <Collapsible title="Custom SQL Query">
           <ThemedView style={styles.section}>
             <TextInput
@@ -867,7 +942,7 @@ export default function DevToolsScreen() {
   );
 }
 
-const styles = StyleSheet.create((theme) => ({
+const styles = (StyleSheet as any).create((theme: any) => ({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
