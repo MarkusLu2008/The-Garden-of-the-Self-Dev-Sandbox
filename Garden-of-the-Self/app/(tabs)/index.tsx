@@ -123,10 +123,11 @@ function VirtueGardenPage({
     isUnlocked &&
     score < 5 &&
     (virtueName !== 'Curiosity' || curiosityEverCrossed5);
+  const lastLivingStage = Math.max(0, treeImages.length - 2);
   const treeStage = hasTreeImages
     ? isDeadTree
       ? treeImages.length - 1
-      : treeScoreToStage(score, treeImages.length)
+      : Math.min(treeScoreToStage(score, treeImages.length), lastLivingStage)
     : 0;
   const pineStage = scoreToStage(score, PINE_STAGES.length);
   const displayArt = padStage(PINE_STAGES[pineStage]);
