@@ -136,12 +136,6 @@ async function initializeOrMigrateSchema(database: SQLite.SQLiteDatabase): Promi
       UPDATE virtues SET unlocked_at = COALESCE(unlocked_at, datetime('now')) WHERE id = NEW.virtue_id;
     END;
   `);
-
-  // Default configured virtue is unlocked by default (sorts first).
-  await database.runAsync(
-    "UPDATE virtues SET unlocked_at = '1970-01-01 00:00:00' WHERE name = ?",
-    [gameConfig.virtues.defaultUnlockedVirtue]
-  );
 }
 
 /** Seed virtues from constants only when the virtues table is empty. */
@@ -209,6 +203,11 @@ async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
     db = await SQLite.openDatabaseAsync('garden-of-the-self.db');
     await initializeOrMigrateSchema(db);
     await seedVirtuesIfEmpty(db);
+    // Ensure default virtue is unlocked (must run after seeding so the row exists)
+    await db.runAsync(
+      "UPDATE virtues SET unlocked_at = COALESCE(unlocked_at, '1970-01-01 00:00:00') WHERE name = ?",
+      [gameConfig.virtues.defaultUnlockedVirtue]
+    );
     virtuesCache = await db.getAllAsync<VirtueRow>('SELECT id, name, slug, unlocked_at FROM virtues');
     virtueIdByName = new Map(virtuesCache.map((v) => [v.name, v.id]));
     virtueIdBySlug = new Map(virtuesCache.map((v) => [v.slug, v.id]));
