@@ -23,7 +23,7 @@ import { ThemedView } from '@/components/themed-view';
 import { useUnistyles } from '@/lib/unistyles-compat';
 import { journalStyles, spacing } from '@/utils/styles';
 import { Fonts } from '@/constants/theme';
-import { getVirtueTotals } from '@/services/db';
+import { getVirtueTotalsAndUnlocked } from '@/services/db';
 import { useFocusEffect } from 'expo-router';
 import virtues from '@/constants/virtues';
 import { VIRTUE_TREE_IMAGES, treeScoreToStage } from '@/constants/virtueTreeImages';
@@ -155,7 +155,10 @@ export default function GardenScreen() {
   const textColor = theme.colors.text;
   const { width: windowWidth } = useWindowDimensions();
 
-  const [virtueTotals, setVirtueTotals] = useState<Record<string, number> | null>(null);
+  const [virtueData, setVirtueData] = useState<{
+    totals: Record<string, number>;
+    unlockedAt: Record<string, string | null>;
+  } | null>(null);
   const [pageIndex, setPageIndex] = useState(0);
 
   const breathingStyle = useBreathingAnimation();
@@ -165,10 +168,10 @@ export default function GardenScreen() {
       let cancelled = false;
       (async () => {
         try {
-          const totals = await getVirtueTotals();
-          if (!cancelled) setVirtueTotals(totals);
+          const data = await getVirtueTotalsAndUnlocked();
+          if (!cancelled) setVirtueData(data);
         } catch (e) {
-          console.warn('Failed to load virtue totals', e);
+          console.warn('Failed to load virtue totals and unlocked', e);
         }
       })();
       return () => {
@@ -177,7 +180,25 @@ export default function GardenScreen() {
     }, [])
   );
 
-  const totals = virtueTotals ?? {};
+  const totals = virtueData?.totals ?? {};
+  const unlockedAt = virtueData?.unlockedAt ?? {};
+  const visibleVirtues =
+    virtueData == null
+      ? []
+      : virtues
+          .filter((name) => unlockedAt[name] != null || (totals[name] ?? 0) > 0)
+          .sort((a, b) => {
+            const ta = unlockedAt[a];
+            const tb = unlockedAt[b];
+            if (ta == null && tb == null) return 0;
+            if (ta == null) return 1;
+            if (tb == null) return -1;
+            return ta.localeCompare(tb);
+          });
+
+  useEffect(() => {
+    setPageIndex((prev) => Math.min(prev, Math.max(0, visibleVirtues.length - 1)));
+  }, [visibleVirtues.length]);
 
   const pageContent = (
     <>
@@ -185,10 +206,31 @@ export default function GardenScreen() {
         Your Garden
       </ThemedText>
       <ThemedText style={styles.pageIndicator}>
-        {pageIndex + 1} / {virtues.length}
+        {visibleVirtues.length > 0 ? `${pageIndex + 1} / ${visibleVirtues.length}` : ''}
       </ThemedText>
     </>
   );
+
+  const emptyState = (
+    <ThemedView style={styles.content}>
+      <ThemedText type="title" style={styles.title}>
+        Your Garden
+      </ThemedText>
+      <ThemedText style={styles.emptySubtitle}>
+        {virtueData == null
+          ? 'Loading…'
+          : 'No plants yet — complete quests or earn virtue points to grow your garden.'}
+      </ThemedText>
+    </ThemedView>
+  );
+
+  if (visibleVirtues.length === 0) {
+    return (
+      <SafeAreaView style={journalStyles.container} edges={['top']}>
+        {emptyState}
+      </SafeAreaView>
+    );
+  }
 
   if (isWeb) {
     return (
@@ -203,12 +245,12 @@ export default function GardenScreen() {
               const index = Math.round(
                 e.nativeEvent.contentOffset.x / (windowWidth || 1)
               );
-              setPageIndex(Math.min(index, virtues.length - 1));
+              setPageIndex(Math.min(index, visibleVirtues.length - 1));
             }}
             style={styles.webScroll}
             contentContainerStyle={styles.webScrollContent}
           >
-            {virtues.map((virtueName) => (
+            {visibleVirtues.map((virtueName) => (
               <View key={virtueName} style={[styles.webPage, { width: windowWidth }]}>
                 <VirtueGardenPage
                   virtueName={virtueName}
@@ -238,7 +280,7 @@ export default function GardenScreen() {
         initialPage={0}
         onPageSelected={(e) => setPageIndex(e.nativeEvent.position)}
       >
-        {virtues.map((virtueName) => (
+        {visibleVirtues.map((virtueName) => (
           <View key={virtueName} style={styles.pagerPage}>
             <VirtueGardenPage
               virtueName={virtueName}
@@ -323,6 +365,12 @@ const styles = StyleSheet.create({
     maxWidth: 320,
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.xl,
+  },
+  emptySubtitle: {
+    textAlign: 'center',
+    opacity: 0.8,
+    maxWidth: 320,
+    paddingHorizontal: spacing.lg,
   },
   footer: {
     paddingBottom: spacing.xl,

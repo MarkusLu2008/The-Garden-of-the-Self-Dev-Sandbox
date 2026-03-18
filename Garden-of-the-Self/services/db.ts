@@ -10,6 +10,7 @@ type VirtueRow = {
   id: number;
   name: string;
   slug: string;
+  unlocked_at: string | null;
 };
 
 let db: SQLite.SQLiteDatabase | null = null;
@@ -26,7 +27,8 @@ async function initializeOrMigrateSchema(database: SQLite.SQLiteDatabase): Promi
     CREATE TABLE IF NOT EXISTS virtues (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL UNIQUE,
-      slug TEXT NOT NULL UNIQUE
+      slug TEXT NOT NULL UNIQUE,
+      unlocked_at TEXT
     );
 
     CREATE TABLE IF NOT EXISTS journals (
@@ -86,6 +88,50 @@ async function initializeOrMigrateSchema(database: SQLite.SQLiteDatabase): Promi
       FOREIGN KEY (virtue_id) REFERENCES virtues(id) ON DELETE CASCADE
     );
   `);
+
+  // Migration: add unlocked_at to existing virtues tables (or migrate from unlocked)
+  const tableInfo = await database.getAllAsync<{ name: string }>('PRAGMA table_info(virtues)');
+  const hasUnlockedAt = tableInfo.some((c) => c.name === 'unlocked_at');
+  const hasUnlocked = tableInfo.some((c) => c.name === 'unlocked');
+  if (!hasUnlockedAt) {
+    await database.execAsync('ALTER TABLE virtues ADD COLUMN unlocked_at TEXT');
+    if (hasUnlocked) {
+      await database.execAsync(
+        "UPDATE virtues SET unlocked_at = datetime('now') WHERE unlocked = 1"
+      );
+      await database.runAsync(
+        "UPDATE virtues SET unlocked_at = '1970-01-01 00:00:00' WHERE name = 'Curiosity'"
+      );
+      await database.execAsync(`
+        DROP TRIGGER IF EXISTS virtue_unlocked_on_totals_insert;
+        DROP TRIGGER IF EXISTS virtue_unlocked_on_totals_update;
+      `);
+      await database.execAsync('ALTER TABLE virtues DROP COLUMN unlocked');
+    }
+  }
+
+  // Triggers: set virtues.unlocked_at on first time crossing total_value > 5
+  await database.execAsync(`
+    DROP TRIGGER IF EXISTS virtue_unlocked_on_totals_insert;
+    DROP TRIGGER IF EXISTS virtue_unlocked_on_totals_update;
+    CREATE TRIGGER virtue_unlocked_on_totals_insert
+    AFTER INSERT ON virtue_totals
+    WHEN NEW.total_value > 5
+    BEGIN
+      UPDATE virtues SET unlocked_at = COALESCE(unlocked_at, datetime('now')) WHERE id = NEW.virtue_id;
+    END;
+    CREATE TRIGGER virtue_unlocked_on_totals_update
+    AFTER UPDATE OF total_value ON virtue_totals
+    WHEN NEW.total_value > 5
+    BEGIN
+      UPDATE virtues SET unlocked_at = COALESCE(unlocked_at, datetime('now')) WHERE id = NEW.virtue_id;
+    END;
+  `);
+
+  // Curiosity is unlocked by default (sorts first)
+  await database.runAsync(
+    "UPDATE virtues SET unlocked_at = '1970-01-01 00:00:00' WHERE name = 'Curiosity'"
+  );
 }
 
 /** Seed virtues from constants only when the virtues table is empty. */
@@ -109,7 +155,7 @@ async function seedVirtuesIfEmpty(database: SQLite.SQLiteDatabase): Promise<void
 async function seedQuestsIfEmpty(database: SQLite.SQLiteDatabase): Promise<void> {
   const questCount = await database.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM quests');
   if (questCount?.count !== 0) return;
-  const virtueRows = await database.getAllAsync<VirtueRow>('SELECT id, name, slug FROM virtues');
+  const virtueRows = await database.getAllAsync<VirtueRow>('SELECT id, name, slug, unlocked_at FROM virtues');
   const virtueIdByNameMap = new Map(virtueRows.map((v) => [v.name, v.id]));
   const { questsSeed } = await import('@/data/quests-seed');
   const insertQuestStmt = await database.prepareAsync(
@@ -152,7 +198,7 @@ async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
     db = await SQLite.openDatabaseAsync('garden-of-the-self.db');
     await initializeOrMigrateSchema(db);
     await seedVirtuesIfEmpty(db);
-    virtuesCache = await db.getAllAsync<VirtueRow>('SELECT id, name, slug FROM virtues');
+    virtuesCache = await db.getAllAsync<VirtueRow>('SELECT id, name, slug, unlocked_at FROM virtues');
     virtueIdByName = new Map(virtuesCache.map((v) => [v.name, v.id]));
     virtueIdBySlug = new Map(virtuesCache.map((v) => [v.slug, v.id]));
     await seedQuestsIfEmpty(db);
@@ -165,7 +211,7 @@ async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
 async function ensureVirtuesLoaded() {
   if (virtuesCache && virtueIdByName && virtueIdBySlug) return;
   const database = await getDatabase();
-  virtuesCache = await database.getAllAsync<VirtueRow>('SELECT id, name, slug FROM virtues');
+  virtuesCache = await database.getAllAsync<VirtueRow>('SELECT id, name, slug, unlocked_at FROM virtues');
   virtueIdByName = new Map(virtuesCache.map((v) => [v.name, v.id]));
   virtueIdBySlug = new Map(virtuesCache.map((v) => [v.slug, v.id]));
 }
@@ -622,6 +668,32 @@ async function getVirtueTotals(): Promise<QuestVirtueValues> {
   return result;
 }
 
+export type VirtueTotalsAndUnlocked = {
+  totals: QuestVirtueValues;
+  unlockedAt: Record<string, string | null>;
+};
+
+export async function getVirtueTotalsAndUnlocked(): Promise<VirtueTotalsAndUnlocked> {
+  const database = await getDatabase();
+  const rows = await database.getAllAsync<{
+    name: string;
+    total_value: number;
+    unlocked_at: string | null;
+  }>(
+    `SELECT v.name as name, COALESCE(t.total_value, 0) as total_value, v.unlocked_at as unlocked_at
+     FROM virtues v
+     LEFT JOIN virtue_totals t ON t.virtue_id = v.id`
+  );
+
+  const totals: QuestVirtueValues = {};
+  const unlockedAt: Record<string, string | null> = {};
+  for (const row of rows) {
+    totals[row.name] = row.total_value;
+    unlockedAt[row.name] = row.unlocked_at;
+  }
+  return { totals, unlockedAt };
+}
+
 async function getQuestHistory(limit: number) {
   const all = await getAllQuestHistory();
   return all.slice(0, limit);
@@ -656,7 +728,7 @@ export async function resetDatabase() {
   `);
   await initializeOrMigrateSchema(database);
   await seedVirtuesIfEmpty(database);
-  virtuesCache = await database.getAllAsync<VirtueRow>('SELECT id, name, slug FROM virtues');
+  virtuesCache = await database.getAllAsync<VirtueRow>('SELECT id, name, slug, unlocked_at FROM virtues');
   virtueIdByName = new Map(virtuesCache.map((v) => [v.name, v.id]));
   virtueIdBySlug = new Map(virtuesCache.map((v) => [v.slug, v.id]));
   await seedQuestsIfEmpty(database);
