@@ -67,6 +67,15 @@ const modesty = [
   require('../assets/images/garden-of-the-self-trees-modesty/garden-of-the-self-trees-modesty-6.png'),
 ];
 
+const patience = [
+  require('../assets/images/garden-of-the-self-trees-patience/garden-of-the-self-trees-patience-1.png'),
+  require('../assets/images/garden-of-the-self-trees-patience/garden-of-the-self-trees-patience-2.png'),
+  require('../assets/images/garden-of-the-self-trees-patience/garden-of-the-self-trees-patience-3.png'),
+  require('../assets/images/garden-of-the-self-trees-patience/garden-of-the-self-trees-patience-4.png'),
+  require('../assets/images/garden-of-the-self-trees-patience/garden-of-the-self-trees-patience-5.png'),
+  require('../assets/images/garden-of-the-self-trees-patience/garden-of-the-self-trees-patience-6.png'),
+];
+
 const resilience = [
   require('../assets/images/garden-of-the-self-trees-resilience/garden-of-the-self-trees-resilience-1.png'),
   require('../assets/images/garden-of-the-self-trees-resilience/garden-of-the-self-trees-resilience-2.png'),
@@ -106,6 +115,15 @@ const selfDiscipline = [
   require('../assets/images/garden-of-the-self-trees-self-discipline/garden-of-the-self-trees-self-discipline-7.png'),
 ];
 
+const temperance = [
+  require('../assets/images/garden-of-the-self-trees-termpance/garden-of-the-self-trees-termpance-1.png'),
+  require('../assets/images/garden-of-the-self-trees-termpance/garden-of-the-self-trees-termpance-2.png'),
+  require('../assets/images/garden-of-the-self-trees-termpance/garden-of-the-self-trees-termpance-3.png'),
+  require('../assets/images/garden-of-the-self-trees-termpance/garden-of-the-self-trees-termpance-4.png'),
+  require('../assets/images/garden-of-the-self-trees-termpance/garden-of-the-self-trees-termpance-5.png'),
+  require('../assets/images/garden-of-the-self-trees-termpance/garden-of-the-self-trees-termpance-6.png'),
+];
+
 /** Virtue display name → tree image array. Only virtues with asset folders are included. */
 export const VIRTUE_TREE_IMAGES: Record<string, readonly number[]> = {
   Courage: courage,
@@ -119,6 +137,8 @@ export const VIRTUE_TREE_IMAGES: Record<string, readonly number[]> = {
   Collaboration: collaboration,
   Tolerance: tolerance,
   Discipline: selfDiscipline,
+  Patience: patience,
+  Temperance: temperance,
 };
 
 export const POINTS_PER_TREE_STAGE = 5;

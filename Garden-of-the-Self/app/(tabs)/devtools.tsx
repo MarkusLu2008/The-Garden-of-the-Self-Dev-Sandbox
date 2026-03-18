@@ -23,6 +23,7 @@ import {
   type TableName,
 } from '@/services/db';
 import virtues from '@/constants/virtues';
+import { questsSeed } from '@/data/quests-seed';
 import { Directory, Paths, File } from 'expo-file-system';
 import * as SQLite from 'expo-sqlite';
 
@@ -328,6 +329,34 @@ export default function DevToolsScreen() {
               Alert.alert('Success', `Created ${dummyPrompts.length} dummy quests.`);
             } catch (error) {
               Alert.alert('Error', `Failed to create dummy quests: ${error}`);
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const seedPlannedQuests = () => {
+    Alert.alert(
+      'Seed Planned Quests',
+      `Insert all ${questsSeed.length} planned quests from planning/quest-virtue-combinations.md into the database?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Seed',
+          onPress: async () => {
+            try {
+              setLoading(true);
+              for (const q of questsSeed) {
+                await insertQuest(q.prompt, q.virtues);
+              }
+              await loadDbInfo();
+              await loadQuests();
+              Alert.alert('Success', `Inserted ${questsSeed.length} planned quests.`);
+            } catch (error) {
+              Alert.alert('Error', `Failed to seed quests: ${error}`);
             } finally {
               setLoading(false);
             }
@@ -770,6 +799,12 @@ export default function DevToolsScreen() {
             </ThemedText>
             <TouchableOpacity style={styles.button} onPress={createDummyQuests}>
               <ThemedText style={styles.buttonText}>Create Dummy Quests</ThemedText>
+            </TouchableOpacity>
+            <ThemedText style={[styles.infoRow, styles.infoRowTop]}>
+              Insert all 36 planned quests (from planning/quest-virtue-combinations.md) with their virtue point values.
+            </ThemedText>
+            <TouchableOpacity style={styles.button} onPress={seedPlannedQuests}>
+              <ThemedText style={styles.buttonText}>Seed Planned Quests</ThemedText>
             </TouchableOpacity>
           </ThemedView>
         </Collapsible>

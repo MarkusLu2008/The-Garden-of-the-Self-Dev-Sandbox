@@ -129,6 +129,37 @@ async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
     virtueIdByName = new Map(virtuesCache.map((v) => [v.name, v.id]));
     virtueIdBySlug = new Map(virtuesCache.map((v) => [v.slug, v.id]));
 
+    // Seed planned quests on first run (or after destructive reset when quests table is empty)
+    const questCount = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM quests');
+    if (questCount?.count === 0) {
+      const { questsSeed } = await import('@/data/quests-seed');
+      const insertQuestStmt = await db.prepareAsync(
+        `INSERT INTO quests (completed, prompt, created_at, updated_at)
+         VALUES (0, ?, datetime('now'), datetime('now'))`
+      );
+      const insertQuestVirtueStmt = await db.prepareAsync(
+        'INSERT INTO quest_virtues (quest_id, virtue_id, value) VALUES (?, ?, ?)'
+      );
+      try {
+        for (const q of questsSeed) {
+          await insertQuestStmt.executeAsync([q.prompt]);
+          const questRow = await db.getFirstAsync<{ id: number }>(
+            'SELECT id FROM quests WHERE rowid = last_insert_rowid()'
+          );
+          if (!questRow) continue;
+          for (const [name, value] of Object.entries(q.virtues)) {
+            if (!value) continue;
+            const virtueId = virtueIdByName?.get(name);
+            if (virtueId == null) continue;
+            await insertQuestVirtueStmt.executeAsync([questRow.id, virtueId, value]);
+          }
+        }
+      } finally {
+        await insertQuestStmt.finalizeAsync();
+        await insertQuestVirtueStmt.finalizeAsync();
+      }
+    }
+
     return db;
   })();
 
