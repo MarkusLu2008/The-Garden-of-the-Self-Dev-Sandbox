@@ -26,6 +26,7 @@ import virtues from '@/constants/virtues';
 import { questsSeed } from '@/data/quests-seed';
 import { Directory, Paths, File } from 'expo-file-system';
 import * as SQLite from 'expo-sqlite';
+import { clearAllJournalFiles } from '@/services/fileStorage';
 
 type JournalItem = {
   id: number;
@@ -393,10 +394,10 @@ export default function DevToolsScreen() {
     );
   };
 
-  const clearDatabase = async () => {
+  const hardReset = () => {
     Alert.alert(
-      'Reset Database',
-      'Are you sure you want to reset the entire local database? This will drop and recreate all tables.',
+      'Hard reset',
+      'Wipe database and delete all journal files? This cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -406,11 +407,16 @@ export default function DevToolsScreen() {
             try {
               setLoading(true);
               await resetDatabase();
+              await clearAllJournalFiles();
               await loadDbInfo();
               await loadJournals();
-              Alert.alert('Success', 'Database cleared');
+              await loadQuests();
+              await loadQuestHistory();
+              await loadFileSystemInfo();
+              await loadVirtueTotals();
+              Alert.alert('Done', 'Hard reset complete');
             } catch (error) {
-              Alert.alert('Error', `Failed to clear database: ${error}`);
+              Alert.alert('Error', `Reset failed: ${error}`);
             } finally {
               setLoading(false);
             }
@@ -814,8 +820,8 @@ export default function DevToolsScreen() {
             <TouchableOpacity style={styles.dangerButton} onPress={clearAllQuests}>
               <ThemedText style={styles.dangerButtonText}>Clear All Quests</ThemedText>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.dangerButton, styles.dangerButtonSpaced]} onPress={clearDatabase}>
-              <ThemedText style={styles.dangerButtonText}>Clear All Journals</ThemedText>
+            <TouchableOpacity style={[styles.dangerButton, styles.dangerButtonSpaced]} onPress={hardReset}>
+              <ThemedText style={styles.dangerButtonText}>Hard reset</ThemedText>
             </TouchableOpacity>
           </ThemedView>
         </Collapsible>

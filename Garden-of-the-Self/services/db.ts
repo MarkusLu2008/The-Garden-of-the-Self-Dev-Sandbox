@@ -18,6 +18,127 @@ let virtuesCache: VirtueRow[] | null = null;
 let virtueIdByName: Map<string, number> | null = null;
 let virtueIdBySlug: Map<string, number> | null = null;
 
+/** Create tables if they do not exist; does not drop or overwrite existing data. */
+async function initializeOrMigrateSchema(database: SQLite.SQLiteDatabase): Promise<void> {
+  await database.execAsync(`
+    PRAGMA foreign_keys = ON;
+
+    CREATE TABLE IF NOT EXISTS virtues (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL UNIQUE,
+      slug TEXT NOT NULL UNIQUE
+    );
+
+    CREATE TABLE IF NOT EXISTS journals (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      file_path TEXT NOT NULL UNIQUE,
+      prompt TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS journal_virtues (
+      journal_id INTEGER NOT NULL,
+      virtue_id INTEGER NOT NULL,
+      value INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (journal_id, virtue_id),
+      FOREIGN KEY (journal_id) REFERENCES journals(id) ON DELETE CASCADE,
+      FOREIGN KEY (virtue_id) REFERENCES virtues(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS quests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      completed INTEGER NOT NULL DEFAULT 0,
+      prompt TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS quest_virtues (
+      quest_id INTEGER NOT NULL,
+      virtue_id INTEGER NOT NULL,
+      value INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (quest_id, virtue_id),
+      FOREIGN KEY (quest_id) REFERENCES quests(id) ON DELETE CASCADE,
+      FOREIGN KEY (virtue_id) REFERENCES virtues(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS quest_history (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      quest_id INTEGER NOT NULL,
+      completed_at TEXT NOT NULL,
+      event TEXT NOT NULL DEFAULT 'completed',
+      FOREIGN KEY (quest_id) REFERENCES quests(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS quest_history_virtues (
+      history_id INTEGER NOT NULL,
+      virtue_id INTEGER NOT NULL,
+      value INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (history_id, virtue_id),
+      FOREIGN KEY (history_id) REFERENCES quest_history(id) ON DELETE CASCADE,
+      FOREIGN KEY (virtue_id) REFERENCES virtues(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS virtue_totals (
+      virtue_id INTEGER PRIMARY KEY,
+      total_value INTEGER NOT NULL DEFAULT 0,
+      FOREIGN KEY (virtue_id) REFERENCES virtues(id) ON DELETE CASCADE
+    );
+  `);
+}
+
+/** Seed virtues from constants only when the virtues table is empty. */
+async function seedVirtuesIfEmpty(database: SQLite.SQLiteDatabase): Promise<void> {
+  const count = await database.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM virtues');
+  if (count?.count !== 0) return;
+  const insertVirtueStmt = await database.prepareAsync(
+    'INSERT INTO virtues (name, slug) VALUES (?, ?)'
+  );
+  try {
+    for (const v of virtues) {
+      const slug = virtueToSlug(v);
+      await insertVirtueStmt.executeAsync([v, slug]);
+    }
+  } finally {
+    await insertVirtueStmt.finalizeAsync();
+  }
+}
+
+/** Seed planned quests only when the quests table is empty. */
+async function seedQuestsIfEmpty(database: SQLite.SQLiteDatabase): Promise<void> {
+  const questCount = await database.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM quests');
+  if (questCount?.count !== 0) return;
+  const virtueRows = await database.getAllAsync<VirtueRow>('SELECT id, name, slug FROM virtues');
+  const virtueIdByNameMap = new Map(virtueRows.map((v) => [v.name, v.id]));
+  const { questsSeed } = await import('@/data/quests-seed');
+  const insertQuestStmt = await database.prepareAsync(
+    `INSERT INTO quests (completed, prompt, created_at, updated_at)
+     VALUES (0, ?, datetime('now'), datetime('now'))`
+  );
+  const insertQuestVirtueStmt = await database.prepareAsync(
+    'INSERT INTO quest_virtues (quest_id, virtue_id, value) VALUES (?, ?, ?)'
+  );
+  try {
+    for (const q of questsSeed) {
+      await insertQuestStmt.executeAsync([q.prompt]);
+      const questRow = await database.getFirstAsync<{ id: number }>(
+        'SELECT id FROM quests WHERE rowid = last_insert_rowid()'
+      );
+      if (!questRow) continue;
+      for (const [name, value] of Object.entries(q.virtues)) {
+        if (!value) continue;
+        const virtueId = virtueIdByNameMap.get(name);
+        if (virtueId == null) continue;
+        await insertQuestVirtueStmt.executeAsync([questRow.id, virtueId, value]);
+      }
+    }
+  } finally {
+    await insertQuestStmt.finalizeAsync();
+    await insertQuestVirtueStmt.finalizeAsync();
+  }
+}
+
 async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
   if (db) {
     return db;
@@ -29,137 +150,12 @@ async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
 
   initPromise = (async () => {
     db = await SQLite.openDatabaseAsync('garden-of-the-self.db');
-
-    // Destructive reset to normalized schema – safe because data is local only
-    await db.execAsync(`
-      PRAGMA foreign_keys = OFF;
-      DROP TABLE IF EXISTS quest_history_virtues;
-      DROP TABLE IF EXISTS quest_history;
-      DROP TABLE IF EXISTS quest_virtues;
-      DROP TABLE IF EXISTS quests;
-      DROP TABLE IF EXISTS journal_virtues;
-      DROP TABLE IF EXISTS journals;
-      DROP TABLE IF EXISTS virtues;
-      DROP TABLE IF EXISTS virtue_totals;
-      PRAGMA foreign_keys = ON;
-    `);
-
-    await db.execAsync(`
-      PRAGMA foreign_keys = ON;
-
-      CREATE TABLE virtues (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL UNIQUE,
-        slug TEXT NOT NULL UNIQUE
-      );
-
-      CREATE TABLE journals (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        file_path TEXT NOT NULL UNIQUE,
-        prompt TEXT,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL
-      );
-
-      CREATE TABLE journal_virtues (
-        journal_id INTEGER NOT NULL,
-        virtue_id INTEGER NOT NULL,
-        value INTEGER NOT NULL DEFAULT 0,
-        PRIMARY KEY (journal_id, virtue_id),
-        FOREIGN KEY (journal_id) REFERENCES journals(id) ON DELETE CASCADE,
-        FOREIGN KEY (virtue_id) REFERENCES virtues(id) ON DELETE CASCADE
-      );
-
-      CREATE TABLE quests (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        completed INTEGER NOT NULL DEFAULT 0,
-        prompt TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL
-      );
-
-      CREATE TABLE quest_virtues (
-        quest_id INTEGER NOT NULL,
-        virtue_id INTEGER NOT NULL,
-        value INTEGER NOT NULL DEFAULT 0,
-        PRIMARY KEY (quest_id, virtue_id),
-        FOREIGN KEY (quest_id) REFERENCES quests(id) ON DELETE CASCADE,
-        FOREIGN KEY (virtue_id) REFERENCES virtues(id) ON DELETE CASCADE
-      );
-
-      CREATE TABLE quest_history (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        quest_id INTEGER NOT NULL,
-        completed_at TEXT NOT NULL,
-        event TEXT NOT NULL DEFAULT 'completed',
-        FOREIGN KEY (quest_id) REFERENCES quests(id) ON DELETE CASCADE
-      );
-
-      CREATE TABLE quest_history_virtues (
-        history_id INTEGER NOT NULL,
-        virtue_id INTEGER NOT NULL,
-        value INTEGER NOT NULL DEFAULT 0,
-        PRIMARY KEY (history_id, virtue_id),
-        FOREIGN KEY (history_id) REFERENCES quest_history(id) ON DELETE CASCADE,
-        FOREIGN KEY (virtue_id) REFERENCES virtues(id) ON DELETE CASCADE
-      );
-
-      CREATE TABLE virtue_totals (
-        virtue_id INTEGER PRIMARY KEY,
-        total_value INTEGER NOT NULL DEFAULT 0,
-        FOREIGN KEY (virtue_id) REFERENCES virtues(id) ON DELETE CASCADE
-      );
-    `);
-
-    // Seed virtues table from constants
-    const insertVirtueStmt = await db.prepareAsync(
-      'INSERT INTO virtues (name, slug) VALUES (?, ?)'
-    );
-    try {
-      for (const v of virtues) {
-        const slug = virtueToSlug(v);
-        await insertVirtueStmt.executeAsync([v, slug]);
-      }
-    } finally {
-      await insertVirtueStmt.finalizeAsync();
-    }
-
-    // Load virtue cache
+    await initializeOrMigrateSchema(db);
+    await seedVirtuesIfEmpty(db);
     virtuesCache = await db.getAllAsync<VirtueRow>('SELECT id, name, slug FROM virtues');
     virtueIdByName = new Map(virtuesCache.map((v) => [v.name, v.id]));
     virtueIdBySlug = new Map(virtuesCache.map((v) => [v.slug, v.id]));
-
-    // Seed planned quests on first run (or after destructive reset when quests table is empty)
-    const questCount = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM quests');
-    if (questCount?.count === 0) {
-      const { questsSeed } = await import('@/data/quests-seed');
-      const insertQuestStmt = await db.prepareAsync(
-        `INSERT INTO quests (completed, prompt, created_at, updated_at)
-         VALUES (0, ?, datetime('now'), datetime('now'))`
-      );
-      const insertQuestVirtueStmt = await db.prepareAsync(
-        'INSERT INTO quest_virtues (quest_id, virtue_id, value) VALUES (?, ?, ?)'
-      );
-      try {
-        for (const q of questsSeed) {
-          await insertQuestStmt.executeAsync([q.prompt]);
-          const questRow = await db.getFirstAsync<{ id: number }>(
-            'SELECT id FROM quests WHERE rowid = last_insert_rowid()'
-          );
-          if (!questRow) continue;
-          for (const [name, value] of Object.entries(q.virtues)) {
-            if (!value) continue;
-            const virtueId = virtueIdByName?.get(name);
-            if (virtueId == null) continue;
-            await insertQuestVirtueStmt.executeAsync([questRow.id, virtueId, value]);
-          }
-        }
-      } finally {
-        await insertQuestStmt.finalizeAsync();
-        await insertQuestVirtueStmt.finalizeAsync();
-      }
-    }
-
+    await seedQuestsIfEmpty(db);
     return db;
   })();
 
@@ -643,14 +639,27 @@ export function getQuestVirtueDisplayNames(
 
 // ---- Devtools helpers ----
 
+/** Destructive reset: drops all tables, recreates schema, and reseeds virtues and quests. */
 export async function resetDatabase() {
-  // Force re-init by clearing cached db/initPromise and calling getDatabase again
-  db = null;
-  initPromise = null;
-  virtuesCache = null;
-  virtueIdByName = null;
-  virtueIdBySlug = null;
-  await getDatabase();
+  const database = await getDatabase();
+  await database.execAsync(`
+    PRAGMA foreign_keys = OFF;
+    DROP TABLE IF EXISTS quest_history_virtues;
+    DROP TABLE IF EXISTS quest_history;
+    DROP TABLE IF EXISTS quest_virtues;
+    DROP TABLE IF EXISTS quests;
+    DROP TABLE IF EXISTS journal_virtues;
+    DROP TABLE IF EXISTS journals;
+    DROP TABLE IF EXISTS virtues;
+    DROP TABLE IF EXISTS virtue_totals;
+    PRAGMA foreign_keys = ON;
+  `);
+  await initializeOrMigrateSchema(database);
+  await seedVirtuesIfEmpty(database);
+  virtuesCache = await database.getAllAsync<VirtueRow>('SELECT id, name, slug FROM virtues');
+  virtueIdByName = new Map(virtuesCache.map((v) => [v.name, v.id]));
+  virtueIdBySlug = new Map(virtuesCache.map((v) => [v.slug, v.id]));
+  await seedQuestsIfEmpty(database);
 }
 
 export type TableName =

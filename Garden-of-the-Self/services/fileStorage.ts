@@ -48,4 +48,23 @@ async function deleteJournalFile(file_path: string): Promise<void> {
   }
 }
 
-export { ensureJournalDirectory, createJournalFile, readJournalFile, updateJournalFile, deleteJournalFile };
+/** Delete all journal HTML files in the journals directory (e.g. for full reset / ephemeral mode). */
+async function clearAllJournalFiles(): Promise<void> {
+  await ensureJournalDirectory();
+  try {
+    const entries = await journalDirectory.list();
+    for (const entry of entries) {
+      if (entry instanceof File) {
+        try {
+          await entry.delete();
+        } catch {
+          // ignore per-file errors
+        }
+      }
+    }
+  } catch {
+    // directory may not exist or be empty
+  }
+}
+
+export { ensureJournalDirectory, createJournalFile, readJournalFile, updateJournalFile, deleteJournalFile, clearAllJournalFiles };
