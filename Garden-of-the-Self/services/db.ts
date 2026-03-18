@@ -1,5 +1,6 @@
 import * as SQLite from 'expo-sqlite';
 import virtues from '@/constants/virtues';
+import { clampQuestRewards, gameConfig } from '@/constants/gameConfig';
 import { getTodayDateString } from '@/utils/dateUtils';
 
 /** Virtue display name -> slug (snake_case) */
@@ -106,7 +107,8 @@ async function initializeOrMigrateSchema(database: SQLite.SQLiteDatabase): Promi
         "UPDATE virtues SET unlocked_at = datetime('now') WHERE unlocked = 1"
       );
       await database.runAsync(
-        "UPDATE virtues SET unlocked_at = '1970-01-01 00:00:00' WHERE name = 'Curiosity'"
+        "UPDATE virtues SET unlocked_at = '1970-01-01 00:00:00' WHERE name = ?",
+        [gameConfig.virtues.defaultUnlockedVirtue]
       );
       await database.execAsync(`
         DROP TRIGGER IF EXISTS virtue_unlocked_on_totals_insert;
@@ -116,27 +118,29 @@ async function initializeOrMigrateSchema(database: SQLite.SQLiteDatabase): Promi
     }
   }
 
-  // Triggers: set virtues.unlocked_at on first time crossing total_value > 5
+  const unlocksAfterTotalPoints = gameConfig.unlocking.unlocksAfterTotalPoints;
+  // Triggers: set virtues.unlocked_at on first time crossing configured threshold.
   await database.execAsync(`
     DROP TRIGGER IF EXISTS virtue_unlocked_on_totals_insert;
     DROP TRIGGER IF EXISTS virtue_unlocked_on_totals_update;
     CREATE TRIGGER virtue_unlocked_on_totals_insert
     AFTER INSERT ON virtue_totals
-    WHEN NEW.total_value > 5
+    WHEN NEW.total_value > ${unlocksAfterTotalPoints}
     BEGIN
       UPDATE virtues SET unlocked_at = COALESCE(unlocked_at, datetime('now')) WHERE id = NEW.virtue_id;
     END;
     CREATE TRIGGER virtue_unlocked_on_totals_update
     AFTER UPDATE OF total_value ON virtue_totals
-    WHEN NEW.total_value > 5
+    WHEN NEW.total_value > ${unlocksAfterTotalPoints}
     BEGIN
       UPDATE virtues SET unlocked_at = COALESCE(unlocked_at, datetime('now')) WHERE id = NEW.virtue_id;
     END;
   `);
 
-  // Curiosity is unlocked by default (sorts first)
+  // Default configured virtue is unlocked by default (sorts first).
   await database.runAsync(
-    "UPDATE virtues SET unlocked_at = '1970-01-01 00:00:00' WHERE name = 'Curiosity'"
+    "UPDATE virtues SET unlocked_at = '1970-01-01 00:00:00' WHERE name = ?",
+    [gameConfig.virtues.defaultUnlockedVirtue]
   );
 }
 
@@ -173,12 +177,13 @@ async function seedQuestsIfEmpty(database: SQLite.SQLiteDatabase): Promise<void>
   );
   try {
     for (const q of questsSeed) {
+      const clampedVirtues = clampQuestRewards(q.virtues);
       await insertQuestStmt.executeAsync([q.prompt]);
       const questRow = await database.getFirstAsync<{ id: number }>(
         'SELECT id FROM quests WHERE rowid = last_insert_rowid()'
       );
       if (!questRow) continue;
-      for (const [name, value] of Object.entries(q.virtues)) {
+      for (const [name, value] of Object.entries(clampedVirtues)) {
         if (!value) continue;
         const virtueId = virtueIdByNameMap.get(name);
         if (virtueId == null) continue;
@@ -376,6 +381,7 @@ export type QuestHistoryRow = {
 
 async function insertQuest(prompt: string, virtueValues: QuestVirtueValues = {}) {
   const database = await getDatabase();
+  const clampedVirtues = clampQuestRewards(virtueValues);
   await database.runAsync(
     `INSERT INTO quests (completed, prompt, created_at, updated_at)
      VALUES (0, ?, datetime('now'), datetime('now'))`,
@@ -387,7 +393,7 @@ async function insertQuest(prompt: string, virtueValues: QuestVirtueValues = {})
   );
   if (!quest) return;
 
-  await upsertQuestVirtues(database, quest.id, virtueValues);
+  await upsertQuestVirtues(database, quest.id, clampedVirtues);
 }
 
 async function upsertQuestVirtues(
@@ -395,6 +401,7 @@ async function upsertQuestVirtues(
   questId: number,
   virtueValues: QuestVirtueValues
 ) {
+  const clampedVirtues = clampQuestRewards(virtueValues);
   await ensureVirtuesLoaded();
   await database.runAsync('DELETE FROM quest_virtues WHERE quest_id = ?', [questId]);
 
@@ -402,7 +409,7 @@ async function upsertQuestVirtues(
     'INSERT INTO quest_virtues (quest_id, virtue_id, value) VALUES (?, ?, ?)'
   );
   try {
-    for (const [name, value] of Object.entries(virtueValues)) {
+    for (const [name, value] of Object.entries(clampedVirtues)) {
       if (!value) continue;
       const virtueId = await getVirtueIdFromName(name);
       if (!virtueId) continue;
@@ -465,9 +472,10 @@ async function getAllQuests() {
 }
 
 /**
- * Return today's 3 daily quests. If quests have already been assigned for
- * today (via quest_history), return those. Otherwise pick up to 3 from the
- * full pool using a date-seeded shuffle and persist the assignment.
+ * Return today's configured daily quests. If quests have already been assigned
+ * for today (via quest_history), return those. Otherwise pick up to the
+ * configured count from the full pool using a date-seeded shuffle and persist
+ * the assignment.
  */
 async function getDailyQuests(dateString: string): Promise<QuestRow[]> {
   const database = await getDatabase();
@@ -488,12 +496,13 @@ async function getDailyQuests(dateString: string): Promise<QuestRow[]> {
     return result;
   }
 
-  // No assignments yet — pick up to 3
+  const dailyQuestCount = gameConfig.quests.dailyQuestCount;
+  // No assignments yet — pick up to configured daily quest count.
   const all = await getAllQuests();
   const pool = all.filter((q) => !q.completed);
   let picked: QuestRow[];
 
-  if (pool.length <= 3) {
+  if (pool.length <= dailyQuestCount) {
     picked = pool;
   } else {
     // Deterministic seed from date string
@@ -510,7 +519,7 @@ async function getDailyQuests(dateString: string): Promise<QuestRow[]> {
       const j = Math.floor(nextSeed() * (i + 1));
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
-    picked = shuffled.slice(0, 3);
+    picked = shuffled.slice(0, dailyQuestCount);
   }
 
   // Persist assignments
@@ -552,9 +561,10 @@ async function updateQuest(
       newVirtues[name] = value;
     }
   }
+  const clampedVirtues = clampQuestRewards(newVirtues);
 
   if (existing.completed === 0 && completed === 1) {
-    await recordQuestCompleted({ ...existing, virtues: newVirtues });
+    await recordQuestCompleted({ ...existing, virtues: clampedVirtues });
   } else if (existing.completed === 1 && completed === 0) {
     // If a previously completed quest is being marked as not completed, remove its history
     await deleteQuestHistoryForQuest(id);
@@ -567,7 +577,7 @@ async function updateQuest(
     [completed, prompt, id]
   );
 
-  await upsertQuestVirtues(database, id, newVirtues);
+  await upsertQuestVirtues(database, id, clampedVirtues);
 }
 
 async function deleteQuest(id: number) {
@@ -736,7 +746,10 @@ async function applyVirtueDeltas(
       );
     }
 
-    if (name === 'Curiosity' && newTotal > 5) {
+    if (
+      name === gameConfig.unlocking.decayGateVirtue &&
+      newTotal > gameConfig.unlocking.decayGateOpensAfterPoints
+    ) {
       await database.runAsync(
         'INSERT OR REPLACE INTO app_meta (key, value) VALUES (?, ?)',
         [APP_META_KEY_CURIOSITY_EVER_CROSSED_5, '1']
@@ -772,14 +785,14 @@ async function getVirtueTotals(): Promise<QuestVirtueValues> {
 export type VirtueTotalsAndUnlocked = {
   totals: QuestVirtueValues;
   unlockedAt: Record<string, string | null>;
-  /** True once Curiosity has crossed 5 points (enables decay and dead tree for Curiosity). */
+  /** Backward-compatible flag name: true once the decay-gated virtue has crossed its threshold once. */
   curiosityEverCrossed5: boolean;
 };
 
 const APP_META_KEY_LAST_VIRTUE_DECAY_DATE = 'last_virtue_decay_date';
 const APP_META_KEY_CURIOSITY_EVER_CROSSED_5 = 'curiosity_ever_crossed_5';
 
-/** Apply −1 point per calendar day for each unlocked virtue. Curiosity decays only after it has crossed 5 points once. Uses app date (respects devtools date override). */
+/** Apply −1 point per calendar day for each unlocked virtue. The configured decay-gated virtue decays only after crossing its configured threshold once. */
 async function applyDailyVirtueDecayIfNeeded(database: SQLite.SQLiteDatabase): Promise<void> {
   const today = getTodayDateString();
 
@@ -813,7 +826,7 @@ async function applyDailyVirtueDecayIfNeeded(database: SQLite.SQLiteDatabase): P
     'SELECT id, name FROM virtues WHERE unlocked_at IS NOT NULL'
   );
   const virtuesToDecay = unlockedRows.filter(
-    (v) => v.name !== 'Curiosity' || curiosityEverCrossed5
+    (v) => v.name !== gameConfig.unlocking.decayGateVirtue || curiosityEverCrossed5
   );
 
   for (const v of virtuesToDecay) {
@@ -909,7 +922,8 @@ export async function resetDatabase() {
   await initializeOrMigrateSchema(database);
   await seedVirtuesIfEmpty(database);
   await database.runAsync(
-    "UPDATE virtues SET unlocked_at = '1970-01-01 00:00:00' WHERE name = 'Curiosity'"
+    "UPDATE virtues SET unlocked_at = '1970-01-01 00:00:00' WHERE name = ?",
+    [gameConfig.virtues.defaultUnlockedVirtue]
   );
   virtuesCache = await database.getAllAsync<VirtueRow>('SELECT id, name, slug, unlocked_at FROM virtues');
   virtueIdByName = new Map(virtuesCache.map((v) => [v.name, v.id]));

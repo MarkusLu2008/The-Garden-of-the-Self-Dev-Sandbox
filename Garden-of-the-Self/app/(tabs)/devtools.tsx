@@ -26,7 +26,7 @@ import {
 } from '@/services/db';
 import virtues from '@/constants/virtues';
 import { questsSeed } from '@/data/quests-seed';
-import { VIRTUE_SEED_UNLOCK_PRICING } from '@/constants/virtueSeedUnlockPricing';
+import { gameConfig } from '@/constants/gameConfig';
 import {
   getVirtueSeedUnlockDebugRows,
   type VirtueSeedUnlockDebugRow,
@@ -803,8 +803,8 @@ export default function DevToolsScreen() {
             </ThemedText>
             <ThemedText style={styles.infoRow}>
               <ThemedText type="defaultSemiBold">Config: </ThemedText>
-              basePriceDistance1={VIRTUE_SEED_UNLOCK_PRICING.basePriceDistance1}, multiplier=
-              {VIRTUE_SEED_UNLOCK_PRICING.multiplier}
+              basePriceDistance1={gameConfig.pricing.basePriceDistance1}, multiplier=
+              {gameConfig.pricing.multiplier}
             </ThemedText>
             <TouchableOpacity style={styles.button} onPress={loadVirtueTotals}>
               <ThemedText style={styles.buttonText}>Recompute seed unlock prices</ThemedText>

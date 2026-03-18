@@ -1,5 +1,6 @@
 import { ThemedText } from '@/components/themed-text';
 import virtues from '@/constants/virtues';
+import { clampQuestReward, gameConfig } from '@/constants/gameConfig';
 import { useUnistyles } from '@/lib/unistyles-compat';
 import { insertQuest } from '@/services/db';
 import { borderRadius, journalStyles, spacing } from '@/utils/styles';
@@ -36,9 +37,22 @@ export default function CreateQuestScreen() {
       return;
     }
     const virtueValues: Record<string, number> = {};
-    if (primaryVirtue) virtueValues[primaryVirtue] = 3;
-    if (secondaryVirtue) virtueValues[secondaryVirtue] = Math.max(virtueValues[secondaryVirtue] ?? 0, 2);
-    if (tertiaryVirtue) virtueValues[tertiaryVirtue] = Math.max(virtueValues[tertiaryVirtue] ?? 0, 1);
+    const primaryReward = clampQuestReward(gameConfig.quests.rewards.primary);
+    const secondaryReward = clampQuestReward(gameConfig.quests.rewards.secondary);
+    const tertiaryReward = clampQuestReward(gameConfig.quests.rewards.tertiary);
+    if (primaryVirtue) virtueValues[primaryVirtue] = primaryReward;
+    if (secondaryVirtue) {
+      virtueValues[secondaryVirtue] = Math.max(
+        virtueValues[secondaryVirtue] ?? 0,
+        secondaryReward
+      );
+    }
+    if (tertiaryVirtue) {
+      virtueValues[tertiaryVirtue] = Math.max(
+        virtueValues[tertiaryVirtue] ?? 0,
+        tertiaryReward
+      );
+    }
     try {
       setIsCreating(true);
       await insertQuest(trimmed, virtueValues);

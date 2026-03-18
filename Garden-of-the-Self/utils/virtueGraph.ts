@@ -1,8 +1,8 @@
 import virtues from '@/constants/virtues';
 import {
-  VIRTUE_SEED_UNLOCK_PRICING,
+  gameConfig,
   type VirtueSeedUnlockPricingConfig,
-} from '@/constants/virtueSeedUnlockPricing';
+} from '@/constants/gameConfig';
 
 type GraphEdge = [string, string];
 
@@ -102,7 +102,7 @@ export function getClosestUnlockedVirtueAndDistance(
 
 export function getUnlockPriceFromDistance(
   distance: number,
-  config: VirtueSeedUnlockPricingConfig = VIRTUE_SEED_UNLOCK_PRICING
+  config: VirtueSeedUnlockPricingConfig = gameConfig.pricing
 ): number {
   const rawPrice = config.basePriceDistance1 * Math.pow(config.multiplier, Math.max(0, distance - 1));
   let price = Math.round(rawPrice);

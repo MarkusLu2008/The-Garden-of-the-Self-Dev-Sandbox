@@ -1,8 +1,9 @@
 import type { JournalVirtueValues } from '@/services/db';
+import { gameConfig } from '@/constants/gameConfig';
 
 export function distributeJournalVirtuePoints(
   selectedVirtues: string[],
-  totalPoints = 5
+  totalPoints = gameConfig.journal.totalPointsPerEntry
 ): JournalVirtueValues {
   const result: JournalVirtueValues = {};
   const n = selectedVirtues.length;

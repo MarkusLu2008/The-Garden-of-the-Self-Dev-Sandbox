@@ -1,22 +1,11 @@
-export type VirtueSeedUnlockPricingConfig = {
-  /** Price at graph distance 1. */
-  basePriceDistance1: number;
-  /** Exponential growth multiplier per extra distance step. */
-  multiplier: number;
-  /** Optional clamp after rounding. */
-  minPrice?: number;
-  /** Optional clamp after rounding. */
-  maxPrice?: number;
-};
+import {
+  gameConfig,
+  type VirtueSeedUnlockPricingConfig,
+} from '@/constants/gameConfig';
 
-/**
- * Tweak these values to tune seed unlock progression.
- * Unlock price formula (distance >= 1):
- *   round(basePriceDistance1 * multiplier^(distance - 1))
- */
-export const VIRTUE_SEED_UNLOCK_PRICING: VirtueSeedUnlockPricingConfig = {
-  basePriceDistance1: 5,
-  multiplier: 1.75,
-  minPrice: 1,
-};
+export type { VirtueSeedUnlockPricingConfig };
+
+/** Backward-compatible export; source of truth is gameConfig.pricing. */
+export const VIRTUE_SEED_UNLOCK_PRICING: VirtueSeedUnlockPricingConfig =
+  gameConfig.pricing;
 

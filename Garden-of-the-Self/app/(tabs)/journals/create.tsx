@@ -19,6 +19,7 @@ import { createJournal } from '@/services/journalManager';
 import { generateJournalId } from '@/utils/dateUtils';
 import { journalStyles, spacing } from '@/utils/styles';
 import virtues from '@/constants/virtues';
+import { gameConfig } from '@/constants/gameConfig';
 import { distributeJournalVirtuePoints } from '@/utils/virtuePoints';
 
 export default function CreateJournalModal() {
@@ -35,7 +36,7 @@ export default function CreateJournalModal() {
       if (isSelected) {
         return current.filter((v) => v !== virtue);
       }
-      if (current.length >= 5) {
+      if (current.length >= gameConfig.journal.maxVirtuesPerEntry) {
         return current;
       }
       return [...current, virtue];
@@ -55,7 +56,10 @@ export default function CreateJournalModal() {
       // Generate a unique journal ID (format: YYYY-MM-DD-HHMMSS)
       const journalId = generateJournalId();
 
-      const virtueValues = distributeJournalVirtuePoints(selectedVirtues, 5);
+      const virtueValues = distributeJournalVirtuePoints(
+        selectedVirtues,
+        gameConfig.journal.totalPointsPerEntry
+      );
 
       await createJournal(journalId, intention, virtueValues);
       
@@ -74,7 +78,7 @@ export default function CreateJournalModal() {
 
   const hasVirtueSelection = selectedVirtues.length > 0;
   const previewValues = hasVirtueSelection
-    ? distributeJournalVirtuePoints(selectedVirtues, 5)
+    ? distributeJournalVirtuePoints(selectedVirtues, gameConfig.journal.totalPointsPerEntry)
     : null;
 
   return (
@@ -90,7 +94,9 @@ export default function CreateJournalModal() {
             Create New Journal
           </ThemedText>
           <ThemedText style={styles.description}>
-            Set your intention and choose which virtues this entry will cultivate. Five points will be shared across your selected virtues.
+            Set your intention and choose which virtues this entry will cultivate.{' '}
+            {gameConfig.journal.totalPointsPerEntry} points will be shared across your
+            selected virtues.
           </ThemedText>
 
           <ThemedView style={styles.section}>
@@ -115,7 +121,9 @@ export default function CreateJournalModal() {
               Virtues
             </ThemedText>
             <ThemedText style={styles.helperText}>
-              Select up to 5 virtues. A total of 5 points will be distributed as evenly as possible between your selections.
+              Select up to {gameConfig.journal.maxVirtuesPerEntry} virtues. A total of{' '}
+              {gameConfig.journal.totalPointsPerEntry} points will be distributed as evenly
+              as possible between your selections.
             </ThemedText>
             <View style={styles.virtuesContainer}>
               {virtues.map((virtue) => {
@@ -190,7 +198,7 @@ export default function CreateJournalModal() {
   );
 }
 
-const styles = StyleSheet.create((theme) => ({
+const styles = (StyleSheet as any).create((theme: any) => ({
   scrollContent: {
     flexGrow: 1,
   },

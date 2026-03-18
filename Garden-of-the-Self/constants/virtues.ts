@@ -1,16 +1,5 @@
-const virtues = [
-     "Courage",
-     "Temperance", 
-     "Patience", 
-     "Kindness", 
-     "Proper Ambition", 
-     "Modesty", 
-     "Empathy", 
-     "Resilience", 
-     "Curiosity", 
-     "Respectfulness", 
-     "Tolerance", 
-     "Collaboration",
-     "Discipline"];
+import { gameConfig } from '@/constants/gameConfig';
+
+const virtues = gameConfig.virtues.list;
 
 export default virtues;

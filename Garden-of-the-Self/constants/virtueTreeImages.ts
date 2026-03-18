@@ -1,5 +1,6 @@
 // Tree image assets per virtue. Required from project root so Metro resolves paths.
-// Each virtue advances one stage every 5 points; stage index = min(floor(score/5), images.length - 1).
+// Each virtue advances one stage at configured point intervals.
+import { gameConfig } from '@/constants/gameConfig';
 
 const ambition = [
   require('../assets/images/garden-of-the-self-trees-ambition/garden-of-the-self-trees-ambition-1.png'),
@@ -141,9 +142,26 @@ export const VIRTUE_TREE_IMAGES: Record<string, readonly number[]> = {
   Temperance: temperance,
 };
 
-export const POINTS_PER_TREE_STAGE = 5;
+export const POINTS_PER_TREE_STAGE = gameConfig.trees.pointsPerTreeStage;
+export const SEED_TO_PLANT_POINTS = gameConfig.trees.seedToPlantPoints;
+export const TREE_GROWTH_MULTIPLIER = gameConfig.trees.growthMultiplier;
 
-/** Stage index for tree images: one stage every 5 points, capped at last image. */
+/**
+ * Stage index for tree images with cumulative exponential step costs.
+ * Example step costs with seedToPlantPoints=5 and growthMultiplier=2: 5, 10, 20, ...
+ */
 export function treeScoreToStage(score: number, imageCount: number): number {
-  return Math.min(Math.floor(score / POINTS_PER_TREE_STAGE), imageCount - 1);
+  if (score <= 0 || imageCount <= 1) return 0;
+
+  let stage = 0;
+  let cumulativeRequired = 0;
+  for (let nextStage = 1; nextStage < imageCount; nextStage += 1) {
+    const rawStepCost = SEED_TO_PLANT_POINTS * Math.pow(TREE_GROWTH_MULTIPLIER, nextStage - 1);
+    const stepCost = Math.max(1, Math.round(rawStepCost));
+    cumulativeRequired += stepCost;
+    if (score < cumulativeRequired) break;
+    stage = nextStage;
+  }
+
+  return stage;
 }

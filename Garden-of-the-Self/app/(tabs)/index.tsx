@@ -26,11 +26,12 @@ import { Fonts } from '@/constants/theme';
 import { getVirtueTotalsAndUnlocked } from '@/services/db';
 import { useFocusEffect } from 'expo-router';
 import virtues from '@/constants/virtues';
+import { gameConfig } from '@/constants/gameConfig';
 import { VIRTUE_TREE_IMAGES, treeScoreToStage } from '@/constants/virtueTreeImages';
 
 const LINES = 10;
 const WIDTH = 20;
-const STAGE_THRESHOLD = 25;
+const STAGE_THRESHOLD = gameConfig.trees.asciiStageThreshold;
 
 // Pine: 5 stages from seed → full tree (tip and trunk centered)
 const PINE_STAGES: string[] = [
@@ -121,8 +122,8 @@ function VirtueGardenPage({
   const isDeadTree =
     hasTreeImages &&
     isUnlocked &&
-    score < 5 &&
-    (virtueName !== 'Curiosity' || curiosityEverCrossed5);
+    score < gameConfig.unlocking.unlocksAfterTotalPoints &&
+    (virtueName !== gameConfig.unlocking.decayGateVirtue || curiosityEverCrossed5);
   const lastLivingStage = Math.max(0, treeImages.length - 2);
   const treeStage = hasTreeImages
     ? isDeadTree
