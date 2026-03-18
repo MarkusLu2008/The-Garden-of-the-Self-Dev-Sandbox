@@ -16,7 +16,7 @@
         "LSSupportsOpeningDocumentsInPlace": true,
         "ITSAppUsesNonExemptEncryption": false
       },
-      "bundleIdentifier": "com.markylu.Garden-of-the-Self"
+      "bundleIdentifier": "com.markylu.gardenoftheself"
     },
     "android": {
       "adaptiveIcon": {
