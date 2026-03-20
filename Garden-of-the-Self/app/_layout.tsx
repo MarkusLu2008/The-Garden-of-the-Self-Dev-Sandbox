@@ -1,9 +1,11 @@
+import { useEffect } from 'react';
 import { ThemeProvider, type Theme } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { UnistylesProvider, UnistylesRuntime, useUnistyles } from '@/lib/unistyles-compat';
 import { Colors } from '@/constants/theme';
 import { DateOverrideProvider } from '@/contexts/DateOverrideContext';
+import { OnboardingProvider, useOnboarding } from '@/contexts/OnboardingContext';
 import 'react-native-reanimated';
 
 import '@/lib/unistyles';
@@ -51,13 +53,29 @@ export const unstable_settings = {
 function RootLayoutContent() {
   const { theme } = useUnistyles();
   const themeName = UnistylesRuntime.themeName;
+  const router = useRouter();
+  const { hasCompletedOnboarding } = useOnboarding();
 
   UnistylesRuntime.setRootViewBackgroundColor(theme.colors.background);
+
+  useEffect(() => {
+    if (hasCompletedOnboarding === false) {
+      router.push('/onboarding' as any);
+    }
+  }, [hasCompletedOnboarding, router]);
 
   return (
     <ThemeProvider value={themeName === 'dark' ? DarkNavTheme : LightNavTheme}>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="onboarding"
+          options={{
+            presentation: 'modal',
+            headerShown: false,
+            gestureEnabled: false,
+          }}
+        />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
@@ -67,9 +85,11 @@ function RootLayoutContent() {
 export default function RootLayout() {
   return (
     <UnistylesProvider>
-      <DateOverrideProvider>
-        <RootLayoutContent />
-      </DateOverrideProvider>
+      <OnboardingProvider>
+        <DateOverrideProvider>
+          <RootLayoutContent />
+        </DateOverrideProvider>
+      </OnboardingProvider>
     </UnistylesProvider>
   );
 }

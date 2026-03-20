@@ -1,12 +1,15 @@
+import { View, TouchableOpacity } from 'react-native';
 import { useUnistyles } from '@/lib/unistyles-compat';
 import { BottomTabBar, type BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { gameConfig } from '@/constants/gameConfig';
 
 function FilteredTabBar(props: BottomTabBarProps) {
+  const { theme } = useUnistyles();
+  const router = useRouter();
   const routes = gameConfig.devtools.show
     ? props.state.routes
     : props.state.routes.filter((r) => r.name !== 'devtools');
@@ -17,7 +20,27 @@ function FilteredTabBar(props: BottomTabBarProps) {
     routes,
     index: index >= 0 ? index : 0,
   };
-  return <BottomTabBar {...props} state={filteredState} />;
+  return (
+    <View>
+      <BottomTabBar {...props} state={filteredState} />
+      <TouchableOpacity
+        style={{
+          position: 'absolute',
+          right: 16,
+          top: -44,
+          width: 32,
+          height: 32,
+          borderRadius: 16,
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+        onPress={() => router.push('/onboarding' as any)}
+        activeOpacity={0.7}
+      >
+        <IconSymbol name="questionmark.circle" size={24} color={theme.colors.tint} />
+      </TouchableOpacity>
+    </View>
+  );
 }
 
 export default function TabLayout() {

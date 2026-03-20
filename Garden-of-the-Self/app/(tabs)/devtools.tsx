@@ -8,6 +8,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Collapsible } from '@/components/ui/collapsible';
 import { useDateOverride } from '@/contexts/DateOverrideContext';
+import { useOnboarding } from '@/contexts/OnboardingContext';
 import { getTodayDateString, formatDateForDisplay } from '@/utils/dateUtils';
 import { getAllJournals, createJournal, updateJournal } from '@/services/journalManager';
 import {
@@ -48,6 +49,7 @@ type JournalItem = {
 export default function DevToolsScreen() {
   const { theme } = useUnistyles();
   const { overrideDate, setOverrideDate } = useDateOverride();
+  const { hasCompletedOnboarding, resetOnboarding } = useOnboarding();
   const [journals, setJournals] = useState<JournalItem[]>([]);
   const [quests, setQuests] = useState<QuestRow[]>([]);
   const [questHistory, setQuestHistory] = useState<QuestHistoryRow[]>([]);
@@ -516,6 +518,21 @@ export default function DevToolsScreen() {
                 <ThemedText style={styles.dangerButtonText}>Reset to Real Date</ThemedText>
               </TouchableOpacity>
             )}
+          </ThemedView>
+        </Collapsible>
+
+        <Collapsible title="Onboarding">
+          <ThemedView style={styles.section}>
+            <ThemedText style={styles.infoRow}>
+              <ThemedText type="defaultSemiBold">Status: </ThemedText>
+              {hasCompletedOnboarding ? 'Completed' : 'Not completed'}
+            </ThemedText>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={resetOnboarding}
+            >
+              <ThemedText style={styles.buttonText}>Reset Onboarding</ThemedText>
+            </TouchableOpacity>
           </ThemedView>
         </Collapsible>
 

@@ -127,7 +127,7 @@ export const gameConfig: GameConfig = {
     growthMultiplier: 2,
   },
   devtools: {
-    show: false,
+    show: __DEV__,
   }
 };
 
