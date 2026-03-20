@@ -4,6 +4,8 @@ import {
   updateJournal as updateJournalInDb,
   deleteJournal as deleteJournalFromDb,
   getAllJournals as getAllJournalsFromDb,
+  canAwardJournalPointsForDate as canAwardJournalPointsForDateFromDb,
+  canAwardJournalPointsToday as canAwardJournalPointsTodayFromDb,
   type JournalVirtueValues,
 } from './db';
 import { createJournalFile, readJournalFile, updateJournalFile, deleteJournalFile } from './fileStorage';
@@ -40,4 +42,21 @@ async function getAllJournals() {
   return await getAllJournalsFromDb();
 }
 
-export { createJournal, getJournalInfo, getJournalContent, updateJournal, deleteJournal, getAllJournals };
+async function canAwardJournalPointsForDate(dateKey: string) {
+  return await canAwardJournalPointsForDateFromDb(dateKey);
+}
+
+async function canAwardJournalPointsToday() {
+  return await canAwardJournalPointsTodayFromDb();
+}
+
+export {
+  createJournal,
+  getJournalInfo,
+  getJournalContent,
+  updateJournal,
+  deleteJournal,
+  getAllJournals,
+  canAwardJournalPointsForDate,
+  canAwardJournalPointsToday,
+};

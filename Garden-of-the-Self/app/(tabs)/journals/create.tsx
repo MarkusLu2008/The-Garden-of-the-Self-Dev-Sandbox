@@ -1,5 +1,5 @@
 import '@/lib/unistyles';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   TouchableOpacity,
   View,
@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { createJournal } from '@/services/journalManager';
+import { canAwardJournalPointsToday, createJournal } from '@/services/journalManager';
 import { generateJournalId } from '@/utils/dateUtils';
 import { journalStyles, spacing } from '@/utils/styles';
 import virtues from '@/constants/virtues';
@@ -29,6 +29,28 @@ export default function CreateJournalModal() {
   const [intention, setIntention] = useState('');
   const [selectedVirtues, setSelectedVirtues] = useState<string[]>([]);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [canPreviewPoints, setCanPreviewPoints] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadCanPreviewPoints = async () => {
+      try {
+        const canAward = await canAwardJournalPointsToday();
+        if (isMounted) {
+          setCanPreviewPoints(canAward);
+        }
+      } catch (error) {
+        console.error('Failed to check journal point eligibility:', error);
+      }
+    };
+
+    loadCanPreviewPoints();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
   const toggleVirtue = (virtue: string) => {
     setValidationError(null);
     setSelectedVirtues((current) => {
@@ -95,8 +117,8 @@ export default function CreateJournalModal() {
           </ThemedText>
           <ThemedText style={styles.description}>
             Set your intention and choose which virtues this entry will cultivate.{' '}
-            {gameConfig.journal.totalPointsPerEntry} points will be shared across your
-            selected virtues.
+            Your first journal entry each day awards {gameConfig.journal.totalPointsPerEntry}{' '}
+            points shared across your selected virtues.
           </ThemedText>
 
           <ThemedView style={styles.section}>
@@ -122,8 +144,8 @@ export default function CreateJournalModal() {
             </ThemedText>
             <ThemedText style={styles.helperText}>
               Select up to {gameConfig.journal.maxVirtuesPerEntry} virtues. A total of{' '}
-              {gameConfig.journal.totalPointsPerEntry} points will be distributed as evenly
-              as possible between your selections.
+              {gameConfig.journal.totalPointsPerEntry} points from your first journal entry
+              each day will be distributed as evenly as possible between your selections.
             </ThemedText>
             <View style={styles.virtuesContainer}>
               {virtues.map((virtue) => {
@@ -150,9 +172,9 @@ export default function CreateJournalModal() {
                 );
               })}
             </View>
-            {hasVirtueSelection && previewValues && (
+            {hasVirtueSelection && previewValues && canPreviewPoints === true && (
               <ThemedText style={styles.previewText}>
-                Points preview:{' '}
+                First-entry daily points preview:{' '}
                 {selectedVirtues
                   .map((name) => `${name}: ${previewValues[name] ?? 0}`)
                   .join(', ')}

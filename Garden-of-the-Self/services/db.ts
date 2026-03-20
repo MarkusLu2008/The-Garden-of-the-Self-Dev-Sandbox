@@ -248,6 +248,54 @@ type JournalRow = {
   updated_at: string;
 };
 
+function extractJournalDateKey(filePath: string): string {
+  const match = filePath.match(/^(\d{4}-\d{2}-\d{2})/);
+  return match?.[1] ?? getTodayDateString();
+}
+
+function hasPositiveVirtueValues(virtueValues: JournalVirtueValues): boolean {
+  return Object.values(virtueValues).some((value) => value > 0);
+}
+
+async function applyJournalPointsIfEligible(
+  database: SQLite.SQLiteDatabase,
+  filePath: string,
+  virtueValues: JournalVirtueValues
+) {
+  if (!hasPositiveVirtueValues(virtueValues)) {
+    return;
+  }
+
+  const journalDateKey = extractJournalDateKey(filePath);
+  const lastAwardedDateRow = await database.getFirstAsync<{ value: string | null }>(
+    'SELECT value FROM app_meta WHERE key = ?',
+    [APP_META_KEY_LAST_JOURNAL_POINTS_AWARDED_DATE]
+  );
+
+  if (lastAwardedDateRow?.value === journalDateKey) {
+    return;
+  }
+
+  await applyVirtueDeltas(database, virtueValues, +1);
+  await database.runAsync(
+    'INSERT OR REPLACE INTO app_meta (key, value) VALUES (?, ?)',
+    [APP_META_KEY_LAST_JOURNAL_POINTS_AWARDED_DATE, journalDateKey]
+  );
+}
+
+async function canAwardJournalPointsForDate(dateKey: string): Promise<boolean> {
+  const database = await getDatabase();
+  const lastAwardedDateRow = await database.getFirstAsync<{ value: string | null }>(
+    'SELECT value FROM app_meta WHERE key = ?',
+    [APP_META_KEY_LAST_JOURNAL_POINTS_AWARDED_DATE]
+  );
+  return lastAwardedDateRow?.value !== dateKey;
+}
+
+async function canAwardJournalPointsToday(): Promise<boolean> {
+  return canAwardJournalPointsForDate(getTodayDateString());
+}
+
 async function insertJournal(file_path: string, prompt: string, virtueValues: JournalVirtueValues) {
   const database = await getDatabase();
   await database.runAsync(
@@ -263,7 +311,7 @@ async function insertJournal(file_path: string, prompt: string, virtueValues: Jo
   if (!journal) return;
 
   await upsertJournalVirtues(database, journal.id, virtueValues);
-  await applyVirtueDeltas(database, virtueValues, +1);
+  await applyJournalPointsIfEligible(database, file_path, virtueValues);
 }
 
 async function upsertJournalVirtues(
@@ -870,6 +918,7 @@ export type VirtueTotalsAndUnlocked = {
 
 const APP_META_KEY_LAST_VIRTUE_DECAY_DATE = 'last_virtue_decay_date';
 const APP_META_KEY_CURIOSITY_EVER_CROSSED_5 = 'curiosity_ever_crossed_5';
+const APP_META_KEY_LAST_JOURNAL_POINTS_AWARDED_DATE = 'last_journal_points_awarded_date';
 
 /** Apply −1 point per calendar day for each unlocked virtue. The configured decay-gated virtue decays only after crossing its configured threshold once. */
 async function applyDailyVirtueDecayIfNeeded(database: SQLite.SQLiteDatabase): Promise<void> {
@@ -1025,6 +1074,14 @@ export async function getAllFromTable(table: TableName): Promise<any[]> {
   return database.getAllAsync<any>(`SELECT * FROM ${table}`);
 }
 
-export { insertJournal, getJournal, getAllJournals, updateJournal, deleteJournal };
+export {
+  insertJournal,
+  getJournal,
+  getAllJournals,
+  updateJournal,
+  deleteJournal,
+  canAwardJournalPointsForDate,
+  canAwardJournalPointsToday,
+};
 export { insertQuest, getQuest, getAllQuests, getDailyQuests, updateQuest, deleteQuest, deleteAllQuests };
 export { getAllQuestHistory, getQuestHistory, getVirtueTotals };
