@@ -28,6 +28,7 @@ import { useFocusEffect } from 'expo-router';
 import virtues from '@/constants/virtues';
 import { gameConfig } from '@/constants/gameConfig';
 import { VIRTUE_TREE_IMAGES, treeScoreToStage } from '@/constants/virtueTreeImages';
+import { getSeedShownThresholdFromUnlockedCount } from '@/utils/virtueGraph';
 
 const LINES = 10;
 const WIDTH = 20;
@@ -199,11 +200,19 @@ export default function GardenScreen() {
   const totals = virtueData?.totals ?? {};
   const unlockedAt = virtueData?.unlockedAt ?? {};
   const curiosityEverCrossed5 = virtueData?.curiosityEverCrossed5 ?? false;
+  const unlockedVirtueCount = virtues.reduce(
+    (count, name) => count + (unlockedAt[name] != null ? 1 : 0),
+    0
+  );
+  const seedShownThreshold = getSeedShownThresholdFromUnlockedCount(unlockedVirtueCount);
   const visibleVirtues =
     virtueData == null
       ? []
       : virtues
-          .filter((name) => unlockedAt[name] != null || (totals[name] ?? 0) > 0)
+          .filter((name) => {
+            if (unlockedAt[name] != null) return true;
+            return (totals[name] ?? 0) >= seedShownThreshold;
+          })
           .sort((a, b) => {
             const ta = unlockedAt[a];
             const tb = unlockedAt[b];

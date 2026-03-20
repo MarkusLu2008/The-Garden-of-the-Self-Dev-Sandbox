@@ -27,6 +27,21 @@ export type VirtueSeedUnlockPricingConfig = {
   maxPrice?: number;
 };
 
+export type VirtueSeedShownConfig = {
+  /**
+   * Formula: threshold = baseThreshold * unlockedCount^unlockedCountExponent
+   * unlockedCount is first clamped to at least minUnlockedCount.
+   */
+  baseThreshold: number;
+  unlockedCountExponent: number;
+  /** Lower bound for unlockedCount before exponent formula is applied. */
+  minUnlockedCount: number;
+  /** Lower bound for final computed threshold after rounding. */
+  minThreshold: number;
+  /** Rounding method applied to the raw threshold. */
+  rounding: 'round' | 'ceil' | 'floor';
+};
+
 export type GameConfig = {
   virtues: {
     list: string[];
@@ -55,6 +70,7 @@ export type GameConfig = {
     maxVirtuesPerEntry: number;
   };
   pricing: VirtueSeedUnlockPricingConfig;
+  seedShown: VirtueSeedShownConfig;
   trees: {
     pointsPerTreeStage: number;
     asciiStageThreshold: number;
@@ -93,6 +109,13 @@ export const gameConfig: GameConfig = {
     basePriceDistance1: 10,
     multiplier: 3,
     minPrice: 1,
+  },
+  seedShown: {
+    baseThreshold: 5,
+    unlockedCountExponent: 1.2,
+    minUnlockedCount: 1,
+    minThreshold: 1,
+    rounding: 'round',
   },
   trees: {
     pointsPerTreeStage: 10,

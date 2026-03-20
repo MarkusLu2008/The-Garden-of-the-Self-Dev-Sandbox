@@ -2,6 +2,7 @@ import virtues from '@/constants/virtues';
 import {
   gameConfig,
   type VirtueSeedUnlockPricingConfig,
+  type VirtueSeedShownConfig,
 } from '@/constants/gameConfig';
 
 type GraphEdge = [string, string];
@@ -113,6 +114,25 @@ export function getUnlockPriceFromDistance(
     price = Math.min(config.maxPrice, price);
   }
   return price;
+}
+
+export function getSeedShownThresholdFromUnlockedCount(
+  unlockedCount: number,
+  config: VirtueSeedShownConfig = gameConfig.seedShown
+): number {
+  const normalizedUnlockedCount = Number.isFinite(unlockedCount)
+    ? Math.max(config.minUnlockedCount, Math.floor(unlockedCount))
+    : config.minUnlockedCount;
+  const baseThreshold = Number.isFinite(config.baseThreshold) ? config.baseThreshold : config.minThreshold;
+  const exponent = Number.isFinite(config.unlockedCountExponent) ? config.unlockedCountExponent : 1;
+  const rawThreshold = baseThreshold * Math.pow(normalizedUnlockedCount, exponent);
+  const roundedThreshold =
+    config.rounding === 'ceil'
+      ? Math.ceil(rawThreshold)
+      : config.rounding === 'floor'
+        ? Math.floor(rawThreshold)
+        : Math.round(rawThreshold);
+  return Math.max(config.minThreshold, roundedThreshold);
 }
 
 export type VirtueSeedUnlockDebugRow = {

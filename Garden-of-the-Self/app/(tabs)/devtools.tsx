@@ -29,6 +29,7 @@ import { questsSeed } from '@/data/quests-seed';
 import { gameConfig } from '@/constants/gameConfig';
 import {
   getVirtueSeedUnlockDebugRows,
+  getSeedShownThresholdFromUnlockedCount,
   type VirtueSeedUnlockDebugRow,
 } from '@/utils/virtueGraph';
 import { Directory, Paths, File } from 'expo-file-system';
@@ -855,6 +856,70 @@ export default function DevToolsScreen() {
                 );
               })}
             </ThemedView>
+          </ThemedView>
+        </Collapsible>
+
+        <Collapsible title="Seed Shown Threshold">
+          <ThemedView style={styles.section}>
+            <ThemedText style={styles.infoRow}>
+              Minimum points a locked virtue needs before its seed appears in the garden. Scales with total unlocked virtue count.
+            </ThemedText>
+            <ThemedText style={styles.infoRow}>
+              <ThemedText type="defaultSemiBold">Formula: </ThemedText>
+              {gameConfig.seedShown.rounding}(baseThreshold * unlockedCount^unlockedCountExponent)
+            </ThemedText>
+            <ThemedText style={styles.infoRow}>
+              <ThemedText type="defaultSemiBold">Config: </ThemedText>
+              baseThreshold={gameConfig.seedShown.baseThreshold}, exponent={gameConfig.seedShown.unlockedCountExponent}, minUnlockedCount={gameConfig.seedShown.minUnlockedCount}, minThreshold={gameConfig.seedShown.minThreshold}, rounding={gameConfig.seedShown.rounding}
+            </ThemedText>
+            {(() => {
+              const unlockedCount = virtues.filter((name) => virtueUnlockedAt[name] != null).length;
+              const threshold = getSeedShownThresholdFromUnlockedCount(unlockedCount);
+              return (
+                <>
+                  <ThemedText style={[styles.infoRow, styles.infoRowTop]}>
+                    <ThemedText type="defaultSemiBold">Unlocked virtues: </ThemedText>
+                    {unlockedCount}
+                  </ThemedText>
+                  <ThemedText style={styles.infoRow}>
+                    <ThemedText type="defaultSemiBold">Current threshold: </ThemedText>
+                    {threshold} points
+                  </ThemedText>
+                  <TouchableOpacity style={styles.button} onPress={loadVirtueTotals}>
+                    <ThemedText style={styles.buttonText}>Refresh</ThemedText>
+                  </TouchableOpacity>
+                  <ThemedView style={styles.list}>
+                    {virtues.map((name) => {
+                      const isUnlocked = virtueUnlockedAt[name] != null;
+                      const pts = virtueTotals[name] ?? 0;
+                      const seedVisible = isUnlocked || pts >= threshold;
+                      return (
+                        <ThemedView key={name} style={styles.listItem}>
+                          <ThemedText style={styles.listItemText}>
+                            <ThemedText type="defaultSemiBold">Virtue: </ThemedText>
+                            {name}
+                          </ThemedText>
+                          <ThemedText style={styles.listItemText}>
+                            <ThemedText type="defaultSemiBold">Unlocked: </ThemedText>
+                            {isUnlocked ? 'Yes' : 'No'}
+                          </ThemedText>
+                          <ThemedText style={styles.listItemText}>
+                            <ThemedText type="defaultSemiBold">Points: </ThemedText>
+                            {pts}
+                          </ThemedText>
+                          <ThemedText style={styles.listItemText}>
+                            <ThemedText type="defaultSemiBold">Seed visible: </ThemedText>
+                            {seedVisible
+                              ? 'Yes'
+                              : `No (needs ${threshold - pts} more point${threshold - pts === 1 ? '' : 's'})`}
+                          </ThemedText>
+                        </ThemedView>
+                      );
+                    })}
+                  </ThemedView>
+                </>
+              );
+            })()}
           </ThemedView>
         </Collapsible>
 
