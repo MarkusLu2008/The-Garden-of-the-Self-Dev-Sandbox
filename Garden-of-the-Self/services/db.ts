@@ -378,6 +378,13 @@ export type QuestHistoryRow = {
   virtues: QuestVirtueValues;
 };
 
+type DailyQuestUpdate = {
+  questId: number;
+  assignedDate: string;
+  completed: number;
+  virtues: QuestVirtueValues;
+};
+
 async function insertQuest(prompt: string, virtueValues: QuestVirtueValues = {}) {
   const database = await getDatabase();
   const clampedVirtues = clampQuestRewards(virtueValues);
@@ -494,17 +501,24 @@ async function getDailyQuests(dateString: string): Promise<QuestRow[]> {
   const database = await getDatabase();
 
   // Check for existing assignments today
-  const assigned = await database.getAllAsync<{ quest_id: number | null }>(
-    `SELECT quest_id FROM quest_history WHERE assigned_at = ? AND quest_id IS NOT NULL`,
+  const assigned = await database.getAllAsync<{ quest_id: number | null; completed_at: string | null }>(
+    `SELECT quest_id, completed_at FROM quest_history WHERE assigned_at = ? AND quest_id IS NOT NULL`,
     [dateString]
   );
 
   if (assigned.length > 0) {
-    const ids = assigned.map((r) => r.quest_id!);
+    const byQuestId = new Map<number, string | null>();
+    for (const row of assigned) {
+      if (row.quest_id == null) continue;
+      byQuestId.set(row.quest_id, row.completed_at);
+    }
+    const ids = assigned.map((r) => r.quest_id!).filter((id): id is number => id != null);
     const result: QuestRow[] = [];
     for (const id of ids) {
       const quest = await getQuest(id);
-      if (quest) result.push(quest);
+      if (!quest) continue;
+      const completedAt = byQuestId.get(id) ?? null;
+      result.push({ ...quest, completed: completedAt ? 1 : 0 });
     }
     return result;
   }
@@ -517,7 +531,6 @@ async function getDailyQuests(dateString: string): Promise<QuestRow[]> {
   );
   const unlockedVirtues = new Set(unlockedRows.map((row) => row.name));
   const pool = all.filter((q) => {
-    if (q.completed) return false;
     const primaryVirtue = getPrimaryVirtueNameFromValues(q.virtues);
     return primaryVirtue != null && unlockedVirtues.has(primaryVirtue);
   });
@@ -557,8 +570,39 @@ async function getDailyQuests(dateString: string): Promise<QuestRow[]> {
       await upsertQuestHistoryVirtues(database, history.id, quest.virtues);
     }
   }
+  return picked.map((q) => ({ ...q, completed: 0 }));
+}
 
-  return picked;
+async function updateDailyQuestCompletion(update: DailyQuestUpdate): Promise<boolean> {
+  const database = await getDatabase();
+  const row = await database.getFirstAsync<{ id: number; completed_at: string | null }>(
+    `SELECT id, completed_at
+     FROM quest_history
+     WHERE quest_id = ? AND assigned_at = ?
+     ORDER BY id DESC
+     LIMIT 1`,
+    [update.questId, update.assignedDate]
+  );
+  if (!row) return false;
+
+  const wasCompleted = row.completed_at != null;
+  const wantsCompleted = update.completed === 1;
+
+  if (!wasCompleted && wantsCompleted) {
+    await database.runAsync('UPDATE quest_history SET completed_at = datetime(\'now\') WHERE id = ?', [row.id]);
+    await upsertQuestHistoryVirtues(database, row.id, update.virtues);
+    await applyVirtueDeltas(database, update.virtues, +1);
+  } else if (wasCompleted && !wantsCompleted) {
+    await database.runAsync('UPDATE quest_history SET completed_at = NULL WHERE id = ?', [row.id]);
+    await upsertQuestHistoryVirtues(database, row.id, update.virtues);
+    await applyVirtueDeltas(database, update.virtues, -1);
+  }
+
+  await database.runAsync(
+    `UPDATE quests SET completed = ?, updated_at = datetime('now') WHERE id = ?`,
+    [update.completed, update.questId]
+  );
+  return true;
 }
 
 async function updateQuest(
@@ -566,7 +610,9 @@ async function updateQuest(
   updates: {
     completed?: number;
     prompt?: string;
-  } & Partial<QuestVirtueValues>
+    virtues?: Partial<QuestVirtueValues>;
+    assignedDate?: string;
+  }
 ) {
   const database = await getDatabase();
   const existing = await getQuest(id);
@@ -574,15 +620,27 @@ async function updateQuest(
 
   const completed = updates.completed ?? existing.completed;
   const prompt = updates.prompt ?? existing.prompt;
+  const assignedDate = updates.assignedDate;
 
   const newVirtues: QuestVirtueValues = { ...existing.virtues };
-  for (const [name, value] of Object.entries(updates)) {
-    if (name === 'completed' || name === 'prompt') continue;
+  for (const [name, value] of Object.entries(updates.virtues ?? {})) {
     if (typeof value === 'number') {
       newVirtues[name] = value;
     }
   }
   const clampedVirtues = clampQuestRewards(newVirtues);
+
+  if (assignedDate) {
+    const handled = await updateDailyQuestCompletion({
+      questId: id,
+      assignedDate,
+      completed,
+      virtues: clampedVirtues,
+    });
+    if (handled) {
+      return;
+    }
+  }
 
   if (existing.completed === 0 && completed === 1) {
     await recordQuestCompleted({ ...existing, virtues: clampedVirtues });

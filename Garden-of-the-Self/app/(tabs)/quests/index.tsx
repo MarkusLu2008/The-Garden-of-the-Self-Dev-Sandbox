@@ -50,12 +50,13 @@ export default function QuestsScreen() {
 
   const handleToggleCompleted = async (quest: QuestRow) => {
     const newCompleted = quest.completed ? 0 : 1;
+    const today = getTodayDateString();
     // Optimistically update local state so the list stays fixed
     setQuests((prev) =>
       prev.map((q) => (q.id === quest.id ? { ...q, completed: newCompleted } : q))
     );
     try {
-      await updateQuest(quest.id, { completed: newCompleted });
+      await updateQuest(quest.id, { completed: newCompleted, assignedDate: today });
     } catch (error) {
       // Revert on failure
       setQuests((prev) =>
