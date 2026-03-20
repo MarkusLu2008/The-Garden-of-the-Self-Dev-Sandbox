@@ -39,6 +39,7 @@ Two color palettes defined in `constants/theme.ts`: **Alucard** (light) and **Dr
 ### Key Constants
 - `constants/virtues.ts` — the 12 virtues users can tag journal entries with
 - `constants/theme.ts` — full color palette definitions for both themes
+- `utils/dateUtils.ts` — use the existing date utility helpers instead of creating ad hoc date logic with `new Date()` in features/components
 
 ### Path Alias
 `@/*` resolves to the project root (e.g., `import { db } from '@/services/db'`).
