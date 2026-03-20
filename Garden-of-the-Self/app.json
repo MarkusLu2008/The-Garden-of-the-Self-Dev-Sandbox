@@ -27,7 +27,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.markylu.GardenoftheSelf"
+      "package": "com.markylu.gardenoftheself"
     },
     "web": {
       "output": "static",
