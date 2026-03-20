@@ -4,11 +4,10 @@ import { Tabs } from 'expo-router';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-
-const showDevTools = false;
+import { gameConfig } from '@/constants/gameConfig';
 
 function FilteredTabBar(props: BottomTabBarProps) {
-  const routes = showDevTools
+  const routes = gameConfig.devtools.show
     ? props.state.routes
     : props.state.routes.filter((r) => r.name !== 'devtools');
   const currentRoute = props.state.routes[props.state.index];

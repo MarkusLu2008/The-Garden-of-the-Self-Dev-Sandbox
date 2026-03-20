@@ -79,6 +79,9 @@ export type GameConfig = {
     /** Exponential multiplier for each subsequent tree image stage step cost. */
     growthMultiplier: number;
   };
+  devtools: {
+    show: boolean;
+  };
 };
 
 export const gameConfig: GameConfig = {
@@ -123,6 +126,9 @@ export const gameConfig: GameConfig = {
     seedToPlantPoints: 5,
     growthMultiplier: 2,
   },
+  devtools: {
+    show: false,
+  }
 };
 
 export function clampQuestReward(value: number): number {
