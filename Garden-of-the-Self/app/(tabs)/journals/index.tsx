@@ -1,15 +1,15 @@
-import { useState, useCallback } from 'react';
-import { StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, useFocusEffect } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { getAllJournals } from '@/services/journalManager';
-import type { JournalVirtueValues } from '@/services/db';
-import { formatDateForDisplay } from '@/utils/dateUtils';
 import { useUnistyles } from '@/lib/unistyles-compat';
-import { journalStyles, spacing, borderRadius } from '@/utils/styles';
+import type { JournalVirtueValues } from '@/services/db';
+import { getAllJournals } from '@/services/journalManager';
+import { formatDateForDisplay } from '@/utils/dateUtils';
+import { borderRadius, journalStyles, spacing } from '@/utils/styles';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { ActivityIndicator, Alert, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type JournalItem = {
   id: number;
@@ -75,12 +75,12 @@ export default function JournalsScreen() {
             {formatDateForDisplay(item.file_path)}
           </ThemedText>
           {promptText ? (
-            <ThemedText style={styles.promptText} numberOfLines={1}>
+            <ThemedText style={styles.promptText}>
               💭 {promptText}
             </ThemedText>
           ) : null}
           {virtuesText ? (
-            <ThemedText style={styles.virtuesText} numberOfLines={1}>
+            <ThemedText style={styles.virtuesText}>
               ⭐ {virtuesText}
             </ThemedText>
           ) : null}
