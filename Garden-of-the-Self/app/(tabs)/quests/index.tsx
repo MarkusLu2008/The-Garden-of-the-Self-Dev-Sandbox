@@ -1,26 +1,26 @@
-import { useState, useCallback } from 'react';
-import {
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { useUnistyles } from '@/lib/unistyles-compat';
 import {
-  getDailyQuests,
-  updateQuest,
   deleteQuest,
+  getDailyQuests,
   getQuestVirtueDisplayNames,
+  updateQuest,
   type QuestRow,
 } from '@/services/db';
 import { getTodayDateString } from '@/utils/dateUtils';
-import { useUnistyles } from '@/lib/unistyles-compat';
-import { journalStyles, spacing, borderRadius } from '@/utils/styles';
+import { borderRadius, journalStyles, spacing } from '@/utils/styles';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function QuestsScreen() {
   const [quests, setQuests] = useState<QuestRow[]>([]);
@@ -104,11 +104,10 @@ export default function QuestsScreen() {
           <ThemedText
             type="defaultSemiBold"
             style={[styles.questPrompt, item.completed ? styles.completedText : null]}
-            numberOfLines={2}
           >
             {item.prompt}
           </ThemedText>
-          <ThemedText style={styles.virtuesText} numberOfLines={1}>
+          <ThemedText style={styles.virtuesText}>
             ⭐ {virtueNames}
           </ThemedText>
           {item.completed ? (
