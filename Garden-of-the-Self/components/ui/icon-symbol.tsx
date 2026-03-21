@@ -27,6 +27,7 @@ const MAPPING: Record<string, MaterialIconName> = {
   'cactus.fill': 'grass',
   'leaf.circle.fill': 'local-florist',
   'questionmark.circle': 'help-outline',
+  'gearshape.fill': 'settings',
 };
 
 export type IconSymbolName = keyof typeof MAPPING;
