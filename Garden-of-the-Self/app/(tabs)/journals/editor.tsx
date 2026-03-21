@@ -13,6 +13,31 @@ import { journalStyles, spacing } from "@/utils/styles";
 
 type StyleState = OnChangeStateEvent;
 
+function decodeParam(value: string | undefined): string {
+  if (!value) return '';
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+function buildQuestReflectionTemplate(questPrompt: string): string {
+  const normalizedPrompt = questPrompt.trim();
+  if (!normalizedPrompt) return '';
+
+  return [
+    `Quest completed: ${normalizedPrompt}`,
+    '',
+    'How did this quest challenge me?',
+    '',
+    'What did I learn about myself?',
+    '',
+    'What is one thing I want to carry into tomorrow?',
+    '',
+  ].join('\n');
+}
+
 interface ToolbarButton {
   label: string;
   style: keyof StyleState;
@@ -30,7 +55,10 @@ export default function EditorScreen() {
   const richText = useRef<EnrichedTextInputInstance>(null);
   const router = useRouter();
   const { theme } = useUnistyles();
-  const { date } = useLocalSearchParams<{ date: string }>();
+  const { date, sourceQuestPrompt } = useLocalSearchParams<{
+    date: string;
+    sourceQuestPrompt?: string;
+  }>();
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -51,10 +79,15 @@ export default function EditorScreen() {
       try {
         setIsLoading(true);
         const existingContent = await getJournalContent(date);
+        const decodedQuestPrompt = decodeParam(sourceQuestPrompt);
 
-        if (existingContent) {
+        if (existingContent && existingContent.trim().length > 0) {
           setDefaultValue(existingContent);
           latestContentRef.current = existingContent;
+        } else if (decodedQuestPrompt) {
+          const questTemplate = buildQuestReflectionTemplate(decodedQuestPrompt);
+          setDefaultValue(questTemplate);
+          latestContentRef.current = questTemplate;
         }
       } catch (error) {
         console.error("Failed to load journal:", error);
@@ -64,7 +97,7 @@ export default function EditorScreen() {
     };
 
     loadJournal();
-  }, [date]);
+  }, [date, sourceQuestPrompt]);
 
   // Auto-save function
   const saveJournal = useCallback(async (htmlContent: string) => {
@@ -163,7 +196,10 @@ export default function EditorScreen() {
   return (
     <SafeAreaView style={journalStyles.container} edges={["top"]}>
       <ThemedView style={[styles.header, journalStyles.headerBorder]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
           <ThemedText style={[styles.backButtonText, { color: theme.colors.tint }]}>
             ← Back
           </ThemedText>

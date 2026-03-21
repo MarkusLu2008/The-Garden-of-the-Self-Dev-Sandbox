@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { StyleSheet, useUnistyles } from '@/lib/unistyles-compat';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { canAwardJournalPointsToday, createJournal } from '@/services/journalManager';
@@ -21,15 +21,50 @@ import { journalStyles, spacing } from '@/utils/styles';
 import virtues from '@/constants/virtues';
 import { gameConfig } from '@/constants/gameConfig';
 import { distributeJournalVirtuePoints } from '@/utils/virtuePoints';
+import type { QuestVirtueValues } from '@/services/db';
+
+function decodeParam(value: string | undefined): string {
+  if (!value) return '';
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+function parseSourceQuestVirtues(rawValue: string | undefined): QuestVirtueValues {
+  if (!rawValue) return {};
+
+  try {
+    const decoded = decodeParam(rawValue);
+    const parsed = JSON.parse(decoded) as Record<string, unknown>;
+    const values: QuestVirtueValues = {};
+    for (const [name, value] of Object.entries(parsed)) {
+      if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+        values[name] = value;
+      }
+    }
+    return values;
+  } catch {
+    return {};
+  }
+}
 
 export default function CreateJournalModal() {
   const router = useRouter();
+  const { sourceQuestId, sourceQuestPrompt, sourceQuestVirtues } = useLocalSearchParams<{
+    sourceQuestId?: string;
+    sourceQuestPrompt?: string;
+    sourceQuestVirtues?: string;
+  }>();
   const { theme } = useUnistyles();
   const [isCreating, setIsCreating] = useState(false);
   const [intention, setIntention] = useState('');
   const [selectedVirtues, setSelectedVirtues] = useState<string[]>([]);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [canPreviewPoints, setCanPreviewPoints] = useState<boolean | null>(null);
+  const sourcePrompt = decodeParam(sourceQuestPrompt);
+  const sourceVirtues = parseSourceQuestVirtues(sourceQuestVirtues);
 
   useEffect(() => {
     let isMounted = true;
@@ -51,6 +86,29 @@ export default function CreateJournalModal() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!sourcePrompt && Object.keys(sourceVirtues).length === 0) {
+      return;
+    }
+
+    if (!intention.trim() && sourcePrompt) {
+      setIntention(`Reflecting on quest: ${sourcePrompt}`);
+    }
+
+    if (selectedVirtues.length === 0) {
+      const questVirtueNames = Object.entries(sourceVirtues)
+        .filter(([, value]) => value > 0)
+        .sort(([, a], [, b]) => b - a)
+        .map(([name]) => name)
+        .slice(0, gameConfig.journal.maxVirtuesPerEntry);
+
+      if (questVirtueNames.length > 0) {
+        setSelectedVirtues(questVirtueNames);
+      }
+    }
+  }, [sourcePrompt, sourceVirtues, intention, selectedVirtues.length]);
+
   const toggleVirtue = (virtue: string) => {
     setValidationError(null);
     setSelectedVirtues((current) => {
@@ -83,10 +141,32 @@ export default function CreateJournalModal() {
         gameConfig.journal.totalPointsPerEntry
       );
 
-      await createJournal(journalId, intention, virtueValues);
+      const sourceQuestIdValue =
+        typeof sourceQuestId === 'string' && sourceQuestId.length > 0
+          ? Number.parseInt(sourceQuestId, 10)
+          : null;
+
+      await createJournal(journalId, intention, virtueValues, {
+        sourceQuestId:
+          sourceQuestIdValue != null && Number.isFinite(sourceQuestIdValue)
+            ? sourceQuestIdValue
+            : undefined,
+        sourceQuestVirtues:
+          Object.keys(sourceVirtues).length > 0 ? sourceVirtues : undefined,
+      });
       
       // Navigate to the editor
-      router.replace(`/(tabs)/journals/editor?date=${journalId}`);
+      const sourcePromptParam = sourcePrompt ? `&sourceQuestPrompt=${encodeURIComponent(sourcePrompt)}` : '';
+      const sourceQuestIdParam =
+        sourceQuestIdValue != null && Number.isFinite(sourceQuestIdValue)
+          ? `&sourceQuestId=${sourceQuestIdValue}`
+          : '';
+      const editorPath = `/(tabs)/journals/editor?date=${journalId}${sourceQuestIdParam}${sourcePromptParam}` as Href;
+      // Normalize stack so Editor "Back" returns to Journals list.
+      router.replace('/(tabs)/journals');
+      setTimeout(() => {
+        router.push(editorPath);
+      }, 0);
     } catch (error) {
       console.error('Failed to create journal:', error);
       Alert.alert('Error', 'Failed to create journal. Please try again.');

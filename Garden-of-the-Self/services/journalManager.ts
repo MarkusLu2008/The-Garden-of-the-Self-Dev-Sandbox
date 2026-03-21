@@ -6,13 +6,19 @@ import {
   getAllJournals as getAllJournalsFromDb,
   canAwardJournalPointsForDate as canAwardJournalPointsForDateFromDb,
   canAwardJournalPointsToday as canAwardJournalPointsTodayFromDb,
+  type JournalInsertOptions,
   type JournalVirtueValues,
 } from './db';
 import { createJournalFile, readJournalFile, updateJournalFile, deleteJournalFile } from './fileStorage';
 
-async function createJournal(file_path: string, prompt: string, virtueValues: JournalVirtueValues) {
+async function createJournal(
+  file_path: string,
+  prompt: string,
+  virtueValues: JournalVirtueValues,
+  options?: JournalInsertOptions
+) {
   await createJournalFile(file_path);
-  await insertJournal(file_path, prompt, virtueValues);
+  await insertJournal(file_path, prompt, virtueValues, options);
 }
 
 async function getJournalInfo(file_path: string) {
