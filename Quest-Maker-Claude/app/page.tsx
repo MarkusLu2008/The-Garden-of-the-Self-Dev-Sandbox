@@ -10,15 +10,17 @@ const DEFAULT_SETTINGS: GenerateSettings = {
   primaryVirtue: '',
   secondaryVirtues: [],
   duration: 'Medium',
+  count: 1,
 };
 
 type Message = { text: string; type: 'success' | 'error' };
 
 export default function Home() {
   const [settings, setSettings] = useState<GenerateSettings>(DEFAULT_SETTINGS);
-  const [quest, setQuest] = useState<QuestSeedItem | null>(null);
+  const [quests, setQuests] = useState<QuestSeedItem[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [savingIdx, setSavingIdx] = useState<number | null>(null);
+  const [isSavingAll, setIsSavingAll] = useState(false);
   const [isLoadingAutoSuggest, setIsLoadingAutoSuggest] = useState(false);
   const [message, setMessage] = useState<Message | null>(null);
 
@@ -40,8 +42,8 @@ export default function Home() {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error ?? 'Generation failed');
       }
-      const generated: QuestSeedItem = await res.json();
-      setQuest(generated);
+      const { quests: generated } = await res.json();
+      setQuests(generated);
     } catch (e) {
       showMessage(e instanceof Error ? e.message : 'Failed to generate quest', 'error');
     } finally {
@@ -54,8 +56,8 @@ export default function Home() {
     try {
       const res = await fetch('/api/auto-suggest');
       if (!res.ok) throw new Error('Auto-suggest failed');
-      const suggestion: GenerateSettings = await res.json();
-      setSettings(suggestion);
+      const suggestion: Omit<GenerateSettings, 'count'> = await res.json();
+      setSettings((s) => ({ ...s, ...suggestion }));
     } catch {
       showMessage('Auto-suggest failed', 'error');
     } finally {
@@ -63,23 +65,43 @@ export default function Home() {
     }
   };
 
-  const handleSave = async () => {
-    if (!quest) return;
-    setIsSaving(true);
+  const saveOne = async (quest: QuestSeedItem): Promise<number> => {
+    const res = await fetch('/api/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(quest),
+    });
+    if (!res.ok) throw new Error('Save failed');
+    const { total } = await res.json();
+    return total;
+  };
+
+  const handleSave = async (idx: number) => {
+    setSavingIdx(idx);
     try {
-      const res = await fetch('/api/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(quest),
-      });
-      if (!res.ok) throw new Error('Save failed');
-      const { total } = await res.json();
+      const total = await saveOne(quests[idx]);
+      setQuests((prev) => prev.filter((_, i) => i !== idx));
       showMessage(`Quest saved! Library now has ${total} quest${total === 1 ? '' : 's'}.`, 'success');
-      setQuest(null);
     } catch {
       showMessage('Failed to save quest', 'error');
     } finally {
-      setIsSaving(false);
+      setSavingIdx(null);
+    }
+  };
+
+  const handleSaveAll = async () => {
+    setIsSavingAll(true);
+    let total = 0;
+    try {
+      for (const quest of quests) {
+        total = await saveOne(quest);
+      }
+      setQuests([]);
+      showMessage(`All ${quests.length} quests saved! Library now has ${total} quests.`, 'success');
+    } catch {
+      showMessage('Failed to save all quests', 'error');
+    } finally {
+      setIsSavingAll(false);
     }
   };
 
@@ -110,49 +132,79 @@ export default function Home() {
         </div>
       )}
 
-      <main className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-5xl mx-auto">
-        <section className="bg-gray-800 rounded-xl p-6">
-          <h2 className="text-sm font-semibold text-gray-300 mb-5 flex items-center gap-2">
-            Settings
-            {settings.primaryVirtue && (
-              <span className="text-xs font-normal text-emerald-400 bg-emerald-900/40 px-2 py-0.5 rounded-full">
-                {settings.primaryVirtue}
-                {settings.secondaryVirtues.length > 0 &&
-                  ` + ${settings.secondaryVirtues.join(', ')}`}
-                {' · '}
-                {settings.duration}
-              </span>
-            )}
-          </h2>
+      <main className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-5xl mx-auto items-start">
+        <section className="bg-gray-800 rounded-xl p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-gray-300">Settings</h2>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleAutoSuggest}
+                disabled={isLoadingAutoSuggest || isGenerating}
+                className="text-xs px-2.5 py-1 rounded bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoadingAutoSuggest ? '…' : '✦ Auto-suggest'}
+              </button>
+              {settings.primaryVirtue && (
+                <span className="text-xs text-emerald-400 bg-emerald-900/40 px-2 py-0.5 rounded-full">
+                  {settings.primaryVirtue}
+                  {settings.secondaryVirtues.length > 0 &&
+                    ` + ${settings.secondaryVirtues.join(', ')}`}
+                  {' · '}
+                  {settings.duration}
+                </span>
+              )}
+            </div>
+          </div>
           <SettingsPanel
             settings={settings}
             onChange={setSettings}
             onGenerate={handleGenerate}
-            onAutoSuggest={handleAutoSuggest}
             isGenerating={isGenerating}
-            isLoadingAutoSuggest={isLoadingAutoSuggest}
           />
         </section>
 
         <section className="bg-gray-800 rounded-xl p-6">
-          <h2 className="text-sm font-semibold text-gray-300 mb-5">
-            {quest ? 'Review & Edit' : 'Generated Quest'}
-          </h2>
-          {quest ? (
-            <QuestReview
-              quest={quest}
-              onChange={setQuest}
-              onSave={handleSave}
-              onDiscard={() => setQuest(null)}
-              isSaving={isSaving}
-            />
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-sm font-semibold text-gray-300">
+              {quests.length > 0
+                ? `Review & Edit (${quests.length} quest${quests.length === 1 ? '' : 's'})`
+                : 'Generated Quests'}
+            </h2>
+            {quests.length > 1 && (
+              <button
+                onClick={handleSaveAll}
+                disabled={isSavingAll}
+                className="text-xs px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSavingAll ? 'Saving…' : `Save All ${quests.length}`}
+              </button>
+            )}
+          </div>
+
+          {quests.length > 0 ? (
+            <div className="space-y-6">
+              {quests.map((quest, idx) => (
+                <div key={idx} className={quests.length > 1 ? 'pb-6 border-b border-gray-700 last:border-0 last:pb-0' : ''}>
+                  {quests.length > 1 && (
+                    <p className="text-xs text-gray-500 mb-3">#{idx + 1}</p>
+                  )}
+                  <QuestReview
+                    quest={quest}
+                    onChange={(q) => setQuests((prev) => prev.map((item, i) => (i === idx ? q : item)))}
+                    onSave={() => handleSave(idx)}
+                    onDiscard={() => setQuests((prev) => prev.filter((_, i) => i !== idx))}
+                    isSaving={savingIdx === idx || isSavingAll}
+                  />
+                </div>
+              ))}
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-64 text-center gap-3">
               <div className="text-4xl opacity-20">✦</div>
               <p className="text-gray-500 text-sm">
                 {settings.primaryVirtue
-                  ? 'Click "Generate Quest" to create a quest.'
-                  : 'Select a primary virtue, then generate a quest.'}
+                  ? 'Click "Generate" to create quests.'
+                  : 'Select a primary virtue, then generate quests.'}
               </p>
             </div>
           )}

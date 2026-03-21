@@ -27,7 +27,7 @@ const VIRTUE_DESCRIPTIONS: Record<string, string> = {
 };
 
 export async function POST(request: Request) {
-  const { primaryVirtue, secondaryVirtues, duration }: GenerateSettings =
+  const { primaryVirtue, secondaryVirtues, duration, count = 1 }: GenerateSettings =
     await request.json();
 
   const { primary: primaryRange, secondary: secondaryRange } = POINT_RANGES[duration];
@@ -63,21 +63,27 @@ ${secondaryVirtues.length > 0 ? `- Secondary virtues: ${secondaryVirtues.join(',
 - Difficulty / duration: ${duration}`;
 
   try {
-    const response = await client.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userMessage },
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.9,
+    const n = Math.max(1, Math.min(count, 20));
+    const calls = Array.from({ length: n }, () =>
+      client.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userMessage },
+        ],
+        response_format: { type: 'json_object' },
+        temperature: 0.9,
+      })
+    );
+
+    const responses = await Promise.all(calls);
+    const quests = responses.map((r) => {
+      const content = r.choices[0].message.content;
+      if (!content) throw new Error('Empty response from OpenAI');
+      return JSON.parse(content);
     });
 
-    const content = response.choices[0].message.content;
-    if (!content) throw new Error('Empty response from OpenAI');
-
-    const quest = JSON.parse(content);
-    return NextResponse.json(quest);
+    return NextResponse.json({ quests });
   } catch (error) {
     console.error('OpenAI error:', error);
     return NextResponse.json(

@@ -34,7 +34,7 @@ export default function VirtueSelector({ mode, selected, primaryVirtue, onChange
         const hasPrimary = mode === 'secondary' && !!primaryVirtue;
 
         let className =
-          'px-3 py-2 rounded-lg text-sm text-left transition-colors focus:outline-none focus:ring-1 focus:ring-emerald-500 ';
+          'px-2.5 py-1.5 rounded text-xs text-left transition-colors focus:outline-none focus:ring-1 focus:ring-emerald-500 ';
 
         if (isSelected) {
           className += 'bg-emerald-600 text-white font-medium';

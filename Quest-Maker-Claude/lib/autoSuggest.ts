@@ -9,7 +9,7 @@ function getPrimaryVirtue(quest: QuestSeedItem): string {
   return entries.sort(([, a], [, b]) => b - a)[0][0];
 }
 
-export function autoSuggestConfig(quests: QuestSeedItem[]): GenerateSettings {
+export function autoSuggestConfig(quests: QuestSeedItem[]): Omit<GenerateSettings, 'count'> {
   // Count (primaryVirtue, duration) pairs
   const counts: Record<string, Record<QuestDuration, number>> = {};
   for (const virtue of VIRTUES) {

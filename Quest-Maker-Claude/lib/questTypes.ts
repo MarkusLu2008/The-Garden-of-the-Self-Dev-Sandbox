@@ -10,4 +10,5 @@ export type GenerateSettings = {
   primaryVirtue: string;
   secondaryVirtues: string[];
   duration: QuestDuration;
+  count: number;
 };
