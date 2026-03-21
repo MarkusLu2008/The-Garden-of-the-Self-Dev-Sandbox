@@ -13,4 +13,5 @@ export type GenerateSettings = {
   secondaryVirtues: string[];
   duration: QuestDuration;
   count: number;
+  autoSuggestBeforeGenerate: boolean;
 };

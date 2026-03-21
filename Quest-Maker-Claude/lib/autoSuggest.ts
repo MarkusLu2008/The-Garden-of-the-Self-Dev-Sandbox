@@ -62,7 +62,9 @@ function parseComboFromQuest(quest: QuestSeedItem): SuggestionCombo | null {
   };
 }
 
-export function autoSuggestConfig(quests: QuestSeedItem[]): Omit<GenerateSettings, 'count'> {
+export function autoSuggestConfig(
+  quests: QuestSeedItem[]
+): Omit<GenerateSettings, 'count' | 'autoSuggestBeforeGenerate'> {
   // Build the full set of companion-graph combinations across all durations.
   const allCombos: SuggestionCombo[] = [];
   for (const virtue of VIRTUES) {

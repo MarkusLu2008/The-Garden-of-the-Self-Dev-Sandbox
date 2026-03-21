@@ -5,6 +5,7 @@ import type { GenerateSettings } from '@/lib/questTypes';
 const client = new OpenAI(); // reads OPENAI_API_KEY from env
 const MAX_RETRIES = 2;
 const BASE_RETRY_DELAY_MS = 350;
+type GenerateRequest = GenerateSettings & { themeFocus?: string };
 
 const POINT_RANGES: Record<string, { primary: string; secondary: string }> = {
   Short: { primary: '4–7', secondary: '1–3' },
@@ -80,8 +81,9 @@ async function createQuestWithRetry(
 }
 
 export async function POST(request: Request) {
-  const { primaryVirtue, secondaryVirtues, duration, count = 1 }: GenerateSettings =
+  const { primaryVirtue, secondaryVirtues, duration, count = 3, themeFocus }: GenerateRequest =
     await request.json();
+  const normalizedThemeFocus = themeFocus?.trim();
 
   const { primary: primaryRange, secondary: secondaryRange } = POINT_RANGES[duration];
 
@@ -116,12 +118,14 @@ Rules:
 - Medium quest must be something they can do in 10 minutes to 15 minutes.
 - Long quest must be something they can do in 15 minutes to 30 minutes.
 - DO NOT EXCEED THE 30 minutes time limit for any quest.
+- If an activity focus is provided, strongly bias the quest context toward that focus while still satisfying all virtue and duration rules.
 - Return ONLY the JSON object — no markdown, no explanation, no code blocks.`;
 
   const userMessage = `Generate a quest with:
 - Primary virtue: ${primaryVirtue}
 ${secondaryVirtues.length > 0 ? `- Secondary virtues: ${secondaryVirtues.join(', ')}` : '- No secondary virtues'}
-- Difficulty / duration: ${duration}`;
+- Difficulty / duration: ${duration}
+${normalizedThemeFocus ? `- Activity focus: ${normalizedThemeFocus}` : '- Activity focus: none'}`;
 
   try {
     const n = Math.max(1, Math.min(count, 20));

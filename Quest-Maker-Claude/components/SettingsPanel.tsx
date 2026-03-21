@@ -6,12 +6,22 @@ import VirtueSelector from './VirtueGraphSelector';
 interface Props {
   settings: GenerateSettings;
   onChange: (s: GenerateSettings) => void;
+  themeFocus: string;
+  onThemeFocusChange: (value: string) => void;
   onGenerate: () => void;
   isGenerating: boolean;
 }
 
-export default function SettingsPanel({ settings, onChange, onGenerate, isGenerating }: Props) {
+export default function SettingsPanel({
+  settings,
+  onChange,
+  themeFocus,
+  onThemeFocusChange,
+  onGenerate,
+  isGenerating,
+}: Props) {
   const durations: QuestDuration[] = ['Short', 'Medium', 'Long'];
+  const autoSuggestBeforeGenerate = settings.autoSuggestBeforeGenerate ?? true;
 
   return (
     <div className="space-y-4">
@@ -84,9 +94,32 @@ export default function SettingsPanel({ settings, onChange, onGenerate, isGenera
         />
       </div>
 
+      <label className="flex items-center justify-between gap-3 rounded-lg border border-gray-700 bg-gray-900/40 px-3 py-2">
+        <span className="text-xs text-gray-300">Auto-suggest before generating</span>
+        <input
+          type="checkbox"
+          checked={autoSuggestBeforeGenerate}
+          onChange={(e) =>
+            onChange({ ...settings, autoSuggestBeforeGenerate: e.target.checked })
+          }
+          className="h-4 w-4 cursor-pointer accent-emerald-500"
+        />
+      </label>
+
+      <div>
+        <p className="text-xs text-gray-500 mb-1.5">Activity focus (optional)</p>
+        <input
+          type="text"
+          value={themeFocus}
+          onChange={(e) => onThemeFocusChange(e.target.value)}
+          placeholder="e.g. gym, work, eating"
+          className="w-full rounded bg-gray-700 text-gray-100 px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+        />
+      </div>
+
       <button
         onClick={onGenerate}
-        disabled={!settings.primaryVirtue || isGenerating}
+        disabled={(!settings.primaryVirtue && !autoSuggestBeforeGenerate) || isGenerating}
         className="w-full px-4 py-2 rounded-lg text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isGenerating

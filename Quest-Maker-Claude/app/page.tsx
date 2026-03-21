@@ -10,10 +10,12 @@ const DEFAULT_SETTINGS: GenerateSettings = {
   primaryVirtue: '',
   secondaryVirtues: [],
   duration: 'Medium',
-  count: 1,
+  count: 3,
+  autoSuggestBeforeGenerate: true,
 };
 
 type Message = { text: string; type: 'success' | 'error' };
+type AutoSuggestion = Omit<GenerateSettings, 'count' | 'autoSuggestBeforeGenerate'>;
 type CoverageSummary = {
   coveredCombos: number;
   totalPossibleCombos: number;
@@ -22,6 +24,7 @@ type CoverageSummary = {
 
 export default function Home() {
   const [settings, setSettings] = useState<GenerateSettings>(DEFAULT_SETTINGS);
+  const [themeFocus, setThemeFocus] = useState('');
   const [quests, setQuests] = useState<QuestSeedItem[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [savingIdx, setSavingIdx] = useState<number | null>(null);
@@ -50,14 +53,37 @@ export default function Home() {
     refreshCoverage();
   }, []);
 
+  useEffect(() => {
+    setSettings((prev) => ({ ...DEFAULT_SETTINGS, ...prev }));
+  }, []);
+
+  const getAutoSuggestion = async (): Promise<AutoSuggestion> => {
+    const res = await fetch('/api/auto-suggest');
+    if (!res.ok) throw new Error('Auto-suggest failed');
+    return res.json();
+  };
+
   const handleGenerate = async () => {
-    if (!settings.primaryVirtue) return;
     setIsGenerating(true);
     try {
+      let generationSettings = settings;
+      if (settings.autoSuggestBeforeGenerate ?? true) {
+        setIsLoadingAutoSuggest(true);
+        try {
+          const suggestion = await getAutoSuggestion();
+          generationSettings = { ...settings, ...suggestion };
+          setSettings(generationSettings);
+        } finally {
+          setIsLoadingAutoSuggest(false);
+        }
+      }
+
+      if (!generationSettings.primaryVirtue) return;
+
       const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings),
+        body: JSON.stringify({ ...generationSettings, themeFocus }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -75,9 +101,7 @@ export default function Home() {
   const handleAutoSuggest = async () => {
     setIsLoadingAutoSuggest(true);
     try {
-      const res = await fetch('/api/auto-suggest');
-      if (!res.ok) throw new Error('Auto-suggest failed');
-      const suggestion: Omit<GenerateSettings, 'count'> = await res.json();
+      const suggestion = await getAutoSuggestion();
       setSettings((s) => ({ ...s, ...suggestion }));
     } catch {
       showMessage('Auto-suggest failed', 'error');
@@ -197,6 +221,8 @@ export default function Home() {
           <SettingsPanel
             settings={settings}
             onChange={setSettings}
+            themeFocus={themeFocus}
+            onThemeFocusChange={setThemeFocus}
             onGenerate={handleGenerate}
             isGenerating={isGenerating}
           />

@@ -190,4 +190,160 @@ export const questsSeed: QuestSeedItem[] = [
     virtues: { Kindness: 5 },
     duration: "Short",
   },
+
+  {
+    prompt: "Choose one area of your life where you often tend to overindulge, such as snacking, screen time, or spending. For the next 30 minutes, engage in a substitute activity that promotes balance, like taking a walk, reading a book, or doing a creative project. Observe how this change affects your mindset and jot down a few thoughts on how moderation could benefit your daily routine.",
+    virtues: { "Temperance": 10, "Discipline": 2, "Resilience": 2 },
+    duration: "Long",
+  },
+
+  {
+    prompt: "Prepare and enjoy a balanced meal at home, mindful of portion sizes and nutritional content. Focus on savoring each bite, eating slowly, and stopping when you feel satisfied but not overly full. Reflect on the experience and consider how it affects your mood and energy levels throughout the day.",
+    virtues: { "Temperance": 10, "Discipline": 3, "Resilience": 3 },
+    duration: "Long",
+  },
+
+  {
+    prompt: "Set aside 30 minutes to mindfully plan your meals, considering portions, nutritional balance, and how they align with your health goals. As you plan, focus on practicing moderation by allocating reasonable portions, and ensure your plan leaves room for adjustments in case something unexpected occurs during the week.",
+    virtues: { "Temperance": 10, "Discipline": 3, "Resilience": 3 },
+    duration: "Long",
+  },
+
+  {
+    prompt: "Today, practice temperance by setting a limit on your social media usage to no more than 30 minutes. Use a timer to track your usage and when it ends, take a moment to reflect on how you feel after disconnecting. Use the extra time to engage in a relaxing or productive activity you often postpone. Can you notice the change in your focus or mood?",
+    virtues: { "Temperance": 10, "Discipline": 3, "Resilience": 3 },
+    duration: "Long",
+  },
+
+  {
+    prompt: "Today, practice mindful eating by preparing a meal from scratch using fresh ingredients. Focus on moderating portion sizes and savoring each bite without distractions like phones or TV. Notice how this affects your satisfaction and overall experience.",
+    virtues: { "Temperance": 10, "Discipline": 3, "Resilience": 3 },
+    duration: "Long",
+  },
+
+  {
+    prompt: "Research a topic you know little about for five minutes, and write down three new things you learned.",
+    virtues: { "Curiosity": 6, "Proper Ambition": 2 },
+    duration: "Short",
+  },
+
+  {
+    prompt: "Spend 5 minutes browsing a random article on a topic you know little about. Note down one intriguing fact or question you want to explore further.",
+    virtues: { "Curiosity": 6, "Proper Ambition": 2 },
+    duration: "Short",
+  },
+
+  {
+    prompt: "Find a new word in the dictionary or online, and use it in a sentence related to your career or personal goals.",
+    virtues: { "Curiosity": 6, "Proper Ambition": 2 },
+    duration: "Short",
+  },
+
+  {
+    prompt: "Take five minutes to explore something new within your immediate environment—whether it's identifying a plant, finding an interesting fact about an object in your home, or learning a new feature on a device you own. Approach this small discovery with curiosity and reflect just briefly on how it aligns or inspires your bigger goals.",
+    virtues: { "Curiosity": 6, "Proper Ambition": 2 },
+    duration: "Short",
+  },
+
+  {
+    prompt: "Spend 5 minutes researching an unfamiliar topic that interests you and write down one question you still have after your brief exploration.",
+    virtues: { "Curiosity": 6, "Proper Ambition": 2 },
+    duration: "Short",
+  },
+
+  {
+    prompt: "Identify one small, achievable step you can take today towards a larger personal or professional goal you're working on. Write it down and commit to completing it.",
+    virtues: { "Proper Ambition": 5 },
+    duration: "Short",
+  },
+
+  {
+    prompt: "Identify one specific goal you want to achieve by the end of this week. Write down the first three steps you will take towards achieving it.",
+    virtues: { "Proper Ambition": 5 },
+    duration: "Short",
+  },
+
+  {
+    prompt: "Identify a single ambitious goal you want to achieve in the next month. Write it down, then list one small action you can take today to move towards this goal.",
+    virtues: { "Proper Ambition": 6 },
+    duration: "Short",
+  },
+
+  {
+    prompt: "Spend a few minutes listening to a podcast or watching a short video from someone with a different cultural background or viewpoint than your own. Focus on understanding their perspective without forming judgments.",
+    virtues: { "Tolerance": 5, "Respectfulness": 2 },
+    duration: "Short",
+  },
+
+  {
+    prompt: "Engage in a conversation with someone whose views differ from yours. Focus solely on listening and understanding their perspective for five minutes without interrupting or offering your own opinion.",
+    virtues: { "Tolerance": 6, "Respectfulness": 2 },
+    duration: "Short",
+  },
+
+  {
+    prompt: "Identify a community service project or charity in your local area and spend time volunteering or contributing in a meaningful way. Focus on helping others without seeking recognition or praise. Involve a friend or colleague to join you in this endeavor, fostering a sense of teamwork.",
+    virtues: { "Kindness": 10, "Modesty": 3, "Collaboration": 2 },
+    duration: "Long",
+  },
+
+  {
+    prompt: "Spend time volunteering at a local community center or charity organization for at least 30 minutes today. Focus on helping others without seeking recognition, and collaborate with fellow volunteers to maximize your collective impact.",
+    virtues: { "Kindness": 10, "Collaboration": 2, "Modesty": 2 },
+    duration: "Long",
+  },
+
+  {
+    prompt: "Identify a colleague or teammate who often contributes but doesn't seek recognition. Spend 15 to 30 minutes writing a sincere and specific acknowledgment of their efforts, detailing how their work positively impacts the team. Share this acknowledgment with both the individual and the group, if appropriate, to highlight their contributions and foster a supportive environment.",
+    virtues: { "Kindness": 10, "Modesty": 3, "Collaboration": 2 },
+    duration: "Long",
+  },
+
+  {
+    prompt: "Take five minutes to plan your meals for the next day, ensuring you have a balanced diet and allocate appropriate portions to avoid overeating. Use this practice to develop a routine that supports your goals.",
+    virtues: { "Discipline": 5, "Temperance": 2, "Proper Ambition": 1 },
+    duration: "Short",
+  },
+
+  {
+    prompt: "Set a timer for 5 minutes and organize one small area of your workspace, like a desk drawer or a section of your desktop, focusing on decluttering and prioritizing items that enhance your productivity.",
+    virtues: { "Discipline": 5, "Temperance": 2, "Proper Ambition": 1 },
+    duration: "Short",
+  },
+
+  {
+    prompt: "Set a timer for five minutes and organize a cluttered area of your workspace or home. Focus on making it functional, not perfect.",
+    virtues: { "Discipline": 5, "Temperance": 2, "Proper Ambition": 1 },
+    duration: "Short",
+  },
+
+  {
+    prompt: "Complete a 5-minute focused stretching routine to prepare for your gym session, maintaining a steady pace without rushing.",
+    virtues: { "Discipline": 5, "Patience": 2, "Resilience": 1 },
+    duration: "Short",
+  },
+
+  {
+    prompt: "Spend 5 minutes stretching before your gym workout, focusing on consistent breath control and not rushing through the movements.",
+    virtues: { "Discipline": 5, "Patience": 2, "Resilience": 1 },
+    duration: "Short",
+  },
+
+  {
+    prompt: "Seek an opportunity today to praise a colleague, friend, or family member for their achievements or skills. Make sure the praise highlights their strengths without comparing them to yourself.",
+    virtues: { "Modesty": 10, "Respectfulness": 3, "Proper Ambition": 2 },
+    duration: "Medium",
+  },
+
+  {
+    prompt: "Reflect on a recent team project or group activity in which you participated. Identify one specific contribution from a teammate that was crucial to the success of the project. Take 15 minutes to write them a short note or email expressing your appreciation for their work, highlighting what you learned from their contribution. Avoid mentioning your own contributions.",
+    virtues: { "Modesty": 10, "Respectfulness": 3, "Proper Ambition": 2 },
+    duration: "Medium",
+  },
+
+  {
+    prompt: "Identify one area in your life where you feel successful and write down three humble statements about your achievements that acknowledge the contributions of others or external factors. Share these thoughts with someone you respect and ask for their perspective on your modesty.",
+    virtues: { "Modesty": 10, "Respectfulness": 3, "Proper Ambition": 2 },
+    duration: "Medium",
+  },
 ];
