@@ -1,5 +1,5 @@
 import type { QuestSeedItem, QuestDuration, GenerateSettings } from './questTypes';
-import { VIRTUES, COMPANION_GRAPH } from './virtues';
+import { VIRTUES, COMPANION_GRAPH, getVirtueDistanceFromCuriosity } from './virtues';
 
 const DURATIONS: QuestDuration[] = ['Short', 'Medium', 'Long'];
 
@@ -16,7 +16,7 @@ function getPrimaryVirtue(quest: QuestSeedItem): string {
 }
 
 function sortVirtues(virtues: string[]): string[] {
-  const rank = new Map(VIRTUES.map((v, idx) => [v, idx]));
+  const rank = new Map<string, number>(VIRTUES.map((v, idx) => [v, idx]));
   return [...virtues].sort((a, b) => (rank.get(a) ?? Number.MAX_SAFE_INTEGER) - (rank.get(b) ?? Number.MAX_SAFE_INTEGER));
 }
 
@@ -87,7 +87,7 @@ export function autoSuggestConfig(
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
 
-  // Find combination(s) with the lowest count and randomly pick one.
+  // Find combination(s) with the lowest count.
   let minCount = Infinity;
   const candidates: SuggestionCombo[] = [];
   for (const combo of allCombos) {
@@ -101,7 +101,21 @@ export function autoSuggestConfig(
     }
   }
 
-  const selected = candidates[Math.floor(Math.random() * candidates.length)];
+  // Secondary priority: virtues closest to Curiosity (BFS distance on virtue graph).
+  let minDistance = Infinity;
+  const closestCandidates: SuggestionCombo[] = [];
+  for (const combo of candidates) {
+    const distance = getVirtueDistanceFromCuriosity(combo.primaryVirtue);
+    if (distance < minDistance) {
+      minDistance = distance;
+      closestCandidates.length = 0;
+      closestCandidates.push(combo);
+    } else if (distance === minDistance) {
+      closestCandidates.push(combo);
+    }
+  }
+
+  const selected = closestCandidates[Math.floor(Math.random() * closestCandidates.length)];
   return {
     primaryVirtue: selected.primaryVirtue,
     secondaryVirtues: selected.secondaryVirtues,

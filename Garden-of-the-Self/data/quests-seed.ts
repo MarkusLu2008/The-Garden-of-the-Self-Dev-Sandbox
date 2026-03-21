@@ -346,4 +346,16 @@ export const questsSeed: QuestSeedItem[] = [
     virtues: { "Modesty": 10, "Respectfulness": 3, "Proper Ambition": 2 },
     duration: "Medium",
   },
+
+  {
+    prompt: "Set a timer for 5 minutes and write down three achievable goals you want to pursue today. Include one goal that involves helping someone else and one where you learn something new.",
+    virtues: { "Proper Ambition": 5, "Curiosity": 2, "Kindness": 2 },
+    duration: "Short",
+  },
+
+  {
+    prompt: "Set a small, achievable goal for your day that aligns with your long-term ambitions. Then, take a moment to ask a colleague or friend about a recent challenge they faced and offer a supportive word or gesture.",
+    virtues: { "Proper Ambition": 5, "Kindness": 2, "Curiosity": 1 },
+    duration: "Short",
+  },
 ];

@@ -10,7 +10,7 @@ function getPrimaryVirtue(quest: QuestSeedItem): string {
 }
 
 function sortVirtues(virtues: string[]): string[] {
-  const rank = new Map(VIRTUES.map((v, idx) => [v, idx]));
+  const rank = new Map<string, number>(VIRTUES.map((v, idx) => [v, idx]));
   return [...virtues].sort(
     (a, b) => (rank.get(a) ?? Number.MAX_SAFE_INTEGER) - (rank.get(b) ?? Number.MAX_SAFE_INTEGER)
   );
