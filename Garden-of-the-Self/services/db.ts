@@ -271,6 +271,10 @@ async function getVirtueIdFromName(name: string): Promise<number | undefined> {
 // ---- Journals ----
 
 export type JournalVirtueValues = Record<string, number>;
+export type JournalInsertOptions = {
+  sourceQuestId?: number;
+  sourceQuestVirtues?: JournalVirtueValues;
+};
 
 type JournalRow = {
   id: number;
@@ -287,6 +291,16 @@ function extractJournalDateKey(filePath: string): string {
 
 function hasPositiveVirtueValues(virtueValues: JournalVirtueValues): boolean {
   return Object.values(virtueValues).some((value) => value > 0);
+}
+
+function pickPositiveVirtueValues(virtueValues: JournalVirtueValues): JournalVirtueValues {
+  const result: JournalVirtueValues = {};
+  for (const [name, value] of Object.entries(virtueValues)) {
+    if (value > 0) {
+      result[name] = value;
+    }
+  }
+  return result;
 }
 
 async function applyJournalPointsIfEligible(
@@ -315,6 +329,41 @@ async function applyJournalPointsIfEligible(
   );
 }
 
+async function applyQuestJournalBonusIfEligible(
+  database: SQLite.SQLiteDatabase,
+  filePath: string,
+  sourceQuestId: number | undefined,
+  sourceQuestVirtues: JournalVirtueValues | undefined
+): Promise<void> {
+  if (sourceQuestId == null || !Number.isFinite(sourceQuestId) || !sourceQuestVirtues) {
+    return;
+  }
+
+  const bonusVirtues = pickPositiveVirtueValues(sourceQuestVirtues);
+  if (!hasPositiveVirtueValues(bonusVirtues)) {
+    return;
+  }
+
+  const awardKey = `${APP_META_KEY_JOURNAL_QUEST_BONUS_AWARDED_PREFIX}${filePath}`;
+  const alreadyAwarded = await database.getFirstAsync<{ value: string | null }>(
+    'SELECT value FROM app_meta WHERE key = ?',
+    [awardKey]
+  );
+  if (alreadyAwarded?.value === '1') {
+    return;
+  }
+
+  await applyVirtueDeltas(database, bonusVirtues, +1);
+  await database.runAsync(
+    'INSERT OR REPLACE INTO app_meta (key, value) VALUES (?, ?)',
+    [awardKey, '1']
+  );
+  await database.runAsync(
+    'INSERT OR REPLACE INTO app_meta (key, value) VALUES (?, ?)',
+    [`${APP_META_KEY_JOURNAL_QUEST_SOURCE_ID_PREFIX}${filePath}`, String(sourceQuestId)]
+  );
+}
+
 async function canAwardJournalPointsForDate(dateKey: string): Promise<boolean> {
   const database = await getDatabase();
   const lastAwardedDateRow = await database.getFirstAsync<{ value: string | null }>(
@@ -328,7 +377,25 @@ async function canAwardJournalPointsToday(): Promise<boolean> {
   return canAwardJournalPointsForDate(getTodayDateString());
 }
 
-async function insertJournal(file_path: string, prompt: string, virtueValues: JournalVirtueValues) {
+async function markQuestReflectionUsedIfNeeded(
+  database: SQLite.SQLiteDatabase,
+  sourceQuestId: number | undefined
+): Promise<void> {
+  if (sourceQuestId == null || !Number.isFinite(sourceQuestId)) {
+    return;
+  }
+  await database.runAsync(
+    'INSERT OR REPLACE INTO app_meta (key, value) VALUES (?, ?)',
+    [`${APP_META_KEY_QUEST_REFLECTION_USED_PREFIX}${sourceQuestId}`, '1']
+  );
+}
+
+async function insertJournal(
+  file_path: string,
+  prompt: string,
+  virtueValues: JournalVirtueValues,
+  options?: JournalInsertOptions
+) {
   const database = await getDatabase();
   await database.runAsync(
     `INSERT INTO journals (file_path, prompt, created_at, updated_at)
@@ -344,6 +411,13 @@ async function insertJournal(file_path: string, prompt: string, virtueValues: Jo
 
   await upsertJournalVirtues(database, journal.id, virtueValues);
   await applyJournalPointsIfEligible(database, file_path, virtueValues);
+  await applyQuestJournalBonusIfEligible(
+    database,
+    file_path,
+    options?.sourceQuestId,
+    options?.sourceQuestVirtues
+  );
+  await markQuestReflectionUsedIfNeeded(database, options?.sourceQuestId);
 }
 
 async function upsertJournalVirtues(
@@ -887,6 +961,38 @@ async function getAllQuestHistory() {
   return result;
 }
 
+async function getQuestReflectionUsageMap(questIds: number[]): Promise<Record<number, boolean>> {
+  const database = await getDatabase();
+  const normalizedQuestIds = Array.from(
+    new Set(questIds.filter((id) => Number.isFinite(id) && id > 0))
+  );
+
+  const result: Record<number, boolean> = {};
+  for (const id of normalizedQuestIds) {
+    result[id] = false;
+  }
+  if (normalizedQuestIds.length === 0) {
+    return result;
+  }
+
+  const placeholders = normalizedQuestIds.map(() => '?').join(', ');
+  const keys = normalizedQuestIds.map((id) => `${APP_META_KEY_QUEST_REFLECTION_USED_PREFIX}${id}`);
+  const rows = await database.getAllAsync<{ key: string; value: string | null }>(
+    `SELECT key, value FROM app_meta WHERE key IN (${placeholders})`,
+    keys
+  );
+
+  for (const row of rows) {
+    if (row.value !== '1') continue;
+    const questIdText = row.key.slice(APP_META_KEY_QUEST_REFLECTION_USED_PREFIX.length);
+    const questId = Number.parseInt(questIdText, 10);
+    if (!Number.isFinite(questId)) continue;
+    result[questId] = true;
+  }
+
+  return result;
+}
+
 async function deleteQuestHistoryForQuest(questId: number) {
   const database = await getDatabase();
 
@@ -997,6 +1103,9 @@ export type VirtueTotalsAndUnlocked = {
 const APP_META_KEY_LAST_VIRTUE_DECAY_DATE = 'last_virtue_decay_date';
 const APP_META_KEY_CURIOSITY_EVER_CROSSED_5 = 'curiosity_ever_crossed_5';
 const APP_META_KEY_LAST_JOURNAL_POINTS_AWARDED_DATE = 'last_journal_points_awarded_date';
+const APP_META_KEY_JOURNAL_QUEST_BONUS_AWARDED_PREFIX = 'journal_quest_bonus_awarded:';
+const APP_META_KEY_JOURNAL_QUEST_SOURCE_ID_PREFIX = 'journal_source_quest_id:';
+const APP_META_KEY_QUEST_REFLECTION_USED_PREFIX = 'quest_reflection_used:';
 
 /** Apply −1 point per calendar day for each unlocked virtue. The configured decay-gated virtue decays only after crossing its configured threshold once. */
 async function applyDailyVirtueDecayIfNeeded(database: SQLite.SQLiteDatabase): Promise<void> {
@@ -1162,4 +1271,4 @@ export {
   canAwardJournalPointsToday,
 };
 export { insertQuest, getQuest, getAllQuests, getDailyQuests, updateQuest, deleteQuest, deleteAllQuests };
-export { getAllQuestHistory, getQuestHistory, getVirtueTotals };
+export { getAllQuestHistory, getQuestHistory, getVirtueTotals, getQuestReflectionUsageMap };

@@ -6,13 +6,14 @@ import {
   deleteQuest,
   getDailyQuests,
   getQuestDurationLabel,
+  getQuestReflectionUsageMap,
   getQuestVirtueDisplayNames,
   updateQuest,
   type QuestRow,
 } from '@/services/db';
 import { getTodayDateString } from '@/utils/dateUtils';
 import { borderRadius, journalStyles, spacing } from '@/utils/styles';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
@@ -25,15 +26,19 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function QuestsScreen() {
   const [quests, setQuests] = useState<QuestRow[]>([]);
+  const [questReflectionUsedMap, setQuestReflectionUsedMap] = useState<Record<number, boolean>>({});
   const [loading, setLoading] = useState(true);
   const { theme } = useUnistyles();
+  const router = useRouter();
 
   const loadQuests = useCallback(async (showLoader = true) => {
     try {
       if (showLoader) setLoading(true);
       const today = getTodayDateString();
       const daily = await getDailyQuests(today);
+      const reflectionUsage = await getQuestReflectionUsageMap(daily.map((quest) => quest.id));
       setQuests(daily);
+      setQuestReflectionUsedMap(reflectionUsage);
     } catch (error) {
       console.error('Failed to load quests:', error);
       Alert.alert('Error', 'Failed to load quests');
@@ -93,6 +98,8 @@ export default function QuestsScreen() {
 
   const renderQuestItem = ({ item }: { item: QuestRow }) => {
     const virtueNames = getQuestVirtueDisplayNames(item).join(' · ');
+    const questVirtuesParam = encodeURIComponent(JSON.stringify(item.virtues));
+    const isReflectionUsed = questReflectionUsedMap[item.id] === true;
 
     return (
       <ThemedView style={styles.questItemContainer}>
@@ -116,7 +123,25 @@ export default function QuestsScreen() {
               ⭐ {virtueNames}
             </ThemedText>
             {item.completed ? (
-              <ThemedText style={styles.completedBadge}>Completed</ThemedText>
+              <>
+                <ThemedText style={styles.completedBadge}>Completed</ThemedText>
+                <TouchableOpacity
+                  style={[styles.reflectButton, isReflectionUsed ? styles.reflectButtonDisabled : null]}
+                  onPress={(event) => {
+                    event.stopPropagation();
+                    if (isReflectionUsed) return;
+                    router.push(
+                      `/(tabs)/journals/create?sourceQuestId=${item.id}&sourceQuestPrompt=${encodeURIComponent(item.prompt)}&sourceQuestVirtues=${questVirtuesParam}`
+                    );
+                  }}
+                  disabled={isReflectionUsed}
+                  activeOpacity={0.8}
+                >
+                  <ThemedText style={styles.reflectButtonText}>
+                    {isReflectionUsed ? 'Reflection Logged' : 'Reflect in Journal'}
+                  </ThemedText>
+                </TouchableOpacity>
+              </>
             ) : null}
           </ThemedView>
         </TouchableOpacity>
@@ -219,6 +244,22 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     fontSize: 12,
     opacity: 0.6,
+  },
+  reflectButton: {
+    marginTop: spacing.md,
+    alignSelf: 'flex-start',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+    backgroundColor: 'rgba(122, 162, 247, 0.15)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(122, 162, 247, 0.4)',
+  },
+  reflectButtonText: {
+    fontSize: 13,
+  },
+  reflectButtonDisabled: {
+    opacity: 0.45,
   },
   emptyContainer: {
     flex: 1,
