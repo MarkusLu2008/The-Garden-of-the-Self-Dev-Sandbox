@@ -1,7 +1,7 @@
 'use client';
 
 import type { GenerateSettings, QuestDuration } from '@/lib/questTypes';
-import VirtueSelector from './VirtueSelector';
+import VirtueSelector from './VirtueGraphSelector';
 
 interface Props {
   settings: GenerateSettings;

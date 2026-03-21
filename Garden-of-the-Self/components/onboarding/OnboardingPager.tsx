@@ -75,22 +75,32 @@ export function OnboardingPager() {
     </TouchableOpacity>
   );
 
+  const header = (
+    <View style={styles.header}>
+      {!isFirstPage ? (
+        <TouchableOpacity style={styles.headerButton} onPress={goBack}>
+          <ThemedText style={styles.skipText}>Back</ThemedText>
+        </TouchableOpacity>
+      ) : (
+        <View style={styles.headerButton} />
+      )}
+      {!isLastPage ? (
+        <TouchableOpacity style={styles.headerButton} onPress={dismiss}>
+          <ThemedText style={styles.skipText}>Skip</ThemedText>
+        </TouchableOpacity>
+      ) : (
+        <View style={styles.headerButton} />
+      )}
+    </View>
+  );
+
   if (isWeb) {
     return (
       <SafeAreaView
         style={[styles.container, { backgroundColor: theme.colors.background }]}
         edges={['top', 'bottom']}
       >
-        {!isFirstPage && (
-          <TouchableOpacity style={styles.backButton} onPress={goBack}>
-            <ThemedText style={styles.skipText}>Back</ThemedText>
-          </TouchableOpacity>
-        )}
-        {!isLastPage && (
-          <TouchableOpacity style={styles.skipButton} onPress={dismiss}>
-            <ThemedText style={styles.skipText}>Skip</ThemedText>
-          </TouchableOpacity>
-        )}
+        {header}
         <ScrollView
           horizontal
           pagingEnabled
@@ -118,16 +128,7 @@ export function OnboardingPager() {
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       edges={['top', 'bottom']}
     >
-      {!isFirstPage && (
-        <TouchableOpacity style={styles.backButton} onPress={goBack}>
-          <ThemedText style={styles.skipText}>Back</ThemedText>
-        </TouchableOpacity>
-      )}
-      {!isLastPage && (
-        <TouchableOpacity style={styles.skipButton} onPress={dismiss}>
-          <ThemedText style={styles.skipText}>Skip</ThemedText>
-        </TouchableOpacity>
-      )}
+      {header}
       <PagerView
         ref={pagerRef}
         style={styles.pager}
@@ -148,18 +149,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  backButton: {
-    position: 'absolute',
-    top: 16,
-    left: 16,
-    zIndex: 10,
-    padding: 8,
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 8,
   },
-  skipButton: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    zIndex: 10,
+  headerButton: {
     padding: 8,
   },
   skipText: {
