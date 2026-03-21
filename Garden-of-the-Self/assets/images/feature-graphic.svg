@@ -1,0 +1,28 @@
+<svg width="1024" height="500" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bg-glow" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0A4A3F"/>
+      <stop offset="100%" stop-color="#04342C"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1024" height="500" fill="url(#bg-glow)"/>
+
+  <!-- Flower logo -->
+  <g transform="translate(242, 250)">
+    <ellipse cx="0" cy="-50" rx="21" ry="47" fill="#9FE1CB" opacity="0.45" transform="rotate(0)"/>
+    <ellipse cx="0" cy="-50" rx="21" ry="47" fill="#5DCAA5" opacity="0.4"  transform="rotate(60)"/>
+    <ellipse cx="0" cy="-50" rx="21" ry="47" fill="#1D9E75" opacity="0.35" transform="rotate(120)"/>
+    <ellipse cx="0" cy="-50" rx="21" ry="47" fill="#0F6E56" opacity="0.45" transform="rotate(180)"/>
+    <ellipse cx="0" cy="-50" rx="21" ry="47" fill="#1D9E75" opacity="0.4"  transform="rotate(240)"/>
+    <ellipse cx="0" cy="-50" rx="21" ry="47" fill="#5DCAA5" opacity="0.35" transform="rotate(300)"/>
+    <circle cx="0" cy="0" r="15" fill="#04342C"/>
+  </g>
+
+  <!-- App name text -->
+  <text x="390" y="238" font-family="Georgia, 'Times New Roman', serif" font-size="52" fill="#9FE1CB" letter-spacing="1">Garden of the Self</text>
+
+  <!-- Tagline -->
+  <text x="390" y="284" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#5DCAA5" opacity="0.6" letter-spacing="1">Grow your virtues, one day at a time</text>
+</svg>
