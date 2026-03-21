@@ -5,6 +5,7 @@ import { useUnistyles } from '@/lib/unistyles-compat';
 import {
   deleteQuest,
   getDailyQuests,
+  getQuestDurationLabel,
   getQuestVirtueDisplayNames,
   updateQuest,
   type QuestRow,
@@ -94,27 +95,32 @@ export default function QuestsScreen() {
     const virtueNames = getQuestVirtueDisplayNames(item).join(' · ');
 
     return (
-      <TouchableOpacity
-        style={styles.questItem}
-        onPress={() => handleToggleCompleted(item)}
-        onLongPress={() => handleDelete(item)}
-        activeOpacity={0.7}
-      >
-        <ThemedView style={[journalStyles.border, styles.questContent]}>
-          <ThemedText
-            type="defaultSemiBold"
-            style={[styles.questPrompt, item.completed ? styles.completedText : null]}
-          >
-            {item.prompt}
-          </ThemedText>
-          <ThemedText style={styles.virtuesText}>
-            ⭐ {virtueNames}
-          </ThemedText>
-          {item.completed ? (
-            <ThemedText style={styles.completedBadge}>Completed</ThemedText>
-          ) : null}
-        </ThemedView>
-      </TouchableOpacity>
+      <ThemedView style={styles.questItemContainer}>
+        <ThemedText type="subtitle" style={styles.durationHeading}>
+          {getQuestDurationLabel(item.duration)}
+        </ThemedText>
+        <TouchableOpacity
+          style={styles.questItem}
+          onPress={() => handleToggleCompleted(item)}
+          onLongPress={() => handleDelete(item)}
+          activeOpacity={0.7}
+        >
+          <ThemedView style={[journalStyles.border, styles.questContent]}>
+            <ThemedText
+              type="defaultSemiBold"
+              style={[styles.questPrompt, item.completed ? styles.completedText : null]}
+            >
+              {item.prompt}
+            </ThemedText>
+            <ThemedText style={styles.virtuesText}>
+              ⭐ {virtueNames}
+            </ThemedText>
+            {item.completed ? (
+              <ThemedText style={styles.completedBadge}>Completed</ThemedText>
+            ) : null}
+          </ThemedView>
+        </TouchableOpacity>
+      </ThemedView>
     );
   };
 
@@ -183,9 +189,15 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
   questItem: {
-    marginBottom: spacing.md,
     borderRadius: borderRadius.md,
     overflow: 'hidden',
+  },
+  questItemContainer: {
+    marginBottom: spacing.lg,
+  },
+  durationHeading: {
+    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.xs,
   },
   questContent: {
     padding: spacing.lg,

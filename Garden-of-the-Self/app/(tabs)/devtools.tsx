@@ -362,7 +362,7 @@ export default function DevToolsScreen() {
             try {
               setLoading(true);
               for (const q of questsSeed) {
-                await insertQuest(q.prompt, q.virtues);
+                await insertQuest(q.prompt, q.virtues, q.duration);
               }
               await loadDbInfo();
               await loadQuests();
@@ -681,6 +681,10 @@ export default function DevToolsScreen() {
                     <ThemedText style={styles.listItemText}>
                       <ThemedText type="defaultSemiBold">Completed: </ThemedText>
                       {quest.completed ? 'Yes' : 'No'}
+                    </ThemedText>
+                    <ThemedText style={styles.listItemText}>
+                      <ThemedText type="defaultSemiBold">Duration: </ThemedText>
+                      {quest.duration}
                     </ThemedText>
                     <ThemedText style={styles.listItemText}>
                       <ThemedText type="defaultSemiBold">Virtues: </ThemedText>

@@ -1,6 +1,7 @@
 import * as SQLite from 'expo-sqlite';
 import virtues from '@/constants/virtues';
 import { clampQuestRewards, gameConfig } from '@/constants/gameConfig';
+import { questDurationOrder, questsSeed, type QuestDuration } from '@/data/quests-seed';
 import { getTodayDateString } from '@/utils/dateUtils';
 
 /** Virtue display name -> slug (snake_case) */
@@ -20,6 +21,12 @@ let initPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 let virtuesCache: VirtueRow[] | null = null;
 let virtueIdByName: Map<string, number> | null = null;
 let virtueIdBySlug: Map<string, number> | null = null;
+
+const QUEST_DURATION_LABELS: Record<QuestDuration, string> = {
+  Long: 'Long (30min~)',
+  Medium: 'Medium (15~)',
+  Short: 'Short duration (5~)',
+};
 
 /** Create tables if they do not exist; does not drop or overwrite existing data. */
 async function initializeOrMigrateSchema(database: SQLite.SQLiteDatabase): Promise<void> {
@@ -54,6 +61,7 @@ async function initializeOrMigrateSchema(database: SQLite.SQLiteDatabase): Promi
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       completed INTEGER NOT NULL DEFAULT 0,
       prompt TEXT NOT NULL,
+      duration TEXT NOT NULL DEFAULT 'Medium',
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
@@ -118,6 +126,31 @@ async function initializeOrMigrateSchema(database: SQLite.SQLiteDatabase): Promi
     }
   }
 
+  // Migration: add duration to quests and backfill from seed prompts.
+  const questTableInfo = await database.getAllAsync<{ name: string }>('PRAGMA table_info(quests)');
+  const hasDuration = questTableInfo.some((c) => c.name === 'duration');
+  if (!hasDuration) {
+    await database.execAsync("ALTER TABLE quests ADD COLUMN duration TEXT NOT NULL DEFAULT 'Medium'");
+  }
+
+  const durationByPrompt = new Map(questsSeed.map((seedItem) => [seedItem.prompt, seedItem.duration]));
+  const existingQuests = await database.getAllAsync<{ id: number; prompt: string }>(
+    'SELECT id, prompt FROM quests'
+  );
+  const updateQuestDurationStmt = await database.prepareAsync(
+    "UPDATE quests SET duration = ?, updated_at = datetime('now') WHERE id = ?"
+  );
+  try {
+    for (const quest of existingQuests) {
+      const seedDuration = durationByPrompt.get(quest.prompt);
+      if (!seedDuration) continue;
+      await updateQuestDurationStmt.executeAsync([seedDuration, quest.id]);
+    }
+  } finally {
+    await updateQuestDurationStmt.finalizeAsync();
+  }
+  await database.execAsync("UPDATE quests SET duration = 'Medium' WHERE duration IS NULL OR duration = ''");
+
   const unlocksAfterTotalPoints = gameConfig.unlocking.unlocksAfterTotalPoints;
   // Triggers: set virtues.unlocked_at on first time crossing configured threshold.
   await database.execAsync(`
@@ -161,10 +194,9 @@ async function seedQuestsIfEmpty(database: SQLite.SQLiteDatabase): Promise<void>
   if (questCount?.count !== 0) return;
   const virtueRows = await database.getAllAsync<VirtueRow>('SELECT id, name, slug, unlocked_at FROM virtues');
   const virtueIdByNameMap = new Map(virtueRows.map((v) => [v.name, v.id]));
-  const { questsSeed } = await import('@/data/quests-seed');
   const insertQuestStmt = await database.prepareAsync(
-    `INSERT INTO quests (completed, prompt, created_at, updated_at)
-     VALUES (0, ?, datetime('now'), datetime('now'))`
+    `INSERT INTO quests (completed, prompt, duration, created_at, updated_at)
+     VALUES (0, ?, ?, datetime('now'), datetime('now'))`
   );
   const insertQuestVirtueStmt = await database.prepareAsync(
     'INSERT INTO quest_virtues (quest_id, virtue_id, value) VALUES (?, ?, ?)'
@@ -172,7 +204,7 @@ async function seedQuestsIfEmpty(database: SQLite.SQLiteDatabase): Promise<void>
   try {
     for (const q of questsSeed) {
       const clampedVirtues = clampQuestRewards(q.virtues);
-      await insertQuestStmt.executeAsync([q.prompt]);
+      await insertQuestStmt.executeAsync([q.prompt, q.duration]);
       const questRow = await database.getFirstAsync<{ id: number }>(
         'SELECT id FROM quests WHERE rowid = last_insert_rowid()'
       );
@@ -413,6 +445,7 @@ export type QuestRow = {
   id: number;
   completed: number;
   prompt: string;
+  duration: QuestDuration;
   created_at: string;
   updated_at: string;
   virtues: QuestVirtueValues;
@@ -433,13 +466,46 @@ type DailyQuestUpdate = {
   virtues: QuestVirtueValues;
 };
 
-async function insertQuest(prompt: string, virtueValues: QuestVirtueValues = {}) {
+function normalizeQuestDuration(duration: string | null | undefined): QuestDuration {
+  if (duration === 'Long' || duration === 'Medium' || duration === 'Short') {
+    return duration;
+  }
+  return 'Medium';
+}
+
+function createDateSeededRandom(dateString: string): () => number {
+  let seed = 0;
+  for (let i = 0; i < dateString.length; i++) {
+    seed = (seed * 31 + dateString.charCodeAt(i)) | 0;
+  }
+  return () => {
+    seed = (seed * 1664525 + 1013904223) | 0;
+    return (seed >>> 0) / 0x100000000;
+  };
+}
+
+function sortQuestsByDurationLongestToShortest(quests: QuestRow[]): QuestRow[] {
+  return [...quests].sort(
+    (left, right) =>
+      questDurationOrder.indexOf(left.duration) - questDurationOrder.indexOf(right.duration)
+  );
+}
+
+export function getQuestDurationLabel(duration: QuestDuration): string {
+  return QUEST_DURATION_LABELS[duration];
+}
+
+async function insertQuest(
+  prompt: string,
+  virtueValues: QuestVirtueValues = {},
+  duration: QuestDuration = 'Medium'
+) {
   const database = await getDatabase();
   const clampedVirtues = clampQuestRewards(virtueValues);
   await database.runAsync(
-    `INSERT INTO quests (completed, prompt, created_at, updated_at)
-     VALUES (0, ?, datetime('now'), datetime('now'))`,
-    [prompt]
+    `INSERT INTO quests (completed, prompt, duration, created_at, updated_at)
+     VALUES (0, ?, ?, datetime('now'), datetime('now'))`,
+    [prompt, duration]
   );
 
   const quest = await database.getFirstAsync<{ id: number }>(
@@ -498,13 +564,14 @@ async function getQuest(id: number) {
     id: number;
     completed: number;
     prompt: string;
+    duration: string;
     created_at: string;
     updated_at: string;
   }>('SELECT * FROM quests WHERE id = ?', [id]);
   if (!quest) return null;
 
   const virtues = await getQuestVirtues(database, quest.id);
-  return { ...quest, virtues };
+  return { ...quest, duration: normalizeQuestDuration(quest.duration), virtues };
 }
 
 async function getAllQuests() {
@@ -513,6 +580,7 @@ async function getAllQuests() {
     id: number;
     completed: number;
     prompt: string;
+    duration: string;
     created_at: string;
     updated_at: string;
   }>('SELECT * FROM quests ORDER BY created_at DESC');
@@ -520,7 +588,7 @@ async function getAllQuests() {
   const result: QuestRow[] = [];
   for (const row of rows) {
     const virtues = await getQuestVirtues(database, row.id);
-    result.push({ ...row, virtues });
+    result.push({ ...row, duration: normalizeQuestDuration(row.duration), virtues });
   }
   return result;
 }
@@ -568,7 +636,7 @@ async function getDailyQuests(dateString: string): Promise<QuestRow[]> {
       const completedAt = byQuestId.get(id) ?? null;
       result.push({ ...quest, completed: completedAt ? 1 : 0 });
     }
-    return result;
+    return sortQuestsByDurationLongestToShortest(result);
   }
 
   const dailyQuestCount = gameConfig.quests.dailyQuestCount;
@@ -582,30 +650,40 @@ async function getDailyQuests(dateString: string): Promise<QuestRow[]> {
     const primaryVirtue = getPrimaryVirtueNameFromValues(q.virtues);
     return primaryVirtue != null && unlockedVirtues.has(primaryVirtue);
   });
-  let picked: QuestRow[];
-
-  if (pool.length <= dailyQuestCount) {
-    picked = pool;
-  } else {
-    // Deterministic seed from date string
-    let seed = 0;
-    for (let i = 0; i < dateString.length; i++) {
-      seed = (seed * 31 + dateString.charCodeAt(i)) | 0;
-    }
-    const shuffled = [...pool];
-    const nextSeed = () => {
-      seed = (seed * 1664525 + 1013904223) | 0;
-      return (seed >>> 0) / 0x100000000;
-    };
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(nextSeed() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    picked = shuffled.slice(0, dailyQuestCount);
+  const nextRandom = createDateSeededRandom(dateString);
+  const byDuration = new Map<QuestDuration, QuestRow[]>(
+    questDurationOrder.map((duration) => [duration, [] as QuestRow[]])
+  );
+  for (const quest of pool) {
+    byDuration.get(quest.duration)?.push(quest);
   }
 
+  const picked: QuestRow[] = [];
+  for (const duration of questDurationOrder) {
+    const bucket = byDuration.get(duration) ?? [];
+    if (bucket.length === 0) continue;
+    const selectedIndex = Math.floor(nextRandom() * bucket.length);
+    const [selectedQuest] = bucket.splice(selectedIndex, 1);
+    if (selectedQuest) {
+      picked.push(selectedQuest);
+    }
+  }
+
+  if (picked.length < dailyQuestCount) {
+    const remainderPool = questDurationOrder.flatMap((duration) => byDuration.get(duration) ?? []);
+    while (picked.length < dailyQuestCount && remainderPool.length > 0) {
+      const selectedIndex = Math.floor(nextRandom() * remainderPool.length);
+      const [selectedQuest] = remainderPool.splice(selectedIndex, 1);
+      if (selectedQuest) {
+        picked.push(selectedQuest);
+      }
+    }
+  }
+
+  const orderedPicked = sortQuestsByDurationLongestToShortest(picked);
+
   // Persist assignments
-  for (const quest of picked) {
+  for (const quest of orderedPicked) {
     await database.runAsync(
       `INSERT INTO quest_history (quest_id, assigned_at) VALUES (?, ?)`,
       [quest.id, dateString]
@@ -618,7 +696,7 @@ async function getDailyQuests(dateString: string): Promise<QuestRow[]> {
       await upsertQuestHistoryVirtues(database, history.id, quest.virtues);
     }
   }
-  return picked.map((q) => ({ ...q, completed: 0 }));
+  return orderedPicked.map((q) => ({ ...q, completed: 0 }));
 }
 
 async function updateDailyQuestCompletion(update: DailyQuestUpdate): Promise<boolean> {
