@@ -5,24 +5,13 @@ import { Tabs, useRouter } from 'expo-router';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { gameConfig } from '@/constants/gameConfig';
 
 function FilteredTabBar(props: BottomTabBarProps) {
   const { theme } = useUnistyles();
   const router = useRouter();
-  const routes = gameConfig.devtools.show
-    ? props.state.routes
-    : props.state.routes.filter((r) => r.name !== 'devtools');
-  const currentRoute = props.state.routes[props.state.index];
-  const index = routes.findIndex((r) => r.key === currentRoute.key);
-  const filteredState = {
-    ...props.state,
-    routes,
-    index: index >= 0 ? index : 0,
-  };
   return (
     <View>
-      <BottomTabBar {...props} state={filteredState} />
+      <BottomTabBar {...props} />
       <TouchableOpacity
         style={{
           position: 'absolute',
@@ -81,10 +70,10 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="devtools"
+        name="settings"
         options={{
-          title: 'DevTools',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="wrench.and.screwdriver.fill" color={color} />,
+          title: 'Settings',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="gearshape.fill" color={color} />,
         }}
       />
     </Tabs>

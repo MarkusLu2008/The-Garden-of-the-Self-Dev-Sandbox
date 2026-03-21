@@ -21,7 +21,6 @@ export const questsSeed: QuestSeedItem[] = [
     virtues: { Curiosity: 6 },
     duration: 'Long',
   },
-
   {
     prompt: "Spend 15 minutes exploring a new topic or hobby you know little about by reading an article or watching a short video, then jot down three interesting facts you discovered and one question you still have.",
     virtues: { "Curiosity": 5, "Courage": 2 },

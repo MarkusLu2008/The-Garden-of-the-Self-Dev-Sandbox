@@ -6,6 +6,7 @@ import { UnistylesProvider, UnistylesRuntime, useUnistyles } from '@/lib/unistyl
 import { Colors } from '@/constants/theme';
 import { DateOverrideProvider } from '@/contexts/DateOverrideContext';
 import { OnboardingProvider, useOnboarding } from '@/contexts/OnboardingContext';
+import { AppPreferencesProvider } from '@/contexts/AppPreferencesContext';
 import 'react-native-reanimated';
 
 import '@/lib/unistyles';
@@ -86,9 +87,11 @@ export default function RootLayout() {
   return (
     <UnistylesProvider>
       <OnboardingProvider>
-        <DateOverrideProvider>
-          <RootLayoutContent />
-        </DateOverrideProvider>
+        <AppPreferencesProvider>
+          <DateOverrideProvider>
+            <RootLayoutContent />
+          </DateOverrideProvider>
+        </AppPreferencesProvider>
       </OnboardingProvider>
     </UnistylesProvider>
   );

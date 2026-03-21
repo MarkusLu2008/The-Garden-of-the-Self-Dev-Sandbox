@@ -1,13 +1,13 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { useAppPreferences } from '@/contexts/AppPreferencesContext';
 import { useUnistyles } from '@/lib/unistyles-compat';
 import {
   deleteQuest,
   getDailyQuests,
   getQuestDurationLabel,
   getQuestReflectionUsageMap,
-  getQuestVirtueDisplayNames,
   updateQuest,
   type QuestRow,
 } from '@/services/db';
@@ -30,6 +30,7 @@ export default function QuestsScreen() {
   const [loading, setLoading] = useState(true);
   const { theme } = useUnistyles();
   const router = useRouter();
+  const { preferences } = useAppPreferences();
 
   const loadQuests = useCallback(async (showLoader = true) => {
     try {
@@ -97,7 +98,13 @@ export default function QuestsScreen() {
   };
 
   const renderQuestItem = ({ item }: { item: QuestRow }) => {
-    const virtueNames = getQuestVirtueDisplayNames(item).join(' · ');
+    const virtueRewardSummary = Object.entries(item.virtues)
+      .filter(([, value]) => value > 0)
+      .sort(([, left], [, right]) => right - left)
+      .map(([name, value]) =>
+        preferences.showQuestPointRewards ? `${name} +${value}` : name
+      )
+      .join(' · ');
     const questVirtuesParam = encodeURIComponent(JSON.stringify(item.virtues));
     const isReflectionUsed = questReflectionUsedMap[item.id] === true;
 
@@ -120,7 +127,7 @@ export default function QuestsScreen() {
               {item.prompt}
             </ThemedText>
             <ThemedText style={styles.virtuesText}>
-              ⭐ {virtueNames}
+              ⭐ {virtueRewardSummary}
             </ThemedText>
             {item.completed ? (
               <>
