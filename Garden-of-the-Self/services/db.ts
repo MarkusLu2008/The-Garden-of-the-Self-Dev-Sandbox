@@ -233,6 +233,7 @@ async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
 
   initPromise = (async () => {
     db = await SQLite.openDatabaseAsync('garden-of-the-self.db');
+    await db.execAsync('PRAGMA journal_mode=WAL;');
     await initializeOrMigrateSchema(db);
     await seedVirtuesIfEmpty(db);
     // Ensure default virtue is unlocked (must run after seeding so the row exists)
@@ -599,18 +600,14 @@ async function upsertQuestVirtues(
   await ensureVirtuesLoaded();
   await database.runAsync('DELETE FROM quest_virtues WHERE quest_id = ?', [questId]);
 
-  const insertStmt = await database.prepareAsync(
-    'INSERT INTO quest_virtues (quest_id, virtue_id, value) VALUES (?, ?, ?)'
-  );
-  try {
-    for (const [name, value] of Object.entries(clampedVirtues)) {
-      if (!value) continue;
-      const virtueId = await getVirtueIdFromName(name);
-      if (!virtueId) continue;
-      await insertStmt.executeAsync([questId, virtueId, value]);
-    }
-  } finally {
-    await insertStmt.finalizeAsync();
+  for (const [name, value] of Object.entries(clampedVirtues)) {
+    if (!value) continue;
+    const virtueId = await getVirtueIdFromName(name);
+    if (!virtueId) continue;
+    await database.runAsync(
+      'INSERT INTO quest_virtues (quest_id, virtue_id, value) VALUES (?, ?, ?)',
+      [questId, virtueId, value]
+    );
   }
 }
 
@@ -911,18 +908,14 @@ async function upsertQuestHistoryVirtues(
   await ensureVirtuesLoaded();
   await database.runAsync('DELETE FROM quest_history_virtues WHERE history_id = ?', [historyId]);
 
-  const insertStmt = await database.prepareAsync(
-    'INSERT INTO quest_history_virtues (history_id, virtue_id, value) VALUES (?, ?, ?)'
-  );
-  try {
-    for (const [name, value] of Object.entries(virtueValues)) {
-      if (!value) continue;
-      const virtueId = await getVirtueIdFromName(name);
-      if (!virtueId) continue;
-      await insertStmt.executeAsync([historyId, virtueId, value]);
-    }
-  } finally {
-    await insertStmt.finalizeAsync();
+  for (const [name, value] of Object.entries(virtueValues)) {
+    if (!value) continue;
+    const virtueId = await getVirtueIdFromName(name);
+    if (!virtueId) continue;
+    await database.runAsync(
+      'INSERT INTO quest_history_virtues (history_id, virtue_id, value) VALUES (?, ?, ?)',
+      [historyId, virtueId, value]
+    );
   }
 }
 
