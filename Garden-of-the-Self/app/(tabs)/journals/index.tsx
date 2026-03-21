@@ -6,9 +6,8 @@ import type { JournalVirtueValues } from '@/services/db';
 import { deleteJournal, getAllJournals } from '@/services/journalManager';
 import { formatDateForDisplay } from '@/utils/dateUtils';
 import { borderRadius, journalStyles, spacing } from '@/utils/styles';
-import { Audio } from 'expo-av';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -35,60 +34,8 @@ export default function JournalsScreen() {
   const [isDeleteMode, setIsDeleteMode] = useState(false);
   const [deletingFilePath, setDeletingFilePath] = useState<string | null>(null);
   const rowDeleteAnimationsRef = useRef<Record<string, Animated.Value>>({});
-  const deleteSoundRef = useRef<Audio.Sound | null>(null);
   const router = useRouter();
   const { theme } = useUnistyles();
-
-  const loadDeleteSound = useCallback(async () => {
-    try {
-      await Audio.setAudioModeAsync({
-        playsInSilentModeIOS: true,
-      });
-
-      const { sound } = await Audio.Sound.createAsync(
-        require('../../../assets/sounds/delete-woosh.wav')
-      );
-
-      deleteSoundRef.current = sound;
-    } catch (error) {
-      console.error('Failed to load delete sound:', error);
-    }
-  }, []);
-
-  const unloadDeleteSound = useCallback(async () => {
-    const sound = deleteSoundRef.current;
-    deleteSoundRef.current = null;
-    if (!sound) return;
-
-    try {
-      await sound.unloadAsync();
-    } catch (error) {
-      console.error('Failed to unload delete sound:', error);
-    }
-  }, []);
-
-  const playDeleteSound = useCallback(async () => {
-    const sound = deleteSoundRef.current;
-    if (!sound) return;
-
-    try {
-      await sound.stopAsync().catch(() => {});
-      await sound.setPositionAsync(0);
-      await sound.playAsync();
-    } catch (error) {
-      console.error('Failed to play delete sound:', error);
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadDeleteSound();
-  }, [loadDeleteSound]);
-
-  useEffect(() => {
-    return () => {
-      void unloadDeleteSound();
-    };
-  }, [unloadDeleteSound]);
 
   const getRowDeleteAnimation = useCallback((filePath: string) => {
     if (!rowDeleteAnimationsRef.current[filePath]) {
@@ -143,7 +90,6 @@ export default function JournalsScreen() {
           try {
             const rowAnimation = getRowDeleteAnimation(journal.file_path);
             setDeletingFilePath(journal.file_path);
-            void playDeleteSound();
             await new Promise<void>((resolve) => {
               Animated.timing(rowAnimation, {
                 toValue: 1,

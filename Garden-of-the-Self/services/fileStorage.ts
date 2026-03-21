@@ -9,6 +9,9 @@ async function ensureJournalDirectory(): Promise<void> {
   }
 
   directoryInitPromise = (async () => {
+    if (journalDirectory.exists) {
+      return;
+    }
     try {
       await journalDirectory.create();
     } catch {
