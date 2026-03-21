@@ -1,4 +1,6 @@
-export type QuestDuration = 'Long' | 'Medium' | 'Short';
+export const QUEST_DURATIONS = ['Long', 'Medium', 'Short'] as const;
+
+export type QuestDuration = (typeof QUEST_DURATIONS)[number];
 
 export type QuestSeedItem = {
   prompt: string;

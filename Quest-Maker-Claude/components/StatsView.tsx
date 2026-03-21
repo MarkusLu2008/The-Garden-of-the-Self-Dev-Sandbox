@@ -11,6 +11,11 @@ type VirtueStats = {
 interface Props {
   stats: Record<string, VirtueStats>;
   total: number;
+  coverage: {
+    coveredCombos: number;
+    totalPossibleCombos: number;
+    percent: number;
+  };
 }
 
 function Cell({ count }: { count: number }) {
@@ -25,7 +30,7 @@ function Cell({ count }: { count: number }) {
   );
 }
 
-export default function StatsView({ stats, total }: Props) {
+export default function StatsView({ stats, total, coverage }: Props) {
   const zeros = VIRTUES.flatMap((v) => {
     const s = stats[v];
     if (!s) return [];
@@ -40,6 +45,21 @@ export default function StatsView({ stats, total }: Props) {
         {zeros.length > 0 && (
           <p className="ml-auto text-xs text-red-400">{zeros.length} gaps (red)</p>
         )}
+      </div>
+
+      <div className="mb-6 rounded-lg border border-gray-700 bg-gray-900/50 p-3">
+        <div className="mb-2 flex items-baseline justify-between gap-3">
+          <p className="text-sm text-gray-300">Companion-graph combo coverage</p>
+          <p className="text-xs text-gray-400 tabular-nums">
+            {coverage.coveredCombos} / {coverage.totalPossibleCombos} ({coverage.percent.toFixed(1)}%)
+          </p>
+        </div>
+        <div className="h-2 w-full overflow-hidden rounded-full bg-gray-700">
+          <div
+            className="h-full bg-emerald-500 transition-all"
+            style={{ width: `${Math.max(0, Math.min(100, coverage.percent))}%` }}
+          />
+        </div>
       </div>
 
       <div className="overflow-x-auto">

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { QuestDuration } from '@/lib/questTypes';
 import { VIRTUES } from '@/lib/virtues';
 import { readQuests } from '@/lib/questStorage';
+import { getCoveredComboCount, getTotalPossibleCombos } from '@/lib/questCoverage';
 
 export type VirtueStats = {
   primary: Record<QuestDuration, number>;
@@ -40,7 +41,18 @@ export async function GET() {
       }
     }
 
-    return NextResponse.json({ stats, total: quests.length });
+    const totalPossibleCombos = getTotalPossibleCombos();
+    const coveredCombos = getCoveredComboCount(quests);
+
+    return NextResponse.json({
+      stats,
+      total: quests.length,
+      coverage: {
+        coveredCombos,
+        totalPossibleCombos,
+        percent: totalPossibleCombos === 0 ? 0 : (coveredCombos / totalPossibleCombos) * 100,
+      },
+    });
   } catch (error) {
     console.error('Stats error:', error);
     return NextResponse.json({ error: 'Failed to load stats' }, { status: 500 });

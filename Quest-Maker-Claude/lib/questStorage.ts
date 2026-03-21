@@ -1,21 +1,11 @@
-import fs from 'fs';
-import path from 'path';
 import type { QuestSeedItem } from './questTypes';
+import { readSeedQuestsSync } from '@/lib/questSeedFile';
 
-const QUESTS_JSONL = path.join(process.cwd(), '..', 'Garden-of-the-Self', 'data', 'quests.jsonl');
-
+// quests.jsonl is intentionally deprecated. Quest-Maker-Claude now reads from quests-seed.ts.
 export function readQuests(): QuestSeedItem[] {
   try {
-    const content = fs.readFileSync(QUESTS_JSONL, 'utf-8');
-    return content
-      .split('\n')
-      .filter((line) => line.trim())
-      .map((line) => JSON.parse(line) as QuestSeedItem);
+    return readSeedQuestsSync();
   } catch {
     return [];
   }
-}
-
-export function appendQuest(quest: QuestSeedItem): void {
-  fs.appendFileSync(QUESTS_JSONL, JSON.stringify(quest) + '\n');
 }

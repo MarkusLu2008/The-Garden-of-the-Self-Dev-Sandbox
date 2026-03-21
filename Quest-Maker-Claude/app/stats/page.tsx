@@ -13,6 +13,11 @@ type VirtueStats = {
 type StatsData = {
   stats: Record<string, VirtueStats>;
   total: number;
+  coverage: {
+    coveredCombos: number;
+    totalPossibleCombos: number;
+    percent: number;
+  };
 };
 
 export default function StatsPage() {
@@ -63,7 +68,7 @@ export default function StatsPage() {
           {loading ? (
             <p className="text-gray-500 text-sm py-8 text-center">Loading…</p>
           ) : data ? (
-            <StatsView stats={data.stats} total={data.total} />
+            <StatsView stats={data.stats} total={data.total} coverage={data.coverage} />
           ) : (
             <p className="text-red-400 text-sm">Failed to load stats.</p>
           )}

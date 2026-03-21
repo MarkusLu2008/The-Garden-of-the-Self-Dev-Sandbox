@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import SettingsPanel from '@/components/SettingsPanel';
 import QuestReview from '@/components/QuestReview';
@@ -14,6 +14,11 @@ const DEFAULT_SETTINGS: GenerateSettings = {
 };
 
 type Message = { text: string; type: 'success' | 'error' };
+type CoverageSummary = {
+  coveredCombos: number;
+  totalPossibleCombos: number;
+  percent: number;
+};
 
 export default function Home() {
   const [settings, setSettings] = useState<GenerateSettings>(DEFAULT_SETTINGS);
@@ -23,11 +28,27 @@ export default function Home() {
   const [isSavingAll, setIsSavingAll] = useState(false);
   const [isLoadingAutoSuggest, setIsLoadingAutoSuggest] = useState(false);
   const [message, setMessage] = useState<Message | null>(null);
+  const [coverage, setCoverage] = useState<CoverageSummary | null>(null);
 
   const showMessage = (text: string, type: Message['type']) => {
     setMessage({ text, type });
     setTimeout(() => setMessage(null), 4000);
   };
+
+  const refreshCoverage = async () => {
+    try {
+      const res = await fetch('/api/stats');
+      if (!res.ok) return;
+      const data: { coverage?: CoverageSummary } = await res.json();
+      if (data.coverage) setCoverage(data.coverage);
+    } catch {
+      // Non-blocking UI hint; ignore coverage refresh errors.
+    }
+  };
+
+  useEffect(() => {
+    refreshCoverage();
+  }, []);
 
   const handleGenerate = async () => {
     if (!settings.primaryVirtue) return;
@@ -81,6 +102,7 @@ export default function Home() {
     try {
       const total = await saveOne(quests[idx]);
       setQuests((prev) => prev.filter((_, i) => i !== idx));
+      await refreshCoverage();
       showMessage(`Quest saved! Library now has ${total} quest${total === 1 ? '' : 's'}.`, 'success');
     } catch {
       showMessage('Failed to save quest', 'error');
@@ -97,6 +119,7 @@ export default function Home() {
         total = await saveOne(quest);
       }
       setQuests([]);
+      await refreshCoverage();
       showMessage(`All ${quests.length} quests saved! Library now has ${total} quests.`, 'success');
     } catch {
       showMessage('Failed to save all quests', 'error');
@@ -155,6 +178,22 @@ export default function Home() {
               )}
             </div>
           </div>
+          {coverage && (
+            <div className="mb-4 rounded-lg border border-gray-700 bg-gray-900/50 p-3">
+              <div className="mb-2 flex items-baseline justify-between gap-3">
+                <p className="text-xs text-gray-300">Coverage of all possible quest combinations</p>
+                <p className="text-xs text-gray-400 tabular-nums">
+                  {coverage.coveredCombos} / {coverage.totalPossibleCombos} ({coverage.percent.toFixed(1)}%)
+                </p>
+              </div>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-gray-700">
+                <div
+                  className="h-full bg-emerald-500 transition-all"
+                  style={{ width: `${Math.max(0, Math.min(100, coverage.percent))}%` }}
+                />
+              </div>
+            </div>
+          )}
           <SettingsPanel
             settings={settings}
             onChange={setSettings}
