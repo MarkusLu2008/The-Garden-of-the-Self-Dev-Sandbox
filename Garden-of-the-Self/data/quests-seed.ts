@@ -358,4 +358,202 @@ export const questsSeed: QuestSeedItem[] = [
     virtues: { "Proper Ambition": 5, "Kindness": 2, "Curiosity": 1 },
     duration: "Short",
   },
+
+  {
+    prompt: "Pick up a book you've never read before, open it to a random page, and read one paragraph. What new idea or concept did it bring up?",
+    virtues: { "Curiosity": 5, "Courage": 1, "Proper Ambition": 1 },
+    duration: "Short",
+  },
+
+  {
+    prompt: "Spend five minutes exploring a topic you've always been curious about but never took the time to learn. Use a search engine to find at least one new, fascinating fact related to this topic.",
+    virtues: { "Curiosity": 5, "Courage": 2, "Proper Ambition": 1 },
+    duration: "Short",
+  },
+
+  {
+    prompt: "Visit a local library or bookstore, pick up a book from a section you've never explored, and spend at least 10 minutes browsing through its content. Take note of any new concepts or ideas you encounter.",
+    virtues: { "Curiosity": 10 },
+    duration: "Medium",
+  },
+
+  {
+    prompt: "Research an unfamiliar topic you've always been curious about. Spend 10 to 15 minutes finding interesting facts or insights. Capture your findings in a few bullet points.",
+    virtues: { "Curiosity": 10 },
+    duration: "Medium",
+  },
+
+  {
+    prompt: "Visit a local park or nearby natural area and identify three different species of plants or trees. Use a plant identification app or guidebook to learn something new about each one.",
+    virtues: { "Curiosity": 10 },
+    duration: "Medium",
+  },
+
+  {
+    prompt: "Research a topic you've always been curious about but never took the time to dive into. Spend 10-15 minutes learning about it online or through a book. Write down three fascinating facts you discover.",
+    virtues: { "Curiosity": 10, "Proper Ambition": 3 },
+    duration: "Medium",
+  },
+
+  {
+    prompt: "Explore a topic you've always been curious about but never took the time to research. Spend 15 minutes reading or watching a documentary about it, and jot down three new insights you gained. Consider if this new knowledge could inspire any personal ambitions or if it challenges you to step out of your comfort zone.",
+    virtues: { "Curiosity": 10, "Courage": 3, "Proper Ambition": 2 },
+    duration: "Medium",
+  },
+
+  {
+    prompt: "Research a topic you've never explored before. Select something you've always been vaguely interested in but never took the time to explore. Spend 10-15 minutes gathering interesting facts and insights, then share what you found with a friend or family member.",
+    virtues: { "Curiosity": 10, "Courage": 2, "Proper Ambition": 2 },
+    duration: "Medium",
+  },
+
+  {
+    prompt: "Take 15 minutes to explore a topic you've never delved into before. Begin by choosing a new subject that piques your curiosity. Conduct a brief internet search or read a short article on the subject, noting down three interesting facts you didn't know. Challenge yourself to ask one bold question about the subject that would push your understanding further.",
+    virtues: { "Curiosity": 10, "Courage": 2, "Proper Ambition": 2 },
+    duration: "Medium",
+  },
+
+  {
+    prompt: "Deep dive a topic you've always been curious about but have never taken the time to explore. Dedicate time to find credible sources, and summarize your findings. Consider how this newfound knowledge could positively influence your current ambitions or goals.",
+    virtues: { "Curiosity": 10, "Proper Ambition": 3 },
+    duration: "Long",
+  },
+
+  {
+    prompt: "Identify a topic or field you've always been curious about but never had the chance to explore. Spend up to 30 minutes researching this topic online or through a book. Note down at least three new things you learn and reflect on how this knowledge might inspire or influence your personal goals.",
+    virtues: { "Curiosity": 10, "Proper Ambition": 3 },
+    duration: "Long",
+  },
+
+  {
+    prompt: "Visit a local museum, gallery, or cultural site that interests you. Spend at least 20 minutes exploring an exhibit or artwork you've never engaged with before. Push yourself to ask a guide or fellow visitor an open-ended question about what you're observing, and aim to learn something new from the conversation.",
+    virtues: { "Curiosity": 10, "Courage": 3, "Proper Ambition": 2 },
+    duration: "Long",
+  },
+
+  {
+    prompt: "Visit a local cultural or historical site in your area that you've never been to before. Engage with at least three new facts or stories about the place. Reflect on how these new insights could inspire a personal project or goal.",
+    virtues: { "Curiosity": 10, "Courage": 3, "Proper Ambition": 2 },
+    duration: "Long",
+  },
+
+  {
+    prompt: "Approach someone you've been meaning to connect with, whether they're a colleague, neighbor, or acquaintance, and start a genuine conversation. Ask them a meaningful question about their interests or share an interesting personal story to break the ice.",
+    virtues: { "Courage": 10 },
+    duration: "Medium",
+  },
+
+  {
+    prompt: "Approach a colleague or neighbor whom you don't know very well. Start a conversation by asking them about their interests or recent experiences. Aim to learn something new about them and briefly share something about yourself in return.",
+    virtues: { "Courage": 10 },
+    duration: "Medium",
+  },
+
+  {
+    prompt: "Identify a task or conversation you've been avoiding out of fear or uncertainty. Take a bold step today: schedule or initiate this task or conversation within the next few hours. Reflect on how taking this step made you feel braver.",
+    virtues: { "Courage": 10 },
+    duration: "Medium",
+  },
+
+  {
+    prompt: "Identify a long-term goal or dream that excites you. Break it down into smaller, achievable milestones and create a step-by-step plan on how you'll accomplish the first milestone. As you craft your plan, consider realistic timelines and acknowledge potential obstacles, while also reflecting on the strengths and contributions you bring to this goal without seeking external validation.",
+    virtues: { "Proper Ambition": 10, "Modesty": 3 },
+    duration: "Long",
+  },
+
+  {
+    prompt: "Identify a personal goal that aligns with your long-term ambitions, and create a detailed action plan for the next month. Outline clear, achievable steps that you can take each week to progress towards this goal. Ensure your plan reflects both your current capabilities and a modest view of your resources, avoiding overcommitment.",
+    virtues: { "Proper Ambition": 10, "Modesty": 2 },
+    duration: "Long",
+  },
+
+  {
+    prompt: "Identify a small, realistic goal to achieve today, such as reading a few pages of a book or organizing a small area in your home. While setting this goal, ensure it aligns with your broader ambitions but remains modest in scope. Reflect briefly on one new thing you learn during this activity.",
+    virtues: { "Proper Ambition": 5, "Curiosity": 2, "Modesty": 2 },
+    duration: "Short",
+  },
+
+  {
+    prompt: "Spend five minutes researching a personal goal you have. Note down one realistic step you can take towards it today, while reflecting on the balance between ambition and humility.",
+    virtues: { "Proper Ambition": 6, "Curiosity": 2, "Modesty": 2 },
+    duration: "Short",
+  },
+
+  {
+    prompt: "Set one achievable goal for today that stretches your current abilities slightly, write it down, and take a small action towards it. Ensure the goal does not require external validation or attention.",
+    virtues: { "Proper Ambition": 5, "Modesty": 2, "Curiosity": 1 },
+    duration: "Short",
+  },
+
+  {
+    prompt: "Identify one ambitious goal you want to achieve in the next year and write it down. List one small, actionable step you can take today to move closer to this goal.",
+    virtues: { "Proper Ambition": 5, "Discipline": 2 },
+    duration: "Short",
+  },
+
+  {
+    prompt: "Write a single, achievable goal for today that aligns with your long-term aspirations and plan one specific action you will take to move towards it.",
+    virtues: { "Proper Ambition": 6, "Discipline": 2 },
+    duration: "Short",
+  },
+
+  {
+    prompt: "Set a timer for 5 minutes and brainstorm a list of five achievable goals you want to accomplish this month. Prioritize them from most to least important and consider how each aligns with your long-term aspirations.",
+    virtues: { "Proper Ambition": 6, "Discipline": 2 },
+    duration: "Short",
+  },
+
+  {
+    prompt: "Identify a personal or professional goal you've been hesitant to pursue due to uncertainty or fear. Dedicate at least 20 minutes today to create a detailed action plan for achieving this goal. Break it down into manageable steps and schedule the first step within the next week. Reach out to a trusted friend or mentor to share your plan and ask for their support or feedback.",
+    virtues: { "Proper Ambition": 10, "Courage": 3, "Kindness": 2 },
+    duration: "Long",
+  },
+
+  {
+    prompt: "Identify a skill or area where you can grow and aim high. Reach out to someone you admire in that field and ask for their guidance or advice. Use this opportunity to not only learn from them but to also offer a kind gesture or assist them in a meaningful way.",
+    virtues: { "Proper Ambition": 10, "Courage": 3, "Kindness": 2 },
+    duration: "Long",
+  },
+
+  {
+    prompt: "Set a personal goal that aligns with your long-term ambitions. Spend 10-15 minutes breaking it down into actionable steps, ensuring each step is both challenging and achievable. Keep your plan modest by acknowledging your current limits and make a commitment to follow through consistently.",
+    virtues: { "Proper Ambition": 10, "Discipline": 3, "Modesty": 2 },
+    duration: "Medium",
+  },
+
+  {
+    prompt: "Set a meaningful goal for the next month in an area of your life where you aspire to grow. Research and identify three resources (such as books, articles, or videos) that can help you achieve this goal. Then, define three concrete steps you can take over the next week to get started. Make sure your goal is ambitious yet realistic, and be prepared to adapt your plan as you learn more.",
+    virtues: { "Proper Ambition": 10, "Curiosity": 3, "Discipline": 2 },
+    duration: "Long",
+  },
+
+  {
+    prompt: "Approach someone you've been hesitant to talk to and initiate a conversation, even if it's just to say hello or introduce yourself.",
+    virtues: { "Courage": 6, "Proper Ambition": 2 },
+    duration: "Short",
+  },
+
+  {
+    prompt: "Introduce yourself to someone new today, either in person or online, and learn one interesting fact about them.",
+    virtues: { "Courage": 6, "Proper Ambition": 2 },
+    duration: "Short",
+  },
+
+  {
+    prompt: "Introduce yourself to a new colleague or neighbor and start a brief conversation.",
+    virtues: { "Courage": 6, "Proper Ambition": 2 },
+    duration: "Short",
+  },
+
+  {
+    prompt: "Identify one long-term goal that excites you and write down one immediate, small action you can take today to move closer to achieving it.",
+    virtues: { "Proper Ambition": 6, "Courage": 2 },
+    duration: "Short",
+  },
+
+  {
+    prompt: "Identify one ambition you've been hesitant to pursue. Take one small step toward it today by researching a relevant resource or reaching out to someone who can provide insight.",
+    virtues: { "Proper Ambition": 5, "Courage": 2 },
+    duration: "Short",
+  },
 ];
