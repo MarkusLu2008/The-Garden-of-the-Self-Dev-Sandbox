@@ -556,4 +556,40 @@ export const questsSeed: QuestSeedItem[] = [
     virtues: { "Proper Ambition": 5, "Courage": 2 },
     duration: "Short",
   },
+
+  {
+    prompt: "Identify a small fear or hesitation you have about trying something new today, then take a courageous step to face it. Whether it's speaking up in a meeting, introducing yourself to someone, or trying a new hobby, take that bold step. Reflect briefly on any insights or discoveries along the way.",
+    virtues: { "Courage": 10, "Curiosity": 2 },
+    duration: "Medium",
+  },
+
+  {
+    prompt: "Engage in a conversation with someone you admire but have never spoken to before. Ask them at least three open-ended questions about their life or work, and listen actively to their responses.",
+    virtues: { "Courage": 10, "Curiosity": 3 },
+    duration: "Medium",
+  },
+
+  {
+    prompt: "Set a personal goal that you want to achieve within the next three months. Clearly define what success looks like and list three actionable steps you can take to begin working towards it. Ensure that this goal is challenging yet realistic, and consider how achieving it impacts not just your personal growth but also those around you, reflecting modesty in its scope.",
+    virtues: { "Proper Ambition": 10, "Modesty": 3 },
+    duration: "Medium",
+  },
+
+  {
+    prompt: "Identify a goal you've been hesitant to pursue because it feels too ambitious. Break it down into smaller, achievable steps and list the first step you can realistically take today. Focus on how you can approach this goal modestly, without needing recognition from others.",
+    virtues: { "Proper Ambition": 10, "Modesty": 3 },
+    duration: "Medium",
+  },
+
+  {
+    prompt: "Create a detailed action plan for achieving a specific long-term goal you have. Break it down into smaller, actionable steps with deadlines for each step. Review your plan at the end of the day and adjust timelines if necessary.",
+    virtues: { "Proper Ambition": 10, "Discipline": 3 },
+    duration: "Long",
+  },
+
+  {
+    prompt: "Set a challenging yet achievable goal for yourself in an area of personal or professional development. Break this goal down into three actionable steps and commit to completing the first step today. Allocate time at the end of the day to reflect on your progress and adjust your plan if necessary for future steps.",
+    virtues: { "Proper Ambition": 10, "Discipline": 4 },
+    duration: "Long",
+  },
 ];
