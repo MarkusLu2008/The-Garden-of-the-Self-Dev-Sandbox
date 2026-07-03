@@ -23,12 +23,13 @@ import { ThemedView } from '@/components/themed-view';
 import { useUnistyles } from '@/lib/unistyles-compat';
 import { journalStyles, spacing } from '@/utils/styles';
 import { Fonts } from '@/constants/theme';
-import { getVirtueTotalsAndUnlocked } from '@/services/db';
+import { getVirtueTotalsAndUnlocked, getAllVirtueProgress, type VirtueProgressRow } from '@/services/db';
 import { useFocusEffect } from 'expo-router';
 import virtues from '@/constants/virtues';
 import { gameConfig } from '@/constants/gameConfig';
 import { VIRTUE_TREE_IMAGES, treeScoreToStage } from '@/constants/virtueTreeImages';
 import { getSeedShownThresholdFromUnlockedCount } from '@/utils/virtueGraph';
+import { levelProgress, levelStageName } from '@/utils/questScoring';
 
 const LINES = 10;
 const WIDTH = 20;
@@ -108,6 +109,7 @@ type VirtueGardenPageProps = {
   curiosityEverCrossed5: boolean;
   textColor: string;
   animatedStyle: ReturnType<typeof useAnimatedStyle>;
+  virtueProgress: VirtueProgressRow | null;
 };
 
 function VirtueGardenPage({
@@ -117,6 +119,7 @@ function VirtueGardenPage({
   curiosityEverCrossed5,
   textColor,
   animatedStyle,
+  virtueProgress,
 }: VirtueGardenPageProps) {
   const treeImages = VIRTUE_TREE_IMAGES[virtueName];
   const hasTreeImages = treeImages != null && treeImages.length > 0;
@@ -134,6 +137,12 @@ function VirtueGardenPage({
   const pineStage = scoreToStage(score, PINE_STAGES.length);
   const displayArt = padStage(PINE_STAGES[pineStage]);
 
+  const level = virtueProgress?.level ?? 1;
+  const specPts = virtueProgress?.spec_points ?? 0;
+  const progress = levelProgress(specPts);
+  const stageName = levelStageName(level);
+  const progressPercent = `${Math.round(progress * 100)}%` as const;
+
   return (
     <View style={styles.page}>
       <ThemedText type="subtitle" style={styles.virtueName}>
@@ -142,6 +151,12 @@ function VirtueGardenPage({
       <ThemedText style={styles.scoreText}>
         {virtueName} points: {score}
       </ThemedText>
+      <ThemedText style={styles.levelText}>
+        Lv. {level} · {stageName}
+      </ThemedText>
+      <View style={styles.progressBarContainer}>
+        <View style={[styles.progressBarFill, { width: progressPercent }]} />
+      </View>
       <Animated.View
         style={[styles.asciiWrapper, animatedStyle] as React.ComponentProps<typeof Animated.View>['style']}
       >
@@ -176,6 +191,7 @@ export default function GardenScreen() {
     unlockedAt: Record<string, string | null>;
     curiosityEverCrossed5: boolean;
   } | null>(null);
+  const [virtueProgressMap, setVirtueProgressMap] = useState<Record<string, VirtueProgressRow>>({});
   const [pageIndex, setPageIndex] = useState(0);
 
   const breathingStyle = useBreathingAnimation();
@@ -185,8 +201,14 @@ export default function GardenScreen() {
       let cancelled = false;
       (async () => {
         try {
-          const data = await getVirtueTotalsAndUnlocked();
-          if (!cancelled) setVirtueData(data);
+          const [data, progress] = await Promise.all([
+            getVirtueTotalsAndUnlocked(),
+            getAllVirtueProgress(),
+          ]);
+          if (!cancelled) {
+            setVirtueData(data);
+            setVirtueProgressMap(progress);
+          }
         } catch (e) {
           console.warn('Failed to load virtue totals and unlocked', e);
         }
@@ -285,6 +307,7 @@ export default function GardenScreen() {
                   curiosityEverCrossed5={curiosityEverCrossed5}
                   textColor={textColor}
                   animatedStyle={breathingStyle}
+                  virtueProgress={virtueProgressMap[virtueName] ?? null}
                 />
               </View>
             ))}
@@ -317,6 +340,7 @@ export default function GardenScreen() {
               curiosityEverCrossed5={curiosityEverCrossed5}
               textColor={textColor}
               animatedStyle={breathingStyle}
+              virtueProgress={virtueProgressMap[virtueName] ?? null}
             />
           </View>
         ))}
@@ -370,8 +394,27 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   scoreText: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.xs,
     textAlign: 'center',
+  },
+  levelText: {
+    fontSize: 13,
+    opacity: 0.7,
+    marginBottom: spacing.sm,
+    textAlign: 'center',
+  },
+  progressBarContainer: {
+    width: 160,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: 'rgba(128,128,128,0.25)',
+    marginBottom: spacing.md,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 3,
+    backgroundColor: 'rgba(122, 162, 247, 0.8)',
   },
   asciiWrapper: {
     marginVertical: spacing.xl,

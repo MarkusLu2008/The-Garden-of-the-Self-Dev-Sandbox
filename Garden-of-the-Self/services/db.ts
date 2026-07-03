@@ -1,7 +1,8 @@
 import * as SQLite from 'expo-sqlite';
 import virtues from '@/constants/virtues';
 import { clampQuestRewards, gameConfig } from '@/constants/gameConfig';
-import { questDurationOrder, questsSeed, type QuestDuration } from '@/data/quests-seed';
+import { questDurationOrder, questsSeed, type QuestDuration, type QuestDifficultyTier } from '@/data/quests-seed';
+import { getDominantVirtue, specPointsForTier, specPointsToLevel, levelStageName } from '@/utils/questScoring';
 import { getTodayDateString } from '@/utils/dateUtils';
 
 export type VirtueProgressRow = {
@@ -594,9 +595,20 @@ export type QuestRow = {
   completed: number;
   prompt: string;
   duration: QuestDuration;
+  difficulty_tier: QuestDifficultyTier | null;
   created_at: string;
   updated_at: string;
   virtues: QuestVirtueValues;
+};
+
+export type ScoringResult = {
+  awarded: boolean;
+  dominantVirtue: string | null;
+  specPointsAwarded: number;
+  newSpecPoints: number;
+  newLevel: number;
+  leveledUp: boolean;
+  newStageName: string;
 };
 
 export type QuestHistoryRow = {
@@ -612,6 +624,7 @@ type DailyQuestUpdate = {
   assignedDate: string;
   completed: number;
   virtues: QuestVirtueValues;
+  quest: QuestRow;
 };
 
 function normalizeQuestDuration(duration: string | null | undefined): QuestDuration {
@@ -619,6 +632,11 @@ function normalizeQuestDuration(duration: string | null | undefined): QuestDurat
     return duration;
   }
   return 'Medium';
+}
+
+function normalizeQuestDifficultyTier(tier: string | null | undefined): QuestDifficultyTier | null {
+  if (tier === 'Gentle' || tier === 'Moderate' || tier === 'Stretch') return tier;
+  return null;
 }
 
 function createDateSeededRandom(dateString: string): () => number {
@@ -709,13 +727,19 @@ async function getQuest(id: number) {
     completed: number;
     prompt: string;
     duration: string;
+    difficulty_tier: string | null;
     created_at: string;
     updated_at: string;
   }>('SELECT * FROM quests WHERE id = ?', [id]);
   if (!quest) return null;
 
   const virtues = await getQuestVirtues(database, quest.id);
-  return { ...quest, duration: normalizeQuestDuration(quest.duration), virtues };
+  return {
+    ...quest,
+    duration: normalizeQuestDuration(quest.duration),
+    difficulty_tier: normalizeQuestDifficultyTier(quest.difficulty_tier),
+    virtues,
+  };
 }
 
 async function getAllQuests() {
@@ -725,6 +749,7 @@ async function getAllQuests() {
     completed: number;
     prompt: string;
     duration: string;
+    difficulty_tier: string | null;
     created_at: string;
     updated_at: string;
   }>('SELECT * FROM quests ORDER BY created_at DESC');
@@ -732,7 +757,12 @@ async function getAllQuests() {
   const result: QuestRow[] = [];
   for (const row of rows) {
     const virtues = await getQuestVirtues(database, row.id);
-    result.push({ ...row, duration: normalizeQuestDuration(row.duration), virtues });
+    result.push({
+      ...row,
+      duration: normalizeQuestDuration(row.duration),
+      difficulty_tier: normalizeQuestDifficultyTier(row.difficulty_tier),
+      virtues,
+    });
   }
   return result;
 }
@@ -843,7 +873,11 @@ async function getDailyQuests(dateString: string): Promise<QuestRow[]> {
   return orderedPicked.map((q) => ({ ...q, completed: 0 }));
 }
 
-async function updateDailyQuestCompletion(update: DailyQuestUpdate): Promise<boolean> {
+type DailyQuestCompletionResult =
+  | { handled: false }
+  | { handled: true; scoringResult: ScoringResult | null };
+
+async function updateDailyQuestCompletion(update: DailyQuestUpdate): Promise<DailyQuestCompletionResult> {
   const database = await getDatabase();
   const row = await database.getFirstAsync<{ id: number; completed_at: string | null }>(
     `SELECT id, completed_at
@@ -853,15 +887,18 @@ async function updateDailyQuestCompletion(update: DailyQuestUpdate): Promise<boo
      LIMIT 1`,
     [update.questId, update.assignedDate]
   );
-  if (!row) return false;
+  if (!row) return { handled: false };
 
   const wasCompleted = row.completed_at != null;
   const wantsCompleted = update.completed === 1;
+
+  let scoringResult: ScoringResult | null = null;
 
   if (!wasCompleted && wantsCompleted) {
     await database.runAsync('UPDATE quest_history SET completed_at = datetime(\'now\') WHERE id = ?', [row.id]);
     await upsertQuestHistoryVirtues(database, row.id, update.virtues);
     await applyVirtueDeltas(database, update.virtues, +1);
+    scoringResult = await applyQuestSpecPoints(database, update.quest);
   } else if (wasCompleted && !wantsCompleted) {
     await database.runAsync('UPDATE quest_history SET completed_at = NULL WHERE id = ?', [row.id]);
     await upsertQuestHistoryVirtues(database, row.id, update.virtues);
@@ -872,7 +909,7 @@ async function updateDailyQuestCompletion(update: DailyQuestUpdate): Promise<boo
     `UPDATE quests SET completed = ?, updated_at = datetime('now') WHERE id = ?`,
     [update.completed, update.questId]
   );
-  return true;
+  return { handled: true, scoringResult };
 }
 
 async function updateQuest(
@@ -883,10 +920,10 @@ async function updateQuest(
     virtues?: Partial<QuestVirtueValues>;
     assignedDate?: string;
   }
-) {
+): Promise<ScoringResult | null> {
   const database = await getDatabase();
   const existing = await getQuest(id);
-  if (!existing) return;
+  if (!existing) return null;
 
   const completed = updates.completed ?? existing.completed;
   const prompt = updates.prompt ?? existing.prompt;
@@ -899,21 +936,24 @@ async function updateQuest(
     }
   }
   const clampedVirtues = clampQuestRewards(newVirtues);
+  const questWithUpdatedVirtues: QuestRow = { ...existing, virtues: clampedVirtues };
 
   if (assignedDate) {
-    const handled = await updateDailyQuestCompletion({
+    const result = await updateDailyQuestCompletion({
       questId: id,
       assignedDate,
       completed,
       virtues: clampedVirtues,
+      quest: questWithUpdatedVirtues,
     });
-    if (handled) {
-      return;
+    if (result.handled) {
+      return result.scoringResult;
     }
   }
 
+  let scoringResult: ScoringResult | null = null;
   if (existing.completed === 0 && completed === 1) {
-    await recordQuestCompleted({ ...existing, virtues: clampedVirtues });
+    scoringResult = await recordQuestCompleted(questWithUpdatedVirtues);
   } else if (existing.completed === 1 && completed === 0) {
     // If a previously completed quest is being marked as not completed, remove its history
     await deleteQuestHistoryForQuest(id);
@@ -927,6 +967,7 @@ async function updateQuest(
   );
 
   await upsertQuestVirtues(database, id, clampedVirtues);
+  return scoringResult;
 }
 
 async function deleteQuest(id: number) {
@@ -939,7 +980,7 @@ async function deleteAllQuests() {
   return database.runAsync('DELETE FROM quests');
 }
 
-async function recordQuestCompleted(quest: QuestRow) {
+async function recordQuestCompleted(quest: QuestRow): Promise<ScoringResult | null> {
   const database = await getDatabase();
 
   // Find the existing assigned history row for this quest
@@ -966,11 +1007,40 @@ async function recordQuestCompleted(quest: QuestRow) {
     const newHistory = await database.getFirstAsync<{ id: number }>(
       'SELECT id FROM quest_history WHERE rowid = last_insert_rowid()'
     );
-    if (!newHistory) return;
+    if (!newHistory) return null;
     await upsertQuestHistoryVirtues(database, newHistory.id, quest.virtues);
   }
 
   await applyVirtueDeltas(database, quest.virtues, +1);
+  return applyQuestSpecPoints(database, quest);
+}
+
+async function applyQuestSpecPoints(
+  database: SQLite.SQLiteDatabase,
+  quest: QuestRow
+): Promise<ScoringResult | null> {
+  if (!quest.difficulty_tier) return null;
+
+  await ensureVirtuesLoaded();
+  const dominantVirtue = getDominantVirtue(quest.virtues);
+  if (!dominantVirtue) return null;
+
+  const virtueId = await getVirtueIdFromName(dominantVirtue);
+  if (virtueId == null) return null;
+
+  const specPointsAwarded = specPointsForTier(quest.difficulty_tier);
+  const today = getTodayDateString();
+  const result = await awardSpecPoints(database, virtueId, specPointsAwarded, today);
+
+  return {
+    awarded: result.awarded,
+    dominantVirtue,
+    specPointsAwarded: result.awarded ? specPointsAwarded : 0,
+    newSpecPoints: result.newSpecPoints,
+    newLevel: result.newLevel,
+    leveledUp: result.leveledUp,
+    newStageName: levelStageName(result.newLevel),
+  };
 }
 
 async function upsertQuestHistoryVirtues(
@@ -1139,6 +1209,59 @@ async function applyVirtueDeltas(
 export async function addVirtuePoints(deltas: QuestVirtueValues): Promise<void> {
   const database = await getDatabase();
   await applyVirtueDeltas(database, deltas, 1);
+}
+
+/** Count how many quest completions have already awarded spec-points to this virtue today. */
+async function getVirtueSpecPointAwardsToday(
+  database: SQLite.SQLiteDatabase,
+  virtueId: number,
+  date: string
+): Promise<number> {
+  const row = await database.getFirstAsync<{ count: number }>(
+    `SELECT COUNT(DISTINCT qh.id) as count
+     FROM quest_history qh
+     JOIN quest_history_virtues qhv ON qhv.history_id = qh.id
+     WHERE qhv.virtue_id = ?
+       AND qh.completed_at IS NOT NULL
+       AND date(qh.completed_at) = ?`,
+    [virtueId, date]
+  );
+  return row?.count ?? 0;
+}
+
+/**
+ * Award spec-points to a virtue, respecting the daily cap.
+ * Returns full scoring details so callers can surface level-ups.
+ */
+async function awardSpecPoints(
+  database: SQLite.SQLiteDatabase,
+  virtueId: number,
+  points: number,
+  date: string
+): Promise<{ awarded: boolean; newSpecPoints: number; newLevel: number; leveledUp: boolean }> {
+  const cap = gameConfig.quests.difficultyTiers.dailyCapPerVirtue;
+  const awardsToday = await getVirtueSpecPointAwardsToday(database, virtueId, date);
+
+  const current = await database.getFirstAsync<{ spec_points: number; level: number }>(
+    'SELECT spec_points, level FROM virtue_progress WHERE virtue_id = ?',
+    [virtueId]
+  );
+  const oldLevel = current?.level ?? 1;
+  const currentSpecPoints = current?.spec_points ?? 0;
+
+  if (awardsToday >= cap) {
+    return { awarded: false, newSpecPoints: currentSpecPoints, newLevel: oldLevel, leveledUp: false };
+  }
+
+  const newSpecPoints = currentSpecPoints + points;
+  const newLevel = specPointsToLevel(newSpecPoints);
+
+  await database.runAsync(
+    `UPDATE virtue_progress SET spec_points = ?, level = ?, last_activity_date = ? WHERE virtue_id = ?`,
+    [newSpecPoints, newLevel, date, virtueId]
+  );
+
+  return { awarded: true, newSpecPoints, newLevel, leveledUp: newLevel > oldLevel };
 }
 
 async function getVirtueTotals(): Promise<QuestVirtueValues> {

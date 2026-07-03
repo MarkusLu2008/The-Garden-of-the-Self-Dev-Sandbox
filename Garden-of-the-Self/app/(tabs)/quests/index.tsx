@@ -10,6 +10,7 @@ import {
   getQuestReflectionUsageMap,
   updateQuest,
   type QuestRow,
+  type ScoringResult,
 } from '@/services/db';
 import { getTodayDateString } from '@/utils/dateUtils';
 import { borderRadius, journalStyles, spacing } from '@/utils/styles';
@@ -63,7 +64,16 @@ export default function QuestsScreen() {
       prev.map((q) => (q.id === quest.id ? { ...q, completed: newCompleted } : q))
     );
     try {
-      await updateQuest(quest.id, { completed: newCompleted, assignedDate: today });
+      const scoringResult: ScoringResult | null = await updateQuest(quest.id, {
+        completed: newCompleted,
+        assignedDate: today,
+      });
+      if (newCompleted === 1 && scoringResult?.leveledUp) {
+        Alert.alert(
+          'Level Up!',
+          `${scoringResult.dominantVirtue} reached ${scoringResult.newStageName} (Lv. ${scoringResult.newLevel})`
+        );
+      }
     } catch (error) {
       // Revert on failure
       setQuests((prev) =>
