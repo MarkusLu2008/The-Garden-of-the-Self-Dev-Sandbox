@@ -4,6 +4,28 @@ import { clampQuestRewards, gameConfig } from '@/constants/gameConfig';
 import { questDurationOrder, questsSeed, type QuestDuration } from '@/data/quests-seed';
 import { getTodayDateString } from '@/utils/dateUtils';
 
+export type VirtueProgressRow = {
+  virtue_id: number;
+  spec_points: number;
+  level: number;
+  last_activity_date: string | null;
+};
+
+export type StreakRow = {
+  current_streak: number;
+  longest_streak: number;
+  last_completed_date: string | null;
+  freezes_available: number;
+};
+
+export type QuestReflectionRow = {
+  id: number;
+  quest_history_id: number | null;
+  text: string;
+  prompt: string | null;
+  created_at: string;
+};
+
 /** Virtue display name -> slug (snake_case) */
 function virtueToSlug(name: string): string {
   return name.toLowerCase().replace(/\s+/g, '_');
@@ -102,7 +124,34 @@ async function initializeOrMigrateSchema(database: SQLite.SQLiteDatabase): Promi
       key TEXT PRIMARY KEY,
       value TEXT
     );
+
+    CREATE TABLE IF NOT EXISTS virtue_progress (
+      virtue_id INTEGER PRIMARY KEY,
+      spec_points INTEGER NOT NULL DEFAULT 0,
+      level INTEGER NOT NULL DEFAULT 1,
+      last_activity_date TEXT,
+      FOREIGN KEY (virtue_id) REFERENCES virtues(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS streak (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      current_streak INTEGER NOT NULL DEFAULT 0,
+      longest_streak INTEGER NOT NULL DEFAULT 0,
+      last_completed_date TEXT,
+      freezes_available INTEGER NOT NULL DEFAULT 0
+    );
+
+    CREATE TABLE IF NOT EXISTS quest_reflections (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      quest_history_id INTEGER,
+      text TEXT NOT NULL,
+      prompt TEXT,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY (quest_history_id) REFERENCES quest_history(id) ON DELETE SET NULL
+    );
   `);
+
+  await database.execAsync('INSERT OR IGNORE INTO streak (id) VALUES (1)');
 
   // Migration: add unlocked_at to existing virtues tables (or migrate from unlocked)
   const tableInfo = await database.getAllAsync<{ name: string }>('PRAGMA table_info(virtues)');
@@ -150,6 +199,30 @@ async function initializeOrMigrateSchema(database: SQLite.SQLiteDatabase): Promi
     await updateQuestDurationStmt.finalizeAsync();
   }
   await database.execAsync("UPDATE quests SET duration = 'Medium' WHERE duration IS NULL OR duration = ''");
+
+  // Migration: add difficulty_tier to quests.
+  const hasDifficultyTier = questTableInfo.some((c) => c.name === 'difficulty_tier');
+  if (!hasDifficultyTier) {
+    await database.execAsync('ALTER TABLE quests ADD COLUMN difficulty_tier TEXT');
+    const tierByPrompt = new Map(
+      questsSeed.map((s) => [s.prompt, s.difficultyTier ?? null])
+    );
+    const questsForTier = await database.getAllAsync<{ id: number; prompt: string }>(
+      'SELECT id, prompt FROM quests'
+    );
+    const updateTierStmt = await database.prepareAsync(
+      "UPDATE quests SET difficulty_tier = ?, updated_at = datetime('now') WHERE id = ?"
+    );
+    try {
+      for (const quest of questsForTier) {
+        const tier = tierByPrompt.get(quest.prompt);
+        if (tier == null) continue;
+        await updateTierStmt.executeAsync([tier, quest.id]);
+      }
+    } finally {
+      await updateTierStmt.finalizeAsync();
+    }
+  }
 
   const unlocksAfterTotalPoints = gameConfig.unlocking.unlocksAfterTotalPoints;
   // Triggers: set virtues.unlocked_at on first time crossing configured threshold.
@@ -1209,6 +1282,67 @@ export function getQuestVirtueDisplayNames(
     .map(([name]) => name);
 }
 
+// ---- Virtue progress helpers ----
+
+export async function getVirtueProgress(virtueName: string): Promise<VirtueProgressRow | null> {
+  const database = await getDatabase();
+  const virtueId = await getVirtueIdFromName(virtueName);
+  if (virtueId == null) return null;
+  const row = await database.getFirstAsync<VirtueProgressRow>(
+    'SELECT virtue_id, spec_points, level, last_activity_date FROM virtue_progress WHERE virtue_id = ?',
+    [virtueId]
+  );
+  return row ?? null;
+}
+
+export async function getAllVirtueProgress(): Promise<Record<string, VirtueProgressRow>> {
+  const database = await getDatabase();
+  await ensureVirtuesLoaded();
+  const rows = await database.getAllAsync<VirtueProgressRow & { name: string }>(
+    `SELECT vp.virtue_id, vp.spec_points, vp.level, vp.last_activity_date, v.name
+     FROM virtue_progress vp
+     JOIN virtues v ON v.id = vp.virtue_id`
+  );
+  const result: Record<string, VirtueProgressRow> = {};
+  for (const row of rows) {
+    result[row.name] = { virtue_id: row.virtue_id, spec_points: row.spec_points, level: row.level, last_activity_date: row.last_activity_date };
+  }
+  return result;
+}
+
+// ---- Streak helpers ----
+
+export async function getStreak(): Promise<StreakRow> {
+  const database = await getDatabase();
+  const row = await database.getFirstAsync<StreakRow>(
+    'SELECT current_streak, longest_streak, last_completed_date, freezes_available FROM streak WHERE id = 1'
+  );
+  return row ?? { current_streak: 0, longest_streak: 0, last_completed_date: null, freezes_available: 0 };
+}
+
+// ---- Quest reflection helpers ----
+
+export async function insertQuestReflection(
+  questHistoryId: number | null,
+  text: string,
+  prompt: string | null
+): Promise<void> {
+  const database = await getDatabase();
+  await database.runAsync(
+    `INSERT INTO quest_reflections (quest_history_id, text, prompt, created_at)
+     VALUES (?, ?, ?, datetime('now'))`,
+    [questHistoryId, text, prompt]
+  );
+}
+
+export async function getReflectionsForQuestHistory(questHistoryId: number): Promise<QuestReflectionRow[]> {
+  const database = await getDatabase();
+  return database.getAllAsync<QuestReflectionRow>(
+    'SELECT id, quest_history_id, text, prompt, created_at FROM quest_reflections WHERE quest_history_id = ? ORDER BY created_at DESC',
+    [questHistoryId]
+  );
+}
+
 // ---- Devtools helpers ----
 
 /** Destructive reset: drops all tables, recreates schema, and reseeds virtues and quests. */
@@ -1216,6 +1350,9 @@ export async function resetDatabase() {
   const database = await getDatabase();
   await database.execAsync(`
     PRAGMA foreign_keys = OFF;
+    DROP TABLE IF EXISTS quest_reflections;
+    DROP TABLE IF EXISTS virtue_progress;
+    DROP TABLE IF EXISTS streak;
     DROP TABLE IF EXISTS quest_history_virtues;
     DROP TABLE IF EXISTS quest_history;
     DROP TABLE IF EXISTS quest_virtues;
@@ -1246,8 +1383,11 @@ export type TableName =
   | 'quest_virtues'
   | 'quest_history'
   | 'quest_history_virtues'
+  | 'quest_reflections'
   | 'virtues'
-  | 'virtue_totals';
+  | 'virtue_totals'
+  | 'virtue_progress'
+  | 'streak';
 
 export async function getAllFromTable(table: TableName): Promise<any[]> {
   const database = await getDatabase();

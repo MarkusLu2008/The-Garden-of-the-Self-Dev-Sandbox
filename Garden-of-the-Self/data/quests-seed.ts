@@ -10,10 +10,13 @@
  * skew Long. Solo inward quests skew Short.
  */
 
+export type QuestDifficultyTier = 'Gentle' | 'Moderate' | 'Stretch';
+
 export type QuestSeedItem = {
   prompt: string;
   virtues: Record<string, number>;
   duration: QuestDuration;
+  difficultyTier?: QuestDifficultyTier;
 };
 
 export type QuestDuration = 'Long' | 'Medium' | 'Short';
