@@ -70,6 +70,8 @@ export type GameConfig = {
       dailyCapPerVirtue: number;
       /** Cumulative spec-point thresholds for levels 1–7. Index = level - 1. */
       levelThresholds: number[];
+      /** Display name for each level (index = level - 1). */
+      levelStageNames: string[];
     };
   };
   journal: {
@@ -114,6 +116,7 @@ export const gameConfig: GameConfig = {
       pointsPerTier: { gentle: 10, moderate: 25, stretch: 50 },
       dailyCapPerVirtue: 2,
       levelThresholds: [0, 50, 150, 350, 700, 1250, 2100],
+      levelStageNames: ['Seedling', 'Sprouting', 'Growing', 'Budding', 'Flourishing', 'Thriving', 'Radiant'],
     },
   },
   journal: {
