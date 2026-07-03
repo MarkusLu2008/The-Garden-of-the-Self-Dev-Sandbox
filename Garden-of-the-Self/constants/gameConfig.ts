@@ -64,6 +64,13 @@ export type GameConfig = {
       minReward: number;
       maxReward: number;
     };
+    difficultyTiers: {
+      pointsPerTier: { gentle: number; moderate: number; stretch: number };
+      /** Max times a single virtue can earn spec points per calendar day. */
+      dailyCapPerVirtue: number;
+      /** Cumulative spec-point thresholds for levels 1–7. Index = level - 1. */
+      levelThresholds: number[];
+    };
   };
   journal: {
     totalPointsPerEntry: number;
@@ -102,6 +109,11 @@ export const gameConfig: GameConfig = {
       tertiary: 1,
       minReward: 1,
       maxReward: 10,
+    },
+    difficultyTiers: {
+      pointsPerTier: { gentle: 10, moderate: 25, stretch: 50 },
+      dailyCapPerVirtue: 2,
+      levelThresholds: [0, 50, 150, 350, 700, 1250, 2100],
     },
   },
   journal: {
