@@ -269,8 +269,8 @@ async function seedQuestsIfEmpty(database: SQLite.SQLiteDatabase): Promise<void>
   const virtueRows = await database.getAllAsync<VirtueRow>('SELECT id, name, slug, unlocked_at FROM virtues');
   const virtueIdByNameMap = new Map(virtueRows.map((v) => [v.name, v.id]));
   const insertQuestStmt = await database.prepareAsync(
-    `INSERT INTO quests (completed, prompt, duration, created_at, updated_at)
-     VALUES (0, ?, ?, datetime('now'), datetime('now'))`
+    `INSERT INTO quests (completed, prompt, duration, difficulty_tier, created_at, updated_at)
+     VALUES (0, ?, ?, ?, datetime('now'), datetime('now'))`
   );
   const insertQuestVirtueStmt = await database.prepareAsync(
     'INSERT INTO quest_virtues (quest_id, virtue_id, value) VALUES (?, ?, ?)'
@@ -278,7 +278,7 @@ async function seedQuestsIfEmpty(database: SQLite.SQLiteDatabase): Promise<void>
   try {
     for (const q of questsSeed) {
       const clampedVirtues = clampQuestRewards(q.virtues);
-      await insertQuestStmt.executeAsync([q.prompt, q.duration]);
+      await insertQuestStmt.executeAsync([q.prompt, q.duration, q.difficultyTier]);
       const questRow = await database.getFirstAsync<{ id: number }>(
         'SELECT id FROM quests WHERE rowid = last_insert_rowid()'
       );
@@ -661,17 +661,18 @@ export function getQuestDurationLabel(duration: QuestDuration): string {
   return QUEST_DURATION_LABELS[duration];
 }
 
-async function insertQuest(
+export async function insertQuest(
   prompt: string,
   virtueValues: QuestVirtueValues = {},
-  duration: QuestDuration = 'Medium'
+  duration: QuestDuration = 'Medium',
+  difficultyTier: QuestDifficultyTier | null = null,
 ) {
   const database = await getDatabase();
   const clampedVirtues = clampQuestRewards(virtueValues);
   await database.runAsync(
-    `INSERT INTO quests (completed, prompt, duration, created_at, updated_at)
-     VALUES (0, ?, ?, datetime('now'), datetime('now'))`,
-    [prompt, duration]
+    `INSERT INTO quests (completed, prompt, duration, difficulty_tier, created_at, updated_at)
+     VALUES (0, ?, ?, ?, datetime('now'), datetime('now'))`,
+    [prompt, duration, difficultyTier]
   );
 
   const quest = await database.getFirstAsync<{ id: number }>(
@@ -1526,5 +1527,5 @@ export {
   canAwardJournalPointsForDate,
   canAwardJournalPointsToday,
 };
-export { insertQuest, getQuest, getAllQuests, getDailyQuests, updateQuest, deleteQuest, deleteAllQuests };
+export { getQuest, getAllQuests, getDailyQuests, updateQuest, deleteQuest, deleteAllQuests };
 export { getAllQuestHistory, getQuestHistory, getVirtueTotals, getQuestReflectionUsageMap };
