@@ -1,0 +1,772 @@
+{
+  ".opencode/opencode.json": {
+    "mtime": 1783051718.038988,
+    "ast_hash": "abcc8b9dcd80bca5f9dde6d9f0c3ae79",
+    "semantic_hash": "abcc8b9dcd80bca5f9dde6d9f0c3ae79"
+  },
+  ".opencode/plugins/graphify.js": {
+    "mtime": 1783051718.0387769,
+    "ast_hash": "d12d57c380c6f01a0a3c3d480824d09f",
+    "semantic_hash": "d12d57c380c6f01a0a3c3d480824d09f"
+  },
+  ".vscode/extensions.json": {
+    "mtime": 499162500.0,
+    "ast_hash": "b2354ba0225f5689d13651ec0fac0de0",
+    "semantic_hash": "b2354ba0225f5689d13651ec0fac0de0"
+  },
+  ".vscode/settings.json": {
+    "mtime": 499162500.0,
+    "ast_hash": "6b9302c1f72c315e90233c7539c48c9f",
+    "semantic_hash": "6b9302c1f72c315e90233c7539c48c9f"
+  },
+  "app.json": {
+    "mtime": 1774060655.9839861,
+    "ast_hash": "7bef85e57904cb6cc240765c763fd676",
+    "semantic_hash": "7bef85e57904cb6cc240765c763fd676"
+  },
+  "app/(tabs)/_layout.tsx": {
+    "mtime": 1774065791.4795237,
+    "ast_hash": "c3375442dcee8b228f54c0f42a75749e",
+    "semantic_hash": "c3375442dcee8b228f54c0f42a75749e"
+  },
+  "app/(tabs)/index.tsx": {
+    "mtime": 1773973637.271045,
+    "ast_hash": "8767af067360813c676b1600f0fa4abd",
+    "semantic_hash": "8767af067360813c676b1600f0fa4abd"
+  },
+  "app/(tabs)/journals/_layout.tsx": {
+    "mtime": 1764949528.4144747,
+    "ast_hash": "7de150f1dca6f3c6ed9b114a23cab309",
+    "semantic_hash": "7de150f1dca6f3c6ed9b114a23cab309"
+  },
+  "app/(tabs)/journals/create.tsx": {
+    "mtime": 1774063636.0928807,
+    "ast_hash": "a4e367835ca1327d8f7ee62964cb4afc",
+    "semantic_hash": "a4e367835ca1327d8f7ee62964cb4afc"
+  },
+  "app/(tabs)/journals/editor.tsx": {
+    "mtime": 1774064027.3020701,
+    "ast_hash": "362881139391cb9e5e0cb99cb4865933",
+    "semantic_hash": "362881139391cb9e5e0cb99cb4865933"
+  },
+  "app/(tabs)/journals/index.tsx": {
+    "mtime": 1774067536.7277348,
+    "ast_hash": "78d64370ef037074c4656511a97baf05",
+    "semantic_hash": "78d64370ef037074c4656511a97baf05"
+  },
+  "app/(tabs)/quests/_layout.tsx": {
+    "mtime": 1773932765.480806,
+    "ast_hash": "1340332c3ae5d6ec2b3e82ff44c96e43",
+    "semantic_hash": "1340332c3ae5d6ec2b3e82ff44c96e43"
+  },
+  "app/(tabs)/quests/index.tsx": {
+    "mtime": 1774065416.373846,
+    "ast_hash": "d1810a587264189590c7bb71f13c7cef",
+    "semantic_hash": "d1810a587264189590c7bb71f13c7cef"
+  },
+  "app/(tabs)/settings.tsx": {
+    "mtime": 1774066006.0268261,
+    "ast_hash": "f6314fc2968e9efd1797563e0109859b",
+    "semantic_hash": "f6314fc2968e9efd1797563e0109859b"
+  },
+  "app/_layout.tsx": {
+    "mtime": 1774065392.9523537,
+    "ast_hash": "1726526b9df6563504847f5a8ceb12c2",
+    "semantic_hash": "1726526b9df6563504847f5a8ceb12c2"
+  },
+  "app/onboarding.tsx": {
+    "mtime": 1773983510.338127,
+    "ast_hash": "7eb90706fbb020a9e05731318f1a2a08",
+    "semantic_hash": "7eb90706fbb020a9e05731318f1a2a08"
+  },
+  "babel.config.js": {
+    "mtime": 1773722051.0449362,
+    "ast_hash": "9229162674413b1c6c36a45eddf01e50",
+    "semantic_hash": "9229162674413b1c6c36a45eddf01e50"
+  },
+  "components/haptic-tab.tsx": {
+    "mtime": 499162500.0,
+    "ast_hash": "3865d2fa7a067a97b4a0bbc8f7dcb2db",
+    "semantic_hash": "3865d2fa7a067a97b4a0bbc8f7dcb2db"
+  },
+  "components/onboarding/OnboardingPage.tsx": {
+    "mtime": 1773983510.3383594,
+    "ast_hash": "7b67e19a0b49be50eea39290b09a35df",
+    "semantic_hash": "7b67e19a0b49be50eea39290b09a35df"
+  },
+  "components/onboarding/OnboardingPager.tsx": {
+    "mtime": 1774076107.7552981,
+    "ast_hash": "e6c0b436aa41ec642437c426cef7e551",
+    "semantic_hash": "e6c0b436aa41ec642437c426cef7e551"
+  },
+  "components/onboarding/onboarding-content.ts": {
+    "mtime": 1773983821.5090928,
+    "ast_hash": "f5cdab1976a497edf202e13a545094e1",
+    "semantic_hash": "f5cdab1976a497edf202e13a545094e1"
+  },
+  "components/settings/devtools-sections.tsx": {
+    "mtime": 1774065770.6443892,
+    "ast_hash": "b9ad81ea1949a49539f0131ef69d2101",
+    "semantic_hash": "b9ad81ea1949a49539f0131ef69d2101"
+  },
+  "components/themed-text.tsx": {
+    "mtime": 1773730507.8142536,
+    "ast_hash": "e7942118ba5e33f4c4e9a99f7e41012c",
+    "semantic_hash": "e7942118ba5e33f4c4e9a99f7e41012c"
+  },
+  "components/themed-view.tsx": {
+    "mtime": 1773722739.520485,
+    "ast_hash": "1c157d237068fa04c47b4167f63729ea",
+    "semantic_hash": "1c157d237068fa04c47b4167f63729ea"
+  },
+  "components/ui/collapsible.tsx": {
+    "mtime": 1773730507.8145413,
+    "ast_hash": "baaa6657ca3255f8aa7dc16e79f4bab4",
+    "semantic_hash": "baaa6657ca3255f8aa7dc16e79f4bab4"
+  },
+  "components/ui/icon-symbol.ios.tsx": {
+    "mtime": 499162500.0,
+    "ast_hash": "0f318b392e23d311c7094bdbb94d9c58",
+    "semantic_hash": "0f318b392e23d311c7094bdbb94d9c58"
+  },
+  "components/ui/icon-symbol.tsx": {
+    "mtime": 1774077846.8331711,
+    "ast_hash": "7fc51c72d2c74ebd800f94cc0515a3a4",
+    "semantic_hash": "7fc51c72d2c74ebd800f94cc0515a3a4"
+  },
+  "constants/gameConfig.ts": {
+    "mtime": 1783047843.2716274,
+    "ast_hash": "3a55953134e6e66e2515fd0fedb69243",
+    "semantic_hash": "3a55953134e6e66e2515fd0fedb69243"
+  },
+  "constants/theme.ts": {
+    "mtime": 1764725963.0419269,
+    "ast_hash": "c013fe39d3ecb434a1fa2cf2c2bd96b4",
+    "semantic_hash": "c013fe39d3ecb434a1fa2cf2c2bd96b4"
+  },
+  "constants/virtueSeedUnlockPricing.ts": {
+    "mtime": 1773819970.8410304,
+    "ast_hash": "c140107cbedaea09b750a877d05e86c7",
+    "semantic_hash": "c140107cbedaea09b750a877d05e86c7"
+  },
+  "constants/virtueTreeImages.ts": {
+    "mtime": 1773820549.7606485,
+    "ast_hash": "f00f0c8f0e6e7f7c34b91f04009937d1",
+    "semantic_hash": "f00f0c8f0e6e7f7c34b91f04009937d1"
+  },
+  "constants/virtues.ts": {
+    "mtime": 1773819966.20657,
+    "ast_hash": "c3ca288bf9ab2c6d03c6d96f5d7a0f64",
+    "semantic_hash": "c3ca288bf9ab2c6d03c6d96f5d7a0f64"
+  },
+  "contexts/AppPreferencesContext.tsx": {
+    "mtime": 1774065389.3397164,
+    "ast_hash": "e57a2c191124aa35b85f51b70012cefb",
+    "semantic_hash": "e57a2c191124aa35b85f51b70012cefb"
+  },
+  "contexts/DateOverrideContext.tsx": {
+    "mtime": 1773970411.2884061,
+    "ast_hash": "7ed4db862d18647d280b12dde60501a4",
+    "semantic_hash": "7ed4db862d18647d280b12dde60501a4"
+  },
+  "contexts/OnboardingContext.tsx": {
+    "mtime": 1773983510.339849,
+    "ast_hash": "1fc7563ddce272e5c258de470222226e",
+    "semantic_hash": "1fc7563ddce272e5c258de470222226e"
+  },
+  "data/quests-seed.ts": {
+    "mtime": 1783047843.2726903,
+    "ast_hash": "5d23c608b7bf45046239d41fb353ea90",
+    "semantic_hash": "5d23c608b7bf45046239d41fb353ea90"
+  },
+  "eas.json": {
+    "mtime": 1773985813.4552696,
+    "ast_hash": "1c30bde8c624d2b51861f8f216caacf5",
+    "semantic_hash": "1c30bde8c624d2b51861f8f216caacf5"
+  },
+  "eslint.config.js": {
+    "mtime": 499162500.0,
+    "ast_hash": "560a864580ad8107fbbf8d6d452c82fe",
+    "semantic_hash": "560a864580ad8107fbbf8d6d452c82fe"
+  },
+  "hooks/use-color-scheme.ts": {
+    "mtime": 499162500.0,
+    "ast_hash": "6f3444fcb9c7013a839a7832be518831",
+    "semantic_hash": "6f3444fcb9c7013a839a7832be518831"
+  },
+  "hooks/use-color-scheme.web.ts": {
+    "mtime": 499162500.0,
+    "ast_hash": "071fbb9a1a05ffb8af4b7d3b1ffa72d6",
+    "semantic_hash": "071fbb9a1a05ffb8af4b7d3b1ffa72d6"
+  },
+  "lib/unistyles-compat.tsx": {
+    "mtime": 1773730507.8148317,
+    "ast_hash": "86db4ad51ad7aae7bd6b44f0a26e913c",
+    "semantic_hash": "86db4ad51ad7aae7bd6b44f0a26e913c"
+  },
+  "lib/unistyles.ts": {
+    "mtime": 1773722703.3354118,
+    "ast_hash": "31aa160506f419e3747a67d289b65068",
+    "semantic_hash": "31aa160506f419e3747a67d289b65068"
+  },
+  "package.json": {
+    "mtime": 1774067539.5344427,
+    "ast_hash": "e2ea2f706e6009a9703535293c9df3d7",
+    "semantic_hash": "e2ea2f706e6009a9703535293c9df3d7"
+  },
+  "scripts/reset-project.js": {
+    "mtime": 499162500.0,
+    "ast_hash": "55e9a46ae7c35eb0340e956473beaed2",
+    "semantic_hash": "55e9a46ae7c35eb0340e956473beaed2"
+  },
+  "services/db.ts": {
+    "mtime": 1783047843.2735758,
+    "ast_hash": "bda881179692381eb8b89f4f5d148250",
+    "semantic_hash": "bda881179692381eb8b89f4f5d148250"
+  },
+  "services/fileStorage.ts": {
+    "mtime": 1774067237.4175296,
+    "ast_hash": "23624c4aa1be1e806d01d2b0c870900d",
+    "semantic_hash": "23624c4aa1be1e806d01d2b0c870900d"
+  },
+  "services/journalManager.ts": {
+    "mtime": 1774063007.326742,
+    "ast_hash": "5d9f2e1ef7e9479e7367e432ceb28e5f",
+    "semantic_hash": "5d9f2e1ef7e9479e7367e432ceb28e5f"
+  },
+  "tsconfig.json": {
+    "mtime": 499162500.0,
+    "ast_hash": "54dc64d62868350b1d819e47e2ac8e9a",
+    "semantic_hash": "54dc64d62868350b1d819e47e2ac8e9a"
+  },
+  "utils/dateUtils.ts": {
+    "mtime": 1773970401.6191914,
+    "ast_hash": "209c037000d381cfc3e42ebb6a066390",
+    "semantic_hash": "209c037000d381cfc3e42ebb6a066390"
+  },
+  "utils/styles.ts": {
+    "mtime": 1773730507.8151371,
+    "ast_hash": "fc6b5895e15f41945f1f562d2e40fedc",
+    "semantic_hash": "fc6b5895e15f41945f1f562d2e40fedc"
+  },
+  "utils/virtueGraph.ts": {
+    "mtime": 1773973937.6107235,
+    "ast_hash": "104cb709726bcba376c5e339bfe950ad",
+    "semantic_hash": "104cb709726bcba376c5e339bfe950ad"
+  },
+  "utils/virtuePoints.ts": {
+    "mtime": 1773819989.3807502,
+    "ast_hash": "3851d04d6a0df0097f89f46d34a6a2db",
+    "semantic_hash": "3851d04d6a0df0097f89f46d34a6a2db"
+  },
+  "AGENTS.md": {
+    "mtime": 1773971995.8715463,
+    "ast_hash": "efe2110eec908868888a321195af3b11",
+    "semantic_hash": "efe2110eec908868888a321195af3b11"
+  },
+  "CLAUDE.md": {
+    "mtime": 1773971995.8715463,
+    "ast_hash": "efe2110eec908868888a321195af3b11",
+    "semantic_hash": "efe2110eec908868888a321195af3b11"
+  },
+  "README.md": {
+    "mtime": 1780724042.23243,
+    "ast_hash": "b41ee6fccc81a494b3579416b6000aa4",
+    "semantic_hash": "b41ee6fccc81a494b3579416b6000aa4"
+  },
+  "app-store-copy.txt": {
+    "mtime": 1774060655.983173,
+    "ast_hash": "a28fb4b086b799003a1a9ce807f4fc96",
+    "semantic_hash": "a28fb4b086b799003a1a9ce807f4fc96"
+  },
+  "privacy-policy.html": {
+    "mtime": 1773817543.5571532,
+    "ast_hash": "35573f3950aa5e402292ca1aaa11c40b",
+    "semantic_hash": "35573f3950aa5e402292ca1aaa11c40b"
+  },
+  "terms-and-conditions.html": {
+    "mtime": 1773817543.557386,
+    "ast_hash": "b648ebcddb77c1234cdf6f20650eac36",
+    "semantic_hash": "b648ebcddb77c1234cdf6f20650eac36"
+  },
+  "assets/images/android-icon-background.png": {
+    "mtime": 1773727626.4777145,
+    "ast_hash": "7fb528e5d8c7a43b1b18fc73803623a4",
+    "semantic_hash": "7fb528e5d8c7a43b1b18fc73803623a4"
+  },
+  "assets/images/android-icon-foreground.png": {
+    "mtime": 1773727626.478027,
+    "ast_hash": "2c037923e657983441e75584241c0bc7",
+    "semantic_hash": "2c037923e657983441e75584241c0bc7"
+  },
+  "assets/images/android-icon-monochrome.png": {
+    "mtime": 1773727626.4783697,
+    "ast_hash": "968ceb6fd736f5cc5784c977de4d0c3e",
+    "semantic_hash": "968ceb6fd736f5cc5784c977de4d0c3e"
+  },
+  "assets/images/favicon.png": {
+    "mtime": 1773727626.4787595,
+    "ast_hash": "1d614f7d014e0bb78e6177985b31760f",
+    "semantic_hash": "1d614f7d014e0bb78e6177985b31760f"
+  },
+  "assets/images/feature-graphic.png": {
+    "mtime": 1774066479.8361535,
+    "ast_hash": "0e6bebd05a3bc4bac4272c44f1f757bb",
+    "semantic_hash": "0e6bebd05a3bc4bac4272c44f1f757bb"
+  },
+  "assets/images/feature-graphic.svg": {
+    "mtime": 1774066479.8363962,
+    "ast_hash": "de8a92007d6556b4f4cdf9c25b80eeef",
+    "semantic_hash": "de8a92007d6556b4f4cdf9c25b80eeef"
+  },
+  "assets/images/garden-of-the-self-trees-ambition/garden-of-the-self-trees-ambition-1.png": {
+    "mtime": 1773719185.1383355,
+    "ast_hash": "f9368e43f43c714ba46958d3d6ca36dc",
+    "semantic_hash": "f9368e43f43c714ba46958d3d6ca36dc"
+  },
+  "assets/images/garden-of-the-self-trees-ambition/garden-of-the-self-trees-ambition-2.png": {
+    "mtime": 1773719185.1398556,
+    "ast_hash": "0d9469d81523e3105309232d39da5e9c",
+    "semantic_hash": "0d9469d81523e3105309232d39da5e9c"
+  },
+  "assets/images/garden-of-the-self-trees-ambition/garden-of-the-self-trees-ambition-3.png": {
+    "mtime": 1773719185.140304,
+    "ast_hash": "86d6b1d734c1f54a2488a7d764cddda5",
+    "semantic_hash": "86d6b1d734c1f54a2488a7d764cddda5"
+  },
+  "assets/images/garden-of-the-self-trees-ambition/garden-of-the-self-trees-ambition-4.png": {
+    "mtime": 1773719185.1407673,
+    "ast_hash": "7c75af9d87cf8e85541607a16657018c",
+    "semantic_hash": "7c75af9d87cf8e85541607a16657018c"
+  },
+  "assets/images/garden-of-the-self-trees-ambition/garden-of-the-self-trees-ambition-5.png": {
+    "mtime": 1773719185.1412034,
+    "ast_hash": "61cd9f6397b456522f2600fd08ac42a7",
+    "semantic_hash": "61cd9f6397b456522f2600fd08ac42a7"
+  },
+  "assets/images/garden-of-the-self-trees-ambition/garden-of-the-self-trees-ambition-6.png": {
+    "mtime": 1773719185.141579,
+    "ast_hash": "2ae20d308862ec08a2288bbbc2dada95",
+    "semantic_hash": "2ae20d308862ec08a2288bbbc2dada95"
+  },
+  "assets/images/garden-of-the-self-trees-collaboration/garden-of-the-self-trees-collaboration-1.png": {
+    "mtime": 1773718767.215706,
+    "ast_hash": "124261ddd9d231b058d3a0a1f6276731",
+    "semantic_hash": "124261ddd9d231b058d3a0a1f6276731"
+  },
+  "assets/images/garden-of-the-self-trees-collaboration/garden-of-the-self-trees-collaboration-2.png": {
+    "mtime": 1773718767.2162402,
+    "ast_hash": "cf0cdf89c2617e0a5fbeacfb6056d9e5",
+    "semantic_hash": "cf0cdf89c2617e0a5fbeacfb6056d9e5"
+  },
+  "assets/images/garden-of-the-self-trees-collaboration/garden-of-the-self-trees-collaboration-3.png": {
+    "mtime": 1773718767.2166824,
+    "ast_hash": "c7d4380dfd3667c8c1ba1a71691085fc",
+    "semantic_hash": "c7d4380dfd3667c8c1ba1a71691085fc"
+  },
+  "assets/images/garden-of-the-self-trees-collaboration/garden-of-the-self-trees-collaboration-4.png": {
+    "mtime": 1773718767.217087,
+    "ast_hash": "4e9e5f4a33ec27c9fe9796d615b1f4f1",
+    "semantic_hash": "4e9e5f4a33ec27c9fe9796d615b1f4f1"
+  },
+  "assets/images/garden-of-the-self-trees-collaboration/garden-of-the-self-trees-collaboration-5.png": {
+    "mtime": 1773718767.2174456,
+    "ast_hash": "2a1eed26121bc13121124422048de56b",
+    "semantic_hash": "2a1eed26121bc13121124422048de56b"
+  },
+  "assets/images/garden-of-the-self-trees-collaboration/garden-of-the-self-trees-collaboration-6.png": {
+    "mtime": 1773718767.2180102,
+    "ast_hash": "c24db17be887ce4a0c1b4841868bb5ab",
+    "semantic_hash": "c24db17be887ce4a0c1b4841868bb5ab"
+  },
+  "assets/images/garden-of-the-self-trees-collaboration/garden-of-the-self-trees-collaboration-7.png": {
+    "mtime": 1773718767.218422,
+    "ast_hash": "6e783273b80782e791dd0412a4ccf51b",
+    "semantic_hash": "6e783273b80782e791dd0412a4ccf51b"
+  },
+  "assets/images/garden-of-the-self-trees-courage/garden-of-the-self-trees-courage-1.png": {
+    "mtime": 1773718676.6369548,
+    "ast_hash": "e9c8954110285289455b1ca39d270ae3",
+    "semantic_hash": "e9c8954110285289455b1ca39d270ae3"
+  },
+  "assets/images/garden-of-the-self-trees-courage/garden-of-the-self-trees-courage-2.png": {
+    "mtime": 1773718676.6374316,
+    "ast_hash": "8bac7daaa420bba723d1b7b376506038",
+    "semantic_hash": "8bac7daaa420bba723d1b7b376506038"
+  },
+  "assets/images/garden-of-the-self-trees-courage/garden-of-the-self-trees-courage-3.png": {
+    "mtime": 1773718676.637895,
+    "ast_hash": "67cc6fc61e2c02fed1f5a6503ac63705",
+    "semantic_hash": "67cc6fc61e2c02fed1f5a6503ac63705"
+  },
+  "assets/images/garden-of-the-self-trees-courage/garden-of-the-self-trees-courage-4.png": {
+    "mtime": 1773718676.6384199,
+    "ast_hash": "09bcda000d2fbcdb239308136bb7823e",
+    "semantic_hash": "09bcda000d2fbcdb239308136bb7823e"
+  },
+  "assets/images/garden-of-the-self-trees-courage/garden-of-the-self-trees-courage-5.png": {
+    "mtime": 1773718676.6389558,
+    "ast_hash": "56a901a2b27a74095b82ea1772836ae1",
+    "semantic_hash": "56a901a2b27a74095b82ea1772836ae1"
+  },
+  "assets/images/garden-of-the-self-trees-courage/garden-of-the-self-trees-courage-6.png": {
+    "mtime": 1773718676.6393657,
+    "ast_hash": "ffb26391476d28c10b389c0fd1d0d8c3",
+    "semantic_hash": "ffb26391476d28c10b389c0fd1d0d8c3"
+  },
+  "assets/images/garden-of-the-self-trees-curiosity/garden-of-the-self-trees-curiosity-1.png": {
+    "mtime": 1773717214.9856737,
+    "ast_hash": "9e941d434d97400655f067182a3bb5cc",
+    "semantic_hash": "9e941d434d97400655f067182a3bb5cc"
+  },
+  "assets/images/garden-of-the-self-trees-curiosity/garden-of-the-self-trees-curiosity-2.png": {
+    "mtime": 1773717214.986188,
+    "ast_hash": "29e1f460be05b44662011648efda0ff1",
+    "semantic_hash": "29e1f460be05b44662011648efda0ff1"
+  },
+  "assets/images/garden-of-the-self-trees-curiosity/garden-of-the-self-trees-curiosity-3.png": {
+    "mtime": 1773717214.9865937,
+    "ast_hash": "6ad3411a510b7f5109f4416d99cf8f3a",
+    "semantic_hash": "6ad3411a510b7f5109f4416d99cf8f3a"
+  },
+  "assets/images/garden-of-the-self-trees-curiosity/garden-of-the-self-trees-curiosity-4.png": {
+    "mtime": 1773717214.9870853,
+    "ast_hash": "72c627861fbd5047af391e45612da913",
+    "semantic_hash": "72c627861fbd5047af391e45612da913"
+  },
+  "assets/images/garden-of-the-self-trees-curiosity/garden-of-the-self-trees-curiosity-5.png": {
+    "mtime": 1773717214.9879055,
+    "ast_hash": "0926aec4d28940484f2fa1c89e33f749",
+    "semantic_hash": "0926aec4d28940484f2fa1c89e33f749"
+  },
+  "assets/images/garden-of-the-self-trees-curiosity/garden-of-the-self-trees-curiosity-6.png": {
+    "mtime": 1773717214.9884274,
+    "ast_hash": "e9006af35f50835f70f5ff479437b06c",
+    "semantic_hash": "e9006af35f50835f70f5ff479437b06c"
+  },
+  "assets/images/garden-of-the-self-trees-curiosity/garden-of-the-self-trees-curiosity-7.png": {
+    "mtime": 1773717214.9889605,
+    "ast_hash": "c527f53325d91312846f1f90f494658c",
+    "semantic_hash": "c527f53325d91312846f1f90f494658c"
+  },
+  "assets/images/garden-of-the-self-trees-empathy/garden-of-the-self-trees-empathy-1.png": {
+    "mtime": 1773719037.1499598,
+    "ast_hash": "77716154f67a808ab66b4ca6bcf23795",
+    "semantic_hash": "77716154f67a808ab66b4ca6bcf23795"
+  },
+  "assets/images/garden-of-the-self-trees-empathy/garden-of-the-self-trees-empathy-2.png": {
+    "mtime": 1773719037.1505964,
+    "ast_hash": "e1a67736093e33d9c45a8fd0ec50f236",
+    "semantic_hash": "e1a67736093e33d9c45a8fd0ec50f236"
+  },
+  "assets/images/garden-of-the-self-trees-empathy/garden-of-the-self-trees-empathy-3.png": {
+    "mtime": 1773719037.1511886,
+    "ast_hash": "34b64713ff583bb432ddf632861b88a9",
+    "semantic_hash": "34b64713ff583bb432ddf632861b88a9"
+  },
+  "assets/images/garden-of-the-self-trees-empathy/garden-of-the-self-trees-empathy-4.png": {
+    "mtime": 1773719037.1516325,
+    "ast_hash": "45b0b5115bee0a1ee6f876121ae1ede8",
+    "semantic_hash": "45b0b5115bee0a1ee6f876121ae1ede8"
+  },
+  "assets/images/garden-of-the-self-trees-empathy/garden-of-the-self-trees-empathy-5.png": {
+    "mtime": 1773719037.1520271,
+    "ast_hash": "da919ed5e1e6330923ecba83f0f52628",
+    "semantic_hash": "da919ed5e1e6330923ecba83f0f52628"
+  },
+  "assets/images/garden-of-the-self-trees-empathy/garden-of-the-self-trees-empathy-6.png": {
+    "mtime": 1773719037.152556,
+    "ast_hash": "a8b404d29ec15c73b681181cce81a590",
+    "semantic_hash": "a8b404d29ec15c73b681181cce81a590"
+  },
+  "assets/images/garden-of-the-self-trees-empathy/garden-of-the-self-trees-empathy-7.png": {
+    "mtime": 1773719037.1530483,
+    "ast_hash": "fdda0366461d3be2ec4d22613d417358",
+    "semantic_hash": "fdda0366461d3be2ec4d22613d417358"
+  },
+  "assets/images/garden-of-the-self-trees-kindness/garden-of-the-self-trees-kindness-1.png": {
+    "mtime": 1773718814.9475136,
+    "ast_hash": "1ead3c1636239f7b4a5d32b485431b07",
+    "semantic_hash": "1ead3c1636239f7b4a5d32b485431b07"
+  },
+  "assets/images/garden-of-the-self-trees-kindness/garden-of-the-self-trees-kindness-2.png": {
+    "mtime": 1773718814.949692,
+    "ast_hash": "158652bac622905f714e844a24f4f4fb",
+    "semantic_hash": "158652bac622905f714e844a24f4f4fb"
+  },
+  "assets/images/garden-of-the-self-trees-kindness/garden-of-the-self-trees-kindness-3.png": {
+    "mtime": 1773718814.9501865,
+    "ast_hash": "be255ac1e51ddf0bd23f5f56c9b2cae7",
+    "semantic_hash": "be255ac1e51ddf0bd23f5f56c9b2cae7"
+  },
+  "assets/images/garden-of-the-self-trees-kindness/garden-of-the-self-trees-kindness-4.png": {
+    "mtime": 1773718814.9506216,
+    "ast_hash": "82f0d313034d8d19756096a882f4b252",
+    "semantic_hash": "82f0d313034d8d19756096a882f4b252"
+  },
+  "assets/images/garden-of-the-self-trees-kindness/garden-of-the-self-trees-kindness-5.png": {
+    "mtime": 1773718814.9517865,
+    "ast_hash": "18b3aa2949be3b6595f17b2af915bdf0",
+    "semantic_hash": "18b3aa2949be3b6595f17b2af915bdf0"
+  },
+  "assets/images/garden-of-the-self-trees-kindness/garden-of-the-self-trees-kindness-6.png": {
+    "mtime": 1773718814.9526954,
+    "ast_hash": "0f95d0eaea1e349da6d818ddb9c7b287",
+    "semantic_hash": "0f95d0eaea1e349da6d818ddb9c7b287"
+  },
+  "assets/images/garden-of-the-self-trees-modesty/garden-of-the-self-trees-modesty-1.png": {
+    "mtime": 1773719000.9030964,
+    "ast_hash": "fdd087868979e67af84a177f85194809",
+    "semantic_hash": "fdd087868979e67af84a177f85194809"
+  },
+  "assets/images/garden-of-the-self-trees-modesty/garden-of-the-self-trees-modesty-2.png": {
+    "mtime": 1773719000.903581,
+    "ast_hash": "0fa988dae4a8a75ab01f591b676becba",
+    "semantic_hash": "0fa988dae4a8a75ab01f591b676becba"
+  },
+  "assets/images/garden-of-the-self-trees-modesty/garden-of-the-self-trees-modesty-3.png": {
+    "mtime": 1773719000.9041052,
+    "ast_hash": "5f92d554288b7756a9ac42ce126965d7",
+    "semantic_hash": "5f92d554288b7756a9ac42ce126965d7"
+  },
+  "assets/images/garden-of-the-self-trees-modesty/garden-of-the-self-trees-modesty-4.png": {
+    "mtime": 1773719000.9045353,
+    "ast_hash": "bf4d4a7ba3622c47299415361fe372a7",
+    "semantic_hash": "bf4d4a7ba3622c47299415361fe372a7"
+  },
+  "assets/images/garden-of-the-self-trees-modesty/garden-of-the-self-trees-modesty-5.png": {
+    "mtime": 1773719000.9049902,
+    "ast_hash": "e7bd11c0e6f65825f0972eeda0cf3f57",
+    "semantic_hash": "e7bd11c0e6f65825f0972eeda0cf3f57"
+  },
+  "assets/images/garden-of-the-self-trees-modesty/garden-of-the-self-trees-modesty-6.png": {
+    "mtime": 1773719000.905418,
+    "ast_hash": "1da910a7c5669735e7ca545ffc170085",
+    "semantic_hash": "1da910a7c5669735e7ca545ffc170085"
+  },
+  "assets/images/garden-of-the-self-trees-patience/garden-of-the-self-trees-patience-1.png": {
+    "mtime": 1773798037.2393272,
+    "ast_hash": "69c4af673c341882371a71d00d5252ec",
+    "semantic_hash": "69c4af673c341882371a71d00d5252ec"
+  },
+  "assets/images/garden-of-the-self-trees-patience/garden-of-the-self-trees-patience-2.png": {
+    "mtime": 1773798037.2399838,
+    "ast_hash": "240b56750b8c4e6319e10fd3611d065c",
+    "semantic_hash": "240b56750b8c4e6319e10fd3611d065c"
+  },
+  "assets/images/garden-of-the-self-trees-patience/garden-of-the-self-trees-patience-3.png": {
+    "mtime": 1773798037.2407453,
+    "ast_hash": "6323659f26c5e7c8daacaa1011023037",
+    "semantic_hash": "6323659f26c5e7c8daacaa1011023037"
+  },
+  "assets/images/garden-of-the-self-trees-patience/garden-of-the-self-trees-patience-4.png": {
+    "mtime": 1773798037.241393,
+    "ast_hash": "b8b767e906209c83b0feaea2972ae1d1",
+    "semantic_hash": "b8b767e906209c83b0feaea2972ae1d1"
+  },
+  "assets/images/garden-of-the-self-trees-patience/garden-of-the-self-trees-patience-5.png": {
+    "mtime": 1773798037.2423267,
+    "ast_hash": "a501a7cd50fb0fe9fa403d52dfd5dccd",
+    "semantic_hash": "a501a7cd50fb0fe9fa403d52dfd5dccd"
+  },
+  "assets/images/garden-of-the-self-trees-patience/garden-of-the-self-trees-patience-6.png": {
+    "mtime": 1773798037.243037,
+    "ast_hash": "26119bd2173ebd7c4a72568bf8ca7392",
+    "semantic_hash": "26119bd2173ebd7c4a72568bf8ca7392"
+  },
+  "assets/images/garden-of-the-self-trees-resilience/garden-of-the-self-trees-resilience-1.png": {
+    "mtime": 1773718814.9707103,
+    "ast_hash": "6b910126441cdea7e7ce977973cce178",
+    "semantic_hash": "6b910126441cdea7e7ce977973cce178"
+  },
+  "assets/images/garden-of-the-self-trees-resilience/garden-of-the-self-trees-resilience-2.png": {
+    "mtime": 1773718814.9714875,
+    "ast_hash": "45c2e347d8d9b6ffac5b5c289e041452",
+    "semantic_hash": "45c2e347d8d9b6ffac5b5c289e041452"
+  },
+  "assets/images/garden-of-the-self-trees-resilience/garden-of-the-self-trees-resilience-3.png": {
+    "mtime": 1773718814.9721766,
+    "ast_hash": "021e3e76672dbc0efc9ff6ece63890b2",
+    "semantic_hash": "021e3e76672dbc0efc9ff6ece63890b2"
+  },
+  "assets/images/garden-of-the-self-trees-resilience/garden-of-the-self-trees-resilience-4.png": {
+    "mtime": 1773718814.9726508,
+    "ast_hash": "7f6a6ee6c4798a9cd3d605de7101276b",
+    "semantic_hash": "7f6a6ee6c4798a9cd3d605de7101276b"
+  },
+  "assets/images/garden-of-the-self-trees-resilience/garden-of-the-self-trees-resilience-5.png": {
+    "mtime": 1773718814.9730883,
+    "ast_hash": "e23c1b8d2fbe65649578232a72ebf928",
+    "semantic_hash": "e23c1b8d2fbe65649578232a72ebf928"
+  },
+  "assets/images/garden-of-the-self-trees-resilience/garden-of-the-self-trees-resilience-6.png": {
+    "mtime": 1773718814.9735692,
+    "ast_hash": "88ceb8f61a413d183314d513c349f4a2",
+    "semantic_hash": "88ceb8f61a413d183314d513c349f4a2"
+  },
+  "assets/images/garden-of-the-self-trees-resilience/garden-of-the-self-trees-resilience-7.png": {
+    "mtime": 1773718814.9740183,
+    "ast_hash": "26af8226233507d5789b8852a410d12b",
+    "semantic_hash": "26af8226233507d5789b8852a410d12b"
+  },
+  "assets/images/garden-of-the-self-trees-resilience/garden-of-the-self-trees-resilience-8.png": {
+    "mtime": 1773718814.9744546,
+    "ast_hash": "78ed0da73d16afc690825b3ad577d044",
+    "semantic_hash": "78ed0da73d16afc690825b3ad577d044"
+  },
+  "assets/images/garden-of-the-self-trees-respectfulness/garden-of-the-self-trees-respectfulness-1.png": {
+    "mtime": 1773719584.2619,
+    "ast_hash": "348e87e247c990f9b9500f0860caa935",
+    "semantic_hash": "348e87e247c990f9b9500f0860caa935"
+  },
+  "assets/images/garden-of-the-self-trees-respectfulness/garden-of-the-self-trees-respectfulness-2.png": {
+    "mtime": 1773719584.2629523,
+    "ast_hash": "ee25ff5e886e2a43515c061cad23d4f3",
+    "semantic_hash": "ee25ff5e886e2a43515c061cad23d4f3"
+  },
+  "assets/images/garden-of-the-self-trees-respectfulness/garden-of-the-self-trees-respectfulness-3.png": {
+    "mtime": 1773719584.2638361,
+    "ast_hash": "c0778ad00e1a0535665b35285ec3cd48",
+    "semantic_hash": "c0778ad00e1a0535665b35285ec3cd48"
+  },
+  "assets/images/garden-of-the-self-trees-respectfulness/garden-of-the-self-trees-respectfulness-4.png": {
+    "mtime": 1773719584.2647576,
+    "ast_hash": "03ab07421df484a0707eb726cccb978c",
+    "semantic_hash": "03ab07421df484a0707eb726cccb978c"
+  },
+  "assets/images/garden-of-the-self-trees-respectfulness/garden-of-the-self-trees-respectfulness-5.png": {
+    "mtime": 1773719584.2657645,
+    "ast_hash": "3f94945dbe5e27dbf1e10e881154a9be",
+    "semantic_hash": "3f94945dbe5e27dbf1e10e881154a9be"
+  },
+  "assets/images/garden-of-the-self-trees-respectfulness/garden-of-the-self-trees-respectfulness-6.png": {
+    "mtime": 1773719584.2665975,
+    "ast_hash": "6b4a94cdbc4e71bbe1b5769f65ab9600",
+    "semantic_hash": "6b4a94cdbc4e71bbe1b5769f65ab9600"
+  },
+  "assets/images/garden-of-the-self-trees-self-discipline/garden-of-the-self-trees-self-discipline-1.png": {
+    "mtime": 1773718814.8731692,
+    "ast_hash": "da6327e699744d41d9637e2618023ebd",
+    "semantic_hash": "da6327e699744d41d9637e2618023ebd"
+  },
+  "assets/images/garden-of-the-self-trees-self-discipline/garden-of-the-self-trees-self-discipline-2.png": {
+    "mtime": 1773718814.8743405,
+    "ast_hash": "fe307c88f6666a6ab9a17e8eeb5526cc",
+    "semantic_hash": "fe307c88f6666a6ab9a17e8eeb5526cc"
+  },
+  "assets/images/garden-of-the-self-trees-self-discipline/garden-of-the-self-trees-self-discipline-3.png": {
+    "mtime": 1773718814.8765798,
+    "ast_hash": "bd41830e674cc77fde13bbe7b2aa1fa2",
+    "semantic_hash": "bd41830e674cc77fde13bbe7b2aa1fa2"
+  },
+  "assets/images/garden-of-the-self-trees-self-discipline/garden-of-the-self-trees-self-discipline-4.png": {
+    "mtime": 1773718814.8777559,
+    "ast_hash": "7fce75c3cbabbfdb2d851026107ff05b",
+    "semantic_hash": "7fce75c3cbabbfdb2d851026107ff05b"
+  },
+  "assets/images/garden-of-the-self-trees-self-discipline/garden-of-the-self-trees-self-discipline-5.png": {
+    "mtime": 1773718814.8785357,
+    "ast_hash": "b9a723da3f4823465a2fef28b8b86109",
+    "semantic_hash": "b9a723da3f4823465a2fef28b8b86109"
+  },
+  "assets/images/garden-of-the-self-trees-self-discipline/garden-of-the-self-trees-self-discipline-6.png": {
+    "mtime": 1773718814.8797684,
+    "ast_hash": "de9f36dafb68b6fcfd9c1e5d4cb112bf",
+    "semantic_hash": "de9f36dafb68b6fcfd9c1e5d4cb112bf"
+  },
+  "assets/images/garden-of-the-self-trees-self-discipline/garden-of-the-self-trees-self-discipline-7.png": {
+    "mtime": 1773718814.880927,
+    "ast_hash": "e76ce0fb258c21a7833e557fa9da4751",
+    "semantic_hash": "e76ce0fb258c21a7833e557fa9da4751"
+  },
+  "assets/images/garden-of-the-self-trees-termpance/garden-of-the-self-trees-termpance-1.png": {
+    "mtime": 1773798037.2491145,
+    "ast_hash": "dc3a61a8f144a1182d58d75b42d6d68e",
+    "semantic_hash": "dc3a61a8f144a1182d58d75b42d6d68e"
+  },
+  "assets/images/garden-of-the-self-trees-termpance/garden-of-the-self-trees-termpance-2.png": {
+    "mtime": 1773798037.2494638,
+    "ast_hash": "d0a38147d0199622f8802adf25ed826a",
+    "semantic_hash": "d0a38147d0199622f8802adf25ed826a"
+  },
+  "assets/images/garden-of-the-self-trees-termpance/garden-of-the-self-trees-termpance-3.png": {
+    "mtime": 1773798037.2498944,
+    "ast_hash": "d3069ead8e6173f58dddfce146634c1b",
+    "semantic_hash": "d3069ead8e6173f58dddfce146634c1b"
+  },
+  "assets/images/garden-of-the-self-trees-termpance/garden-of-the-self-trees-termpance-4.png": {
+    "mtime": 1773798037.2504413,
+    "ast_hash": "10a7163972af52365531026aaa6250c5",
+    "semantic_hash": "10a7163972af52365531026aaa6250c5"
+  },
+  "assets/images/garden-of-the-self-trees-termpance/garden-of-the-self-trees-termpance-5.png": {
+    "mtime": 1773798037.251657,
+    "ast_hash": "d94dee56fbd29fad2b447b5692c40c64",
+    "semantic_hash": "d94dee56fbd29fad2b447b5692c40c64"
+  },
+  "assets/images/garden-of-the-self-trees-termpance/garden-of-the-self-trees-termpance-6.png": {
+    "mtime": 1773798037.2522192,
+    "ast_hash": "084ab70e0a8ab860cc1163d9fd7962f5",
+    "semantic_hash": "084ab70e0a8ab860cc1163d9fd7962f5"
+  },
+  "assets/images/garden-of-the-self-trees-tolerance/garden-of-the-self-trees-tolerance-1.png": {
+    "mtime": 1773720412.139326,
+    "ast_hash": "3dc91a67dfc54bc0ee250da63b04c2da",
+    "semantic_hash": "3dc91a67dfc54bc0ee250da63b04c2da"
+  },
+  "assets/images/garden-of-the-self-trees-tolerance/garden-of-the-self-trees-tolerance-2.png": {
+    "mtime": 1773720412.1398451,
+    "ast_hash": "a73e15c376223e0a135698da8e40383a",
+    "semantic_hash": "a73e15c376223e0a135698da8e40383a"
+  },
+  "assets/images/garden-of-the-self-trees-tolerance/garden-of-the-self-trees-tolerance-3.png": {
+    "mtime": 1773720412.140312,
+    "ast_hash": "1de77a893cce3a404911f857aeecd220",
+    "semantic_hash": "1de77a893cce3a404911f857aeecd220"
+  },
+  "assets/images/garden-of-the-self-trees-tolerance/garden-of-the-self-trees-tolerance-4.png": {
+    "mtime": 1773720412.1407688,
+    "ast_hash": "306df05e5930e7a26e39cfb80f4bc8d7",
+    "semantic_hash": "306df05e5930e7a26e39cfb80f4bc8d7"
+  },
+  "assets/images/garden-of-the-self-trees-tolerance/garden-of-the-self-trees-tolerance-5.png": {
+    "mtime": 1773720412.1413603,
+    "ast_hash": "dcb1770b57107217dddcfe0bc30f17ab",
+    "semantic_hash": "dcb1770b57107217dddcfe0bc30f17ab"
+  },
+  "assets/images/garden-of-the-self-trees-tolerance/garden-of-the-self-trees-tolerance-6.png": {
+    "mtime": 1773720412.1417902,
+    "ast_hash": "f888cb30838587f4dbd93a1848ee8741",
+    "semantic_hash": "f888cb30838587f4dbd93a1848ee8741"
+  },
+  "assets/images/icon-512-rounded.png": {
+    "mtime": 1774060655.984524,
+    "ast_hash": "29187e86a7a12b4dae4786b635bc2557",
+    "semantic_hash": "29187e86a7a12b4dae4786b635bc2557"
+  },
+  "assets/images/icon-512.png": {
+    "mtime": 1774060655.9848092,
+    "ast_hash": "3960a5adb5e800abdd689cf483e1baf4",
+    "semantic_hash": "3960a5adb5e800abdd689cf483e1baf4"
+  },
+  "assets/images/icon.png": {
+    "mtime": 1773727626.479108,
+    "ast_hash": "48fd38b2b79da3d817de68814c38f396",
+    "semantic_hash": "48fd38b2b79da3d817de68814c38f396"
+  },
+  "assets/images/logo.svg": {
+    "mtime": 1773727626.4792757,
+    "ast_hash": "62eea2e3ff2975f92a74e505501a0583",
+    "semantic_hash": "62eea2e3ff2975f92a74e505501a0583"
+  },
+  "assets/images/splash-icon.png": {
+    "mtime": 1773727626.4797497,
+    "ast_hash": "e2a62b6b8ce07b3a634c18b40c5eb9cd",
+    "semantic_hash": "e2a62b6b8ce07b3a634c18b40c5eb9cd"
+  },
+  "assets/sounds/delete-woosh.wav": {
+    "mtime": 1774064822.4127574,
+    "ast_hash": "8f9e5a9fca7e5be70b9e1a36f4a83708",
+    "semantic_hash": "8f9e5a9fca7e5be70b9e1a36f4a83708"
+  }
+}

@@ -1,0 +1,682 @@
+{
+  "chunks": [
+    {
+      "chunk_num": 1,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/AGENTS.md",
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/CLAUDE.md",
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/README.md",
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/app-store-copy.txt",
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/privacy-policy.html",
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/terms-and-conditions.html",
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/.cursor/rules/CLAUDE.md"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_01.json"
+    },
+    {
+      "chunk_num": 2,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/android-icon-background.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_02.json"
+    },
+    {
+      "chunk_num": 3,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/android-icon-foreground.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_03.json"
+    },
+    {
+      "chunk_num": 4,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/android-icon-monochrome.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_04.json"
+    },
+    {
+      "chunk_num": 5,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/favicon.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_05.json"
+    },
+    {
+      "chunk_num": 6,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/feature-graphic.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_06.json"
+    },
+    {
+      "chunk_num": 7,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/feature-graphic.svg"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_07.json"
+    },
+    {
+      "chunk_num": 8,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-ambition/garden-of-the-self-trees-ambition-1.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_08.json"
+    },
+    {
+      "chunk_num": 9,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-ambition/garden-of-the-self-trees-ambition-2.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_09.json"
+    },
+    {
+      "chunk_num": 10,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-ambition/garden-of-the-self-trees-ambition-3.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_10.json"
+    },
+    {
+      "chunk_num": 11,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-ambition/garden-of-the-self-trees-ambition-4.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_11.json"
+    },
+    {
+      "chunk_num": 12,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-ambition/garden-of-the-self-trees-ambition-5.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_12.json"
+    },
+    {
+      "chunk_num": 13,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-ambition/garden-of-the-self-trees-ambition-6.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_13.json"
+    },
+    {
+      "chunk_num": 14,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-collaboration/garden-of-the-self-trees-collaboration-1.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_14.json"
+    },
+    {
+      "chunk_num": 15,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-collaboration/garden-of-the-self-trees-collaboration-2.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_15.json"
+    },
+    {
+      "chunk_num": 16,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-collaboration/garden-of-the-self-trees-collaboration-3.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_16.json"
+    },
+    {
+      "chunk_num": 17,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-collaboration/garden-of-the-self-trees-collaboration-4.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_17.json"
+    },
+    {
+      "chunk_num": 18,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-collaboration/garden-of-the-self-trees-collaboration-5.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_18.json"
+    },
+    {
+      "chunk_num": 19,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-collaboration/garden-of-the-self-trees-collaboration-6.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_19.json"
+    },
+    {
+      "chunk_num": 20,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-collaboration/garden-of-the-self-trees-collaboration-7.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_20.json"
+    },
+    {
+      "chunk_num": 21,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-courage/garden-of-the-self-trees-courage-1.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_21.json"
+    },
+    {
+      "chunk_num": 22,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-courage/garden-of-the-self-trees-courage-2.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_22.json"
+    },
+    {
+      "chunk_num": 23,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-courage/garden-of-the-self-trees-courage-3.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_23.json"
+    },
+    {
+      "chunk_num": 24,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-courage/garden-of-the-self-trees-courage-4.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_24.json"
+    },
+    {
+      "chunk_num": 25,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-courage/garden-of-the-self-trees-courage-5.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_25.json"
+    },
+    {
+      "chunk_num": 26,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-courage/garden-of-the-self-trees-courage-6.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_26.json"
+    },
+    {
+      "chunk_num": 27,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-curiosity/garden-of-the-self-trees-curiosity-1.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_27.json"
+    },
+    {
+      "chunk_num": 28,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-curiosity/garden-of-the-self-trees-curiosity-2.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_28.json"
+    },
+    {
+      "chunk_num": 29,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-curiosity/garden-of-the-self-trees-curiosity-3.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_29.json"
+    },
+    {
+      "chunk_num": 30,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-curiosity/garden-of-the-self-trees-curiosity-4.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_30.json"
+    },
+    {
+      "chunk_num": 31,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-curiosity/garden-of-the-self-trees-curiosity-5.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_31.json"
+    },
+    {
+      "chunk_num": 32,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-curiosity/garden-of-the-self-trees-curiosity-6.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_32.json"
+    },
+    {
+      "chunk_num": 33,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-curiosity/garden-of-the-self-trees-curiosity-7.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_33.json"
+    },
+    {
+      "chunk_num": 34,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-empathy/garden-of-the-self-trees-empathy-1.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_34.json"
+    },
+    {
+      "chunk_num": 35,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-empathy/garden-of-the-self-trees-empathy-2.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_35.json"
+    },
+    {
+      "chunk_num": 36,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-empathy/garden-of-the-self-trees-empathy-3.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_36.json"
+    },
+    {
+      "chunk_num": 37,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-empathy/garden-of-the-self-trees-empathy-4.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_37.json"
+    },
+    {
+      "chunk_num": 38,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-empathy/garden-of-the-self-trees-empathy-5.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_38.json"
+    },
+    {
+      "chunk_num": 39,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-empathy/garden-of-the-self-trees-empathy-6.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_39.json"
+    },
+    {
+      "chunk_num": 40,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-empathy/garden-of-the-self-trees-empathy-7.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_40.json"
+    },
+    {
+      "chunk_num": 41,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-kindness/garden-of-the-self-trees-kindness-1.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_41.json"
+    },
+    {
+      "chunk_num": 42,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-kindness/garden-of-the-self-trees-kindness-2.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_42.json"
+    },
+    {
+      "chunk_num": 43,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-kindness/garden-of-the-self-trees-kindness-3.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_43.json"
+    },
+    {
+      "chunk_num": 44,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-kindness/garden-of-the-self-trees-kindness-4.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_44.json"
+    },
+    {
+      "chunk_num": 45,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-kindness/garden-of-the-self-trees-kindness-5.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_45.json"
+    },
+    {
+      "chunk_num": 46,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-kindness/garden-of-the-self-trees-kindness-6.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_46.json"
+    },
+    {
+      "chunk_num": 47,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-modesty/garden-of-the-self-trees-modesty-1.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_47.json"
+    },
+    {
+      "chunk_num": 48,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-modesty/garden-of-the-self-trees-modesty-2.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_48.json"
+    },
+    {
+      "chunk_num": 49,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-modesty/garden-of-the-self-trees-modesty-3.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_49.json"
+    },
+    {
+      "chunk_num": 50,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-modesty/garden-of-the-self-trees-modesty-4.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_50.json"
+    },
+    {
+      "chunk_num": 51,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-modesty/garden-of-the-self-trees-modesty-5.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_51.json"
+    },
+    {
+      "chunk_num": 52,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-modesty/garden-of-the-self-trees-modesty-6.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_52.json"
+    },
+    {
+      "chunk_num": 53,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-patience/garden-of-the-self-trees-patience-1.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_53.json"
+    },
+    {
+      "chunk_num": 54,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-patience/garden-of-the-self-trees-patience-2.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_54.json"
+    },
+    {
+      "chunk_num": 55,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-patience/garden-of-the-self-trees-patience-3.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_55.json"
+    },
+    {
+      "chunk_num": 56,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-patience/garden-of-the-self-trees-patience-4.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_56.json"
+    },
+    {
+      "chunk_num": 57,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-patience/garden-of-the-self-trees-patience-5.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_57.json"
+    },
+    {
+      "chunk_num": 58,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-patience/garden-of-the-self-trees-patience-6.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_58.json"
+    },
+    {
+      "chunk_num": 59,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-resilience/garden-of-the-self-trees-resilience-1.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_59.json"
+    },
+    {
+      "chunk_num": 60,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-resilience/garden-of-the-self-trees-resilience-2.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_60.json"
+    },
+    {
+      "chunk_num": 61,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-resilience/garden-of-the-self-trees-resilience-3.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_61.json"
+    },
+    {
+      "chunk_num": 62,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-resilience/garden-of-the-self-trees-resilience-4.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_62.json"
+    },
+    {
+      "chunk_num": 63,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-resilience/garden-of-the-self-trees-resilience-5.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_63.json"
+    },
+    {
+      "chunk_num": 64,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-resilience/garden-of-the-self-trees-resilience-6.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_64.json"
+    },
+    {
+      "chunk_num": 65,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-resilience/garden-of-the-self-trees-resilience-7.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_65.json"
+    },
+    {
+      "chunk_num": 66,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-resilience/garden-of-the-self-trees-resilience-8.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_66.json"
+    },
+    {
+      "chunk_num": 67,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-respectfulness/garden-of-the-self-trees-respectfulness-1.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_67.json"
+    },
+    {
+      "chunk_num": 68,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-respectfulness/garden-of-the-self-trees-respectfulness-2.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_68.json"
+    },
+    {
+      "chunk_num": 69,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-respectfulness/garden-of-the-self-trees-respectfulness-3.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_69.json"
+    },
+    {
+      "chunk_num": 70,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-respectfulness/garden-of-the-self-trees-respectfulness-4.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_70.json"
+    },
+    {
+      "chunk_num": 71,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-respectfulness/garden-of-the-self-trees-respectfulness-5.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_71.json"
+    },
+    {
+      "chunk_num": 72,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-respectfulness/garden-of-the-self-trees-respectfulness-6.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_72.json"
+    },
+    {
+      "chunk_num": 73,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-self-discipline/garden-of-the-self-trees-self-discipline-1.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_73.json"
+    },
+    {
+      "chunk_num": 74,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-self-discipline/garden-of-the-self-trees-self-discipline-2.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_74.json"
+    },
+    {
+      "chunk_num": 75,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-self-discipline/garden-of-the-self-trees-self-discipline-3.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_75.json"
+    },
+    {
+      "chunk_num": 76,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-self-discipline/garden-of-the-self-trees-self-discipline-4.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_76.json"
+    },
+    {
+      "chunk_num": 77,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-self-discipline/garden-of-the-self-trees-self-discipline-5.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_77.json"
+    },
+    {
+      "chunk_num": 78,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-self-discipline/garden-of-the-self-trees-self-discipline-6.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_78.json"
+    },
+    {
+      "chunk_num": 79,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-self-discipline/garden-of-the-self-trees-self-discipline-7.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_79.json"
+    },
+    {
+      "chunk_num": 80,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-termpance/garden-of-the-self-trees-termpance-1.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_80.json"
+    },
+    {
+      "chunk_num": 81,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-termpance/garden-of-the-self-trees-termpance-2.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_81.json"
+    },
+    {
+      "chunk_num": 82,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-termpance/garden-of-the-self-trees-termpance-3.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_82.json"
+    },
+    {
+      "chunk_num": 83,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-termpance/garden-of-the-self-trees-termpance-4.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_83.json"
+    },
+    {
+      "chunk_num": 84,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-termpance/garden-of-the-self-trees-termpance-5.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_84.json"
+    },
+    {
+      "chunk_num": 85,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-termpance/garden-of-the-self-trees-termpance-6.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_85.json"
+    },
+    {
+      "chunk_num": 86,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-tolerance/garden-of-the-self-trees-tolerance-1.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_86.json"
+    },
+    {
+      "chunk_num": 87,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-tolerance/garden-of-the-self-trees-tolerance-2.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_87.json"
+    },
+    {
+      "chunk_num": 88,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-tolerance/garden-of-the-self-trees-tolerance-3.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_88.json"
+    },
+    {
+      "chunk_num": 89,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-tolerance/garden-of-the-self-trees-tolerance-4.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_89.json"
+    },
+    {
+      "chunk_num": 90,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-tolerance/garden-of-the-self-trees-tolerance-5.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_90.json"
+    },
+    {
+      "chunk_num": 91,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/garden-of-the-self-trees-tolerance/garden-of-the-self-trees-tolerance-6.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_91.json"
+    },
+    {
+      "chunk_num": 92,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/icon-512-rounded.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_92.json"
+    },
+    {
+      "chunk_num": 93,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/icon-512.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_93.json"
+    },
+    {
+      "chunk_num": 94,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/icon.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_94.json"
+    },
+    {
+      "chunk_num": 95,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/logo.svg"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_95.json"
+    },
+    {
+      "chunk_num": 96,
+      "files": [
+        "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/Garden-of-the-Self/assets/images/splash-icon.png"
+      ],
+      "chunk_path": "/Users/markuslu/Documents/GitHub/The-Garden-of-the-Self-Dev-Sandbox/graphify-out/.graphify_chunk_96.json"
+    }
+  ]
+}

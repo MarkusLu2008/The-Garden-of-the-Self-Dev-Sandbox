@@ -1,0 +1,1 @@
+{"nodes": [{"id": "img_icon_512", "label": "icon-512.png", "file_type": "image", "source_file": "assets/images/icon-512.png"}], "edges": [{"from": "img_icon_512", "to": "concept_flower_mark_six_petals", "relation": "depicts_symbol", "confidence": "INFERRED", "confidence_score": 0.95, "source_file": "assets/images/icon-512.png"}], "hyperedges": []}
