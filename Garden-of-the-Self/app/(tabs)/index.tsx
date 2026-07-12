@@ -23,7 +23,7 @@ import { ThemedView } from '@/components/themed-view';
 import { useUnistyles } from '@/lib/unistyles-compat';
 import { journalStyles, spacing } from '@/utils/styles';
 import { Fonts } from '@/constants/theme';
-import { getVirtueTotalsAndUnlocked, getAllVirtueProgress, type VirtueProgressRow } from '@/services/db';
+import { getVirtueTotalsAndUnlocked, getAllVirtueProgress, recomputeStreak, type StreakRow, type VirtueProgressRow } from '@/services/db';
 import { useFocusEffect } from 'expo-router';
 import virtues from '@/constants/virtues';
 import { gameConfig } from '@/constants/gameConfig';
@@ -192,6 +192,7 @@ export default function GardenScreen() {
     curiosityEverCrossed5: boolean;
   } | null>(null);
   const [virtueProgressMap, setVirtueProgressMap] = useState<Record<string, VirtueProgressRow>>({});
+  const [streak, setStreak] = useState<StreakRow | null>(null);
   const [pageIndex, setPageIndex] = useState(0);
 
   const breathingStyle = useBreathingAnimation();
@@ -201,13 +202,15 @@ export default function GardenScreen() {
       let cancelled = false;
       (async () => {
         try {
-          const [data, progress] = await Promise.all([
+          const [data, progress, streakRow] = await Promise.all([
             getVirtueTotalsAndUnlocked(),
             getAllVirtueProgress(),
+            recomputeStreak(),
           ]);
           if (!cancelled) {
             setVirtueData(data);
             setVirtueProgressMap(progress);
+            setStreak(streakRow);
           }
         } catch (e) {
           console.warn('Failed to load virtue totals and unlocked', e);
@@ -248,11 +251,19 @@ export default function GardenScreen() {
     setPageIndex((prev) => Math.min(prev, Math.max(0, visibleVirtues.length - 1)));
   }, [visibleVirtues.length]);
 
+  const streakLine =
+    streak == null
+      ? ''
+      : streak.current_streak > 0
+        ? `🔥 ${streak.current_streak}-day streak · best ${streak.longest_streak}${streak.freezes_available > 0 ? ` · ❄️ ${streak.freezes_available}` : ''}`
+        : `Complete a quest today to start a streak${streak.longest_streak > 0 ? ` · best ${streak.longest_streak}` : ''}`;
+
   const pageContent = (
     <>
       <ThemedText type="title" style={styles.title}>
         Your Garden
       </ThemedText>
+      {streakLine !== '' && <ThemedText style={styles.streakText}>{streakLine}</ThemedText>}
       <ThemedText style={styles.pageIndicator}>
         {visibleVirtues.length > 0 ? `${pageIndex + 1} / ${visibleVirtues.length}` : ''}
       </ThemedText>
@@ -368,6 +379,12 @@ const styles = StyleSheet.create({
   },
   title: {
     marginBottom: spacing.sm,
+    textAlign: 'center',
+  },
+  streakText: {
+    marginBottom: spacing.xs,
+    fontSize: 14,
+    opacity: 0.9,
     textAlign: 'center',
   },
   pageIndicator: {
