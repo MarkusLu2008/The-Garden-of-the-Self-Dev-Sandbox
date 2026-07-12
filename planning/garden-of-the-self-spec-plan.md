@@ -14,6 +14,27 @@ Source spec: `Garden_of_the_Self_Spec.pdf` (Feature Specification & Design Brief
 - `gameConfig.VIRTUE_LIST` has 13 entries; spec says twelve virtues. Need to confirm which is extra/wrong.
 - Phase 2 duration→tier retagging involves judgment calls (e.g. a "Long" research quest may actually be Gentle). Decide: do it wholesale, or review a proposed mapping first.
 
+## Known tech debt — BLOCKED, do not start without art assets
+
+**Two parallel point systems currently exist. This is unwanted and must be unified — but is blocked on art, not code.**
+
+- **Legacy (`virtue_totals` table)**: pre-existing before Phase 1–6. Written by every quest completion *and* journal entry (`applyVirtueDeltas` in `services/db.ts`). Drives: tree/ASCII art growth stage (`constants/virtueTreeImages.ts`, 6–7 hand-authored PNG stages per virtue), virtue-unlock-by-graph-distance (`utils/virtueGraph.ts`), daily point decay.
+- **New (`virtue_progress.spec_points`)**: added in Phase 3. Written only by quest completion, daily-capped, tier-based (10/25/50 pts), routed through `utils/questScoring.ts` (`awardSpecPoints` in `services/db.ts`). Drives: level 1–7 + stage name, progress bar, wilting (Phase 5), streak bonus (Phase 6).
+- Both update together on the normal "complete a quest" path today, so nothing is broken — but they're two separate numbers with two separate meanings, and journal entries only feed the legacy one. Confusing to explain to players and to future devs.
+
+**Decision**: unify onto the new spec system (`virtue_progress.spec_points`, 7-level thresholds, daily-cap scoring engine). Its quest-to-quest progression pacing (tiered points, daily cap, level-band progress bar) is the one we want to keep. The legacy `virtue_totals` system is superseded **except** for its tree art, which currently ships with 6–7 stages per virtue hand-drawn against the *old* threshold curve.
+
+**Blocker**: unifying means either (a) commissioning/generating a 7-stage tree art set per virtue matched to the new level thresholds `[0,50,150,350,700,1250,2100]`, or (b) remapping the new 7 levels onto whatever stage count each virtue's existing art has (6 or 7, inconsistent per virtue — see `constants/virtueTreeImages.ts`). Until one of those happens, deleting `virtue_totals` breaks the garden's visual growth.
+
+**Future fix (new phase, insert before Phase 10 dashboard rework once unblocked):**
+1. Get/generate consistent N-stage art per virtue (recommend matching to the 7 spec levels for a 1:1 mapping — simplest, no remapping math needed).
+2. Swap `VirtueGardenPage` tree-stage lookup from `score` (legacy total) to `virtueProgress.level`.
+3. Route journal-entry point awards through `awardSpecPoints` too (currently legacy-only — journaling doesn't move the new bar at all).
+4. Delete `virtue_totals` table, `applyVirtueDeltas`, `addVirtuePoints` devtools helper, and the decay/unlock-threshold logic keyed off it; port virtue-unlock gating to read `spec_points` instead.
+5. Update `utils/virtueGraph.ts` seed-shown thresholds to key off `spec_points`.
+
+See `TODO(unify-point-systems)` markers in `services/db.ts` and `constants/virtueTreeImages.ts` for the exact code spots.
+
 ## Phases
 
 ### Phase 1 — Config & data model foundation

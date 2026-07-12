@@ -1,5 +1,14 @@
 // Tree image assets per virtue. Required from project root so Metro resolves paths.
 // Each virtue advances one stage at configured point intervals.
+//
+// TODO(unify-point-systems): this art is authored against the legacy virtue_totals
+// point system (6-7 stages per virtue, inconsistent count) and is the reason that
+// system is still alive alongside the new virtue_progress.spec_points leveling
+// (Phase 3-6). Blocked on getting/generating a consistent N-stage set per virtue —
+// recommend matching the 7 spec levels 1:1 to avoid remapping math. Once that art
+// exists, swap the tree-stage lookup in app/(tabs)/index.tsx from `score` (legacy
+// total) to `virtueProgress.level`. See planning/garden-of-the-self-spec-plan.md
+// "Known tech debt" section for the full unification plan.
 import { gameConfig } from '@/constants/gameConfig';
 
 const ambition = [

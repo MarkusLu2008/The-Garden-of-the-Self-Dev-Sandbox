@@ -1235,6 +1235,12 @@ async function deleteQuestHistoryForQuest(questId: number) {
   );
 }
 
+// TODO(unify-point-systems): virtue_totals is the legacy point system, superseded by
+// virtue_progress.spec_points (see awardSpecPoints below). Kept alive only because
+// constants/virtueTreeImages.ts tree art is authored against it. Once matching art
+// exists for the new 7-level thresholds, delete this function, virtue_totals, and
+// addVirtuePoints, and point tree-stage lookup + virtue-unlock gating at spec_points
+// instead. See planning/garden-of-the-self-spec-plan.md "Known tech debt" section.
 async function applyVirtueDeltas(
   database: SQLite.SQLiteDatabase,
   deltas: QuestVirtueValues,
@@ -1279,6 +1285,9 @@ async function applyVirtueDeltas(
   }
 }
 
+// TODO(unify-point-systems): this only writes the legacy virtue_totals system — it
+// does NOT move virtue_progress.spec_points, so it will not move the level/progress
+// bar (see applyVirtueDeltas above for why). Delete alongside virtue_totals.
 /** Add points directly to virtue totals (e.g. for devtools). */
 export async function addVirtuePoints(deltas: QuestVirtueValues): Promise<void> {
   const database = await getDatabase();
