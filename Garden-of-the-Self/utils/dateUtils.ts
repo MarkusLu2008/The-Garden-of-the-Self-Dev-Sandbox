@@ -82,6 +82,24 @@ export function generateJournalId(): string {
 }
 
 /**
+ * App-level "now" as a SQLite-compatible `datetime('now')`-shaped string
+ * (`YYYY-MM-DD HH:MM:SS`). Date part respects the devtools date override;
+ * time part is always real clock time. Use this instead of SQL `datetime('now')`
+ * for any timestamp column so all app time flows through one clock.
+ */
+export function getAppNowTimestamp(): string {
+  const dateSource = getCurrentDate();
+  const now = new Date();
+  const year = dateSource.getFullYear();
+  const month = String(dateSource.getMonth() + 1).padStart(2, '0');
+  const day = String(dateSource.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
+/**
  * Parse a date string (YYYY-MM-DD) to Date object
  */
 export function parseDateString(dateString: string): Date {

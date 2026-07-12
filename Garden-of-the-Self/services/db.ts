@@ -3,7 +3,7 @@ import virtues from '@/constants/virtues';
 import { clampQuestRewards, gameConfig } from '@/constants/gameConfig';
 import { questDurationOrder, questsSeed, type QuestDuration, type QuestDifficultyTier } from '@/data/quests-seed';
 import { getDominantVirtue, specPointsForTier, specPointsToLevel, levelStageName } from '@/utils/questScoring';
-import { addDaysToDateString, diffInDays, getTodayDateString } from '@/utils/dateUtils';
+import { addDaysToDateString, diffInDays, getTodayDateString, getAppNowTimestamp } from '@/utils/dateUtils';
 
 export type VirtueProgressRow = {
   virtue_id: number;
@@ -178,8 +178,9 @@ async function initializeOrMigrateSchema(database: SQLite.SQLiteDatabase): Promi
   if (!hasUnlockedAt) {
     await database.execAsync('ALTER TABLE virtues ADD COLUMN unlocked_at TEXT');
     if (hasUnlocked) {
-      await database.execAsync(
-        "UPDATE virtues SET unlocked_at = datetime('now') WHERE unlocked = 1"
+      await database.runAsync(
+        'UPDATE virtues SET unlocked_at = ? WHERE unlocked = 1',
+        [getAppNowTimestamp()]
       );
       await database.runAsync(
         "UPDATE virtues SET unlocked_at = '1970-01-01 00:00:00' WHERE name = ?",
@@ -205,13 +206,13 @@ async function initializeOrMigrateSchema(database: SQLite.SQLiteDatabase): Promi
     'SELECT id, prompt FROM quests'
   );
   const updateQuestDurationStmt = await database.prepareAsync(
-    "UPDATE quests SET duration = ?, updated_at = datetime('now') WHERE id = ?"
+    'UPDATE quests SET duration = ?, updated_at = ? WHERE id = ?'
   );
   try {
     for (const quest of existingQuests) {
       const seedDuration = durationByPrompt.get(quest.prompt);
       if (!seedDuration) continue;
-      await updateQuestDurationStmt.executeAsync([seedDuration, quest.id]);
+      await updateQuestDurationStmt.executeAsync([seedDuration, getAppNowTimestamp(), quest.id]);
     }
   } finally {
     await updateQuestDurationStmt.finalizeAsync();
@@ -229,36 +230,25 @@ async function initializeOrMigrateSchema(database: SQLite.SQLiteDatabase): Promi
       'SELECT id, prompt FROM quests'
     );
     const updateTierStmt = await database.prepareAsync(
-      "UPDATE quests SET difficulty_tier = ?, updated_at = datetime('now') WHERE id = ?"
+      'UPDATE quests SET difficulty_tier = ?, updated_at = ? WHERE id = ?'
     );
     try {
       for (const quest of questsForTier) {
         const tier = tierByPrompt.get(quest.prompt);
         if (tier == null) continue;
-        await updateTierStmt.executeAsync([tier, quest.id]);
+        await updateTierStmt.executeAsync([tier, getAppNowTimestamp(), quest.id]);
       }
     } finally {
       await updateTierStmt.finalizeAsync();
     }
   }
 
-  const unlocksAfterTotalPoints = gameConfig.unlocking.unlocksAfterTotalPoints;
-  // Triggers: set virtues.unlocked_at on first time crossing configured threshold.
+  // Unlock timestamps used to be set by SQL triggers using datetime('now'), which
+  // ignores the devtools date override. Unlock-on-threshold is now handled in JS
+  // (see applyVirtueDeltas) using the app-level clock; drop the old triggers.
   await database.execAsync(`
     DROP TRIGGER IF EXISTS virtue_unlocked_on_totals_insert;
     DROP TRIGGER IF EXISTS virtue_unlocked_on_totals_update;
-    CREATE TRIGGER virtue_unlocked_on_totals_insert
-    AFTER INSERT ON virtue_totals
-    WHEN NEW.total_value > ${unlocksAfterTotalPoints}
-    BEGIN
-      UPDATE virtues SET unlocked_at = COALESCE(unlocked_at, datetime('now')) WHERE id = NEW.virtue_id;
-    END;
-    CREATE TRIGGER virtue_unlocked_on_totals_update
-    AFTER UPDATE OF total_value ON virtue_totals
-    WHEN NEW.total_value > ${unlocksAfterTotalPoints}
-    BEGIN
-      UPDATE virtues SET unlocked_at = COALESCE(unlocked_at, datetime('now')) WHERE id = NEW.virtue_id;
-    END;
   `);
 }
 
@@ -287,7 +277,7 @@ async function seedQuestsIfEmpty(database: SQLite.SQLiteDatabase): Promise<void>
   const virtueIdByNameMap = new Map(virtueRows.map((v) => [v.name, v.id]));
   const insertQuestStmt = await database.prepareAsync(
     `INSERT INTO quests (completed, prompt, duration, difficulty_tier, created_at, updated_at)
-     VALUES (0, ?, ?, ?, datetime('now'), datetime('now'))`
+     VALUES (0, ?, ?, ?, ?, ?)`
   );
   const insertQuestVirtueStmt = await database.prepareAsync(
     'INSERT INTO quest_virtues (quest_id, virtue_id, value) VALUES (?, ?, ?)'
@@ -295,7 +285,8 @@ async function seedQuestsIfEmpty(database: SQLite.SQLiteDatabase): Promise<void>
   try {
     for (const q of questsSeed) {
       const clampedVirtues = clampQuestRewards(q.virtues);
-      await insertQuestStmt.executeAsync([q.prompt, q.duration, q.difficultyTier]);
+      const nowTs = getAppNowTimestamp();
+      await insertQuestStmt.executeAsync([q.prompt, q.duration, q.difficultyTier, nowTs, nowTs]);
       const questRow = await database.getFirstAsync<{ id: number }>(
         'SELECT id FROM quests WHERE rowid = last_insert_rowid()'
       );
@@ -489,10 +480,11 @@ async function insertJournal(
   options?: JournalInsertOptions
 ) {
   const database = await getDatabase();
+  const nowTs = getAppNowTimestamp();
   await database.runAsync(
     `INSERT INTO journals (file_path, prompt, created_at, updated_at)
-     VALUES (?, ?, datetime('now'), datetime('now'))`,
-    [file_path, prompt]
+     VALUES (?, ?, ?, ?)`,
+    [file_path, prompt, nowTs, nowTs]
   );
 
   const journal = await database.getFirstAsync<JournalRow>(
@@ -583,9 +575,9 @@ async function updateJournal(file_path: string, prompt: string, virtueValues: Jo
   const database = await getDatabase();
   await database.runAsync(
     `UPDATE journals
-     SET prompt = ?, updated_at = datetime('now')
+     SET prompt = ?, updated_at = ?
      WHERE file_path = ?`,
-    [prompt, file_path]
+    [prompt, getAppNowTimestamp(), file_path]
   );
 
   const journal = await database.getFirstAsync<JournalRow>(
@@ -686,10 +678,11 @@ export async function insertQuest(
 ) {
   const database = await getDatabase();
   const clampedVirtues = clampQuestRewards(virtueValues);
+  const nowTs = getAppNowTimestamp();
   await database.runAsync(
     `INSERT INTO quests (completed, prompt, duration, difficulty_tier, created_at, updated_at)
-     VALUES (0, ?, ?, ?, datetime('now'), datetime('now'))`,
-    [prompt, duration, difficultyTier]
+     VALUES (0, ?, ?, ?, ?, ?)`,
+    [prompt, duration, difficultyTier, nowTs, nowTs]
   );
 
   const quest = await database.getFirstAsync<{ id: number }>(
@@ -962,7 +955,7 @@ async function updateDailyQuestCompletion(update: DailyQuestUpdate): Promise<Dai
   let scoringResult: ScoringResult | null = null;
 
   if (!wasCompleted && wantsCompleted) {
-    await database.runAsync('UPDATE quest_history SET completed_at = datetime(\'now\') WHERE id = ?', [row.id]);
+    await database.runAsync('UPDATE quest_history SET completed_at = ? WHERE id = ?', [getAppNowTimestamp(), row.id]);
     await upsertQuestHistoryVirtues(database, row.id, update.virtues);
     await applyVirtueDeltas(database, update.virtues, +1);
     scoringResult = await applyQuestSpecPoints(database, update.quest, row.id);
@@ -976,8 +969,8 @@ async function updateDailyQuestCompletion(update: DailyQuestUpdate): Promise<Dai
   }
 
   await database.runAsync(
-    `UPDATE quests SET completed = ?, updated_at = datetime('now') WHERE id = ?`,
-    [update.completed, update.questId]
+    `UPDATE quests SET completed = ?, updated_at = ? WHERE id = ?`,
+    [update.completed, getAppNowTimestamp(), update.questId]
   );
   return { handled: true, scoringResult };
 }
@@ -1031,9 +1024,9 @@ async function updateQuest(
 
   await database.runAsync(
     `UPDATE quests
-     SET completed = ?, prompt = ?, updated_at = datetime('now')
+     SET completed = ?, prompt = ?, updated_at = ?
      WHERE id = ?`,
-    [completed, prompt, id]
+    [completed, prompt, getAppNowTimestamp(), id]
   );
 
   await upsertQuestVirtues(database, id, clampedVirtues);
@@ -1063,18 +1056,18 @@ async function recordQuestCompleted(quest: QuestRow): Promise<ScoringResult | nu
   if (history) {
     // Update the existing assignment row
     await database.runAsync(
-      `UPDATE quest_history SET completed_at = datetime('now') WHERE id = ?`,
-      [history.id]
+      `UPDATE quest_history SET completed_at = ? WHERE id = ?`,
+      [getAppNowTimestamp(), history.id]
     );
     await upsertQuestHistoryVirtues(database, history.id, quest.virtues);
     historyId = history.id;
   } else {
     // Fallback: insert a new row (e.g. quest completed outside daily flow)
-    const today = new Date().toISOString().slice(0, 10);
+    const today = getTodayDateString();
     await database.runAsync(
       `INSERT INTO quest_history (quest_id, assigned_at, completed_at)
-       VALUES (?, ?, datetime('now'))`,
-      [quest.id, today]
+       VALUES (?, ?, ?)`,
+      [quest.id, today, getAppNowTimestamp()]
     );
     const newHistory = await database.getFirstAsync<{ id: number }>(
       'SELECT id FROM quest_history WHERE rowid = last_insert_rowid()'
@@ -1275,6 +1268,13 @@ async function applyVirtueDeltas(
       await database.runAsync(
         'INSERT INTO virtue_totals (virtue_id, total_value) VALUES (?, ?)',
         [virtueId, newTotal]
+      );
+    }
+
+    if (newTotal > gameConfig.unlocking.unlocksAfterTotalPoints) {
+      await database.runAsync(
+        'UPDATE virtues SET unlocked_at = COALESCE(unlocked_at, ?) WHERE id = ?',
+        [getAppNowTimestamp(), virtueId]
       );
     }
 
@@ -1602,7 +1602,7 @@ export async function recomputeStreak(): Promise<StreakRow> {
   const database = await getDatabase();
 
   const completionRows = await database.getAllAsync<{ d: string }>(
-    `SELECT DISTINCT date(completed_at, 'localtime') AS d
+    `SELECT DISTINCT date(completed_at) AS d
      FROM quest_history
      WHERE completed_at IS NOT NULL
      ORDER BY d ASC`
@@ -1667,8 +1667,8 @@ export async function insertQuestReflection(
   const database = await getDatabase();
   await database.runAsync(
     `INSERT INTO quest_reflections (quest_history_id, text, prompt, created_at)
-     VALUES (?, ?, ?, datetime('now'))`,
-    [questHistoryId, text, prompt]
+     VALUES (?, ?, ?, ?)`,
+    [questHistoryId, text, prompt, getAppNowTimestamp()]
   );
 }
 

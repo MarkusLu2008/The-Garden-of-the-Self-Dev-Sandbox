@@ -27,7 +27,7 @@ import {
   type QuestRow,
   type TableName,
 } from '@/services/db';
-import { getTodayDateString, formatDateForDisplay } from '@/utils/dateUtils';
+import { getTodayDateString, addDaysToDateString, formatDateForDisplay } from '@/utils/dateUtils';
 import {
   getVirtueSeedUnlockDebugRows,
   getSeedShownThresholdFromUnlockedCount,
@@ -220,7 +220,7 @@ export function DevtoolsSections() {
           onPress: async () => {
             try {
               setLoading(true);
-              const today = new Date();
+              const today = getTodayDateString();
               const dummyPrompts = [
                 'What am I grateful for today?',
                 'What did I learn today?',
@@ -240,12 +240,7 @@ export function DevtoolsSections() {
               let skipped = 0;
 
               for (let i = 0; i < 5; i++) {
-                const date = new Date(today);
-                date.setDate(date.getDate() - i);
-                const year = date.getFullYear();
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const day = String(date.getDate()).padStart(2, '0');
-                const file_path = `${year}-${month}-${day}`;
+                const file_path = addDaysToDateString(today, -i);
 
                 try {
                   const existing = journals.find(j => j.file_path === file_path);
