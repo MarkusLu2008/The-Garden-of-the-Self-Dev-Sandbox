@@ -23,7 +23,7 @@ import { ThemedView } from '@/components/themed-view';
 import { useUnistyles } from '@/lib/unistyles-compat';
 import { journalStyles, spacing } from '@/utils/styles';
 import { Fonts } from '@/constants/theme';
-import { getVirtueTotalsAndUnlocked, getAllVirtueProgress, recomputeStreak, type StreakRow, type VirtueProgressRow } from '@/services/db';
+import { getVirtueTotalsAndUnlocked, getAllVirtueProgress, getUnlockedCosmetics, recomputeStreak, type StreakRow, type VirtueProgressRow } from '@/services/db';
 import { useFocusEffect } from 'expo-router';
 import virtues from '@/constants/virtues';
 import { gameConfig } from '@/constants/gameConfig';
@@ -205,6 +205,7 @@ export default function GardenScreen() {
   } | null>(null);
   const [virtueProgressMap, setVirtueProgressMap] = useState<Record<string, VirtueProgressRow>>({});
   const [streak, setStreak] = useState<StreakRow | null>(null);
+  const [cosmetics, setCosmetics] = useState<string[]>([]);
   const [pageIndex, setPageIndex] = useState(0);
 
   const breathingStyle = useBreathingAnimation();
@@ -214,15 +215,17 @@ export default function GardenScreen() {
       let cancelled = false;
       (async () => {
         try {
-          const [data, progress, streakRow] = await Promise.all([
+          const [data, progress, streakRow, unlockedCosmetics] = await Promise.all([
             getVirtueTotalsAndUnlocked(),
             getAllVirtueProgress(),
             recomputeStreak(),
+            getUnlockedCosmetics(),
           ]);
           if (!cancelled) {
             setVirtueData(data);
             setVirtueProgressMap(progress);
             setStreak(streakRow);
+            setCosmetics(unlockedCosmetics);
           }
         } catch (e) {
           console.warn('Failed to load virtue totals and unlocked', e);
@@ -263,12 +266,18 @@ export default function GardenScreen() {
     setPageIndex((prev) => Math.min(prev, Math.max(0, visibleVirtues.length - 1)));
   }, [visibleVirtues.length]);
 
+  const COSMETIC_BADGES: Record<string, string> = {
+    bronze_leaf: '🍂',
+    silver_bloom: '🌸',
+    golden_tree: '🌳',
+  };
+  const badges = cosmetics.map((c) => COSMETIC_BADGES[c] ?? '🏅').join('');
   const streakLine =
     streak == null
       ? ''
       : streak.current_streak > 0
-        ? `🔥 ${streak.current_streak}-day streak · best ${streak.longest_streak}${streak.freezes_available > 0 ? ` · ❄️ ${streak.freezes_available}` : ''}`
-        : `Complete a quest today to start a streak${streak.longest_streak > 0 ? ` · best ${streak.longest_streak}` : ''}`;
+        ? `🔥 ${streak.current_streak}-day streak · best ${streak.longest_streak}${streak.freezes_available > 0 ? ` · ❄️ ${streak.freezes_available}` : ''}${badges ? ` · ${badges}` : ''}`
+        : `Complete a quest today to start a streak${streak.longest_streak > 0 ? ` · best ${streak.longest_streak}` : ''}${badges ? ` · ${badges}` : ''}`;
 
   const pageContent = (
     <>

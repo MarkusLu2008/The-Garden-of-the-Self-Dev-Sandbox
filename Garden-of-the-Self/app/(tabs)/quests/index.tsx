@@ -4,6 +4,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useAppPreferences } from '@/contexts/AppPreferencesContext';
 import { useUnistyles } from '@/lib/unistyles-compat';
 import {
+  consumePendingStreakCelebrations,
   deleteQuest,
   getDailyQuests,
   getQuestDurationLabel,
@@ -89,6 +90,12 @@ export default function QuestsScreen() {
           'Level Up!',
           `${scoringResult.dominantVirtue} reached ${scoringResult.newStageName} (Lv. ${scoringResult.newLevel})`
         );
+      }
+      if (newCompleted === 1) {
+        const celebrations = await consumePendingStreakCelebrations();
+        for (const message of celebrations) {
+          Alert.alert('Streak Milestone! 🔥', message);
+        }
       }
     } catch (error) {
       // Revert on failure

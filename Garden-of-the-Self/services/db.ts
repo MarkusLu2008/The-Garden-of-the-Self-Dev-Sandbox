@@ -966,6 +966,16 @@ async function updateDailyQuestCompletion(update: DailyQuestUpdate): Promise<Dai
     await upsertQuestHistoryVirtues(database, row.id, update.virtues);
     await applyVirtueDeltas(database, update.virtues, +1);
     scoringResult = await applyQuestSpecPoints(database, update.quest, row.id);
+    const bonusResult = await maybeAwardDailyConsistencyBonus(database, update.quest, row.id);
+    if (scoringResult && bonusResult) {
+      scoringResult = {
+        ...scoringResult,
+        newSpecPoints: bonusResult.newSpecPoints,
+        newLevel: bonusResult.newLevel,
+        leveledUp: scoringResult.leveledUp || bonusResult.leveledUp,
+        newStageName: levelStageName(bonusResult.newLevel),
+      };
+    }
     await updateStreakAfterCompletionChange(database);
   } else if (wasCompleted && !wantsCompleted) {
     await database.runAsync('UPDATE quest_history SET completed_at = NULL WHERE id = ?', [row.id]);
@@ -1085,7 +1095,17 @@ async function recordQuestCompleted(quest: QuestRow): Promise<ScoringResult | nu
   }
 
   await applyVirtueDeltas(database, quest.virtues, +1);
-  const scoringResult = await applyQuestSpecPoints(database, quest, historyId);
+  let scoringResult = await applyQuestSpecPoints(database, quest, historyId);
+  const bonusResult = await maybeAwardDailyConsistencyBonus(database, quest, historyId);
+  if (scoringResult && bonusResult) {
+    scoringResult = {
+      ...scoringResult,
+      newSpecPoints: bonusResult.newSpecPoints,
+      newLevel: bonusResult.newLevel,
+      leveledUp: scoringResult.leveledUp || bonusResult.leveledUp,
+      newStageName: levelStageName(bonusResult.newLevel),
+    };
+  }
   await updateStreakAfterCompletionChange(database);
   return scoringResult;
 }
@@ -1655,6 +1675,132 @@ export async function recomputeStreak(): Promise<StreakRow> {
 async function updateStreakAfterCompletionChange(database: SQLite.SQLiteDatabase): Promise<void> {
   await maybeConsumeStreakFreeze(database, getTodayDateString());
   await recomputeStreak();
+  await grantStreakMilestonesIfReached(database);
+}
+
+const APP_META_KEY_STREAK_MILESTONE_PREFIX = 'streak_milestone_granted:';
+const APP_META_KEY_COSMETIC_UNLOCKED_PREFIX = 'cosmetic_unlocked:';
+const APP_META_KEY_PENDING_STREAK_CELEBRATIONS = 'pending_streak_celebrations';
+
+/**
+ * Grant each configured streak milestone the first time the current streak
+ * reaches it (once ever): adds streak freezes, records the cosmetic unlock,
+ * and queues a celebration message for the UI to consume.
+ */
+async function grantStreakMilestonesIfReached(database: SQLite.SQLiteDatabase): Promise<void> {
+  const streak = await getStreak();
+  const newCelebrations: string[] = [];
+
+  for (const milestone of gameConfig.streak.milestones) {
+    if (streak.current_streak < milestone.days) continue;
+    const grantedKey = `${APP_META_KEY_STREAK_MILESTONE_PREFIX}${milestone.days}`;
+    const granted = await database.getFirstAsync<{ value: string | null }>(
+      'SELECT value FROM app_meta WHERE key = ?',
+      [grantedKey]
+    );
+    if (granted?.value === '1') continue;
+
+    await database.runAsync('INSERT OR REPLACE INTO app_meta (key, value) VALUES (?, ?)', [
+      grantedKey,
+      '1',
+    ]);
+    if (milestone.freezes > 0) {
+      await database.runAsync(
+        'UPDATE streak SET freezes_available = freezes_available + ? WHERE id = 1',
+        [milestone.freezes]
+      );
+    }
+    await database.runAsync('INSERT OR REPLACE INTO app_meta (key, value) VALUES (?, ?)', [
+      `${APP_META_KEY_COSMETIC_UNLOCKED_PREFIX}${milestone.cosmetic}`,
+      '1',
+    ]);
+    newCelebrations.push(
+      `${milestone.days}-day streak! ${milestone.label} unlocked` +
+        (milestone.freezes > 0 ? ` · +${milestone.freezes} streak freeze${milestone.freezes > 1 ? 's' : ''}` : '')
+    );
+  }
+
+  if (newCelebrations.length > 0) {
+    const existingRow = await database.getFirstAsync<{ value: string | null }>(
+      'SELECT value FROM app_meta WHERE key = ?',
+      [APP_META_KEY_PENDING_STREAK_CELEBRATIONS]
+    );
+    let pending: string[] = [];
+    try {
+      pending = existingRow?.value ? JSON.parse(existingRow.value) : [];
+    } catch {
+      pending = [];
+    }
+    await database.runAsync('INSERT OR REPLACE INTO app_meta (key, value) VALUES (?, ?)', [
+      APP_META_KEY_PENDING_STREAK_CELEBRATIONS,
+      JSON.stringify([...pending, ...newCelebrations]),
+    ]);
+  }
+}
+
+/** Pop (return and clear) milestone celebration messages queued for the UI. */
+export async function consumePendingStreakCelebrations(): Promise<string[]> {
+  const database = await getDatabase();
+  const row = await database.getFirstAsync<{ value: string | null }>(
+    'SELECT value FROM app_meta WHERE key = ?',
+    [APP_META_KEY_PENDING_STREAK_CELEBRATIONS]
+  );
+  if (!row?.value) return [];
+  let pending: string[] = [];
+  try {
+    pending = JSON.parse(row.value);
+  } catch {
+    pending = [];
+  }
+  await database.runAsync('DELETE FROM app_meta WHERE key = ?', [
+    APP_META_KEY_PENDING_STREAK_CELEBRATIONS,
+  ]);
+  return pending;
+}
+
+/** Cosmetic ids unlocked via streak milestones. */
+export async function getUnlockedCosmetics(): Promise<string[]> {
+  const database = await getDatabase();
+  const rows = await database.getAllAsync<{ key: string; value: string | null }>(
+    "SELECT key, value FROM app_meta WHERE key LIKE 'cosmetic_unlocked:%'"
+  );
+  return rows
+    .filter((r) => r.value === '1')
+    .map((r) => r.key.slice(APP_META_KEY_COSMETIC_UNLOCKED_PREFIX.length));
+}
+
+/**
+ * Daily consistency bonus (spec 2.4): the first completed quest of each day
+ * grants extra spec-points to that quest's dominant virtue, routed through
+ * the same scoring engine as regular awards ('streak_bonus' kind bypasses
+ * and does not consume the daily cap). Linked to the completion's history
+ * row, so unchecking reverses it along with the quest award.
+ */
+async function maybeAwardDailyConsistencyBonus(
+  database: SQLite.SQLiteDatabase,
+  quest: QuestRow,
+  historyId: number
+): Promise<{ leveledUp: boolean; newLevel: number; newSpecPoints: number } | null> {
+  const bonus = gameConfig.streak.dailyBonusPoints;
+  if (bonus <= 0) return null;
+
+  const today = getTodayDateString();
+  const completionsToday = await database.getFirstAsync<{ count: number }>(
+    `SELECT COUNT(*) as count FROM quest_history
+     WHERE completed_at IS NOT NULL AND date(completed_at, 'localtime') = ?`,
+    [today]
+  );
+  // The current completion is already written, so 1 means "first of the day".
+  if ((completionsToday?.count ?? 0) !== 1) return null;
+
+  const dominantVirtue = getDominantVirtue(quest.virtues);
+  if (!dominantVirtue) return null;
+  const virtueId = await getVirtueIdFromName(dominantVirtue);
+  if (virtueId == null) return null;
+
+  const result = await awardSpecPoints(database, virtueId, bonus, today, historyId, 'streak_bonus');
+  if (!result.awarded) return null;
+  return { leveledUp: result.leveledUp, newLevel: result.newLevel, newSpecPoints: result.newSpecPoints };
 }
 
 // ---- Quest reflection helpers ----
