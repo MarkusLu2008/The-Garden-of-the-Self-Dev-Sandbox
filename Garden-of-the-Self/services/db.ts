@@ -150,6 +150,17 @@ async function initializeOrMigrateSchema(database: SQLite.SQLiteDatabase): Promi
       created_at TEXT NOT NULL,
       FOREIGN KEY (quest_history_id) REFERENCES quest_history(id) ON DELETE SET NULL
     );
+
+    CREATE TABLE IF NOT EXISTS spec_point_awards (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      history_id INTEGER,
+      virtue_id INTEGER NOT NULL,
+      points INTEGER NOT NULL,
+      award_date TEXT NOT NULL,
+      kind TEXT NOT NULL DEFAULT 'quest',
+      FOREIGN KEY (history_id) REFERENCES quest_history(id) ON DELETE SET NULL,
+      FOREIGN KEY (virtue_id) REFERENCES virtues(id) ON DELETE CASCADE
+    );
   `);
 
   await database.execAsync('INSERT OR IGNORE INTO streak (id) VALUES (1)');
@@ -948,11 +959,12 @@ async function updateDailyQuestCompletion(update: DailyQuestUpdate): Promise<Dai
     await database.runAsync('UPDATE quest_history SET completed_at = datetime(\'now\') WHERE id = ?', [row.id]);
     await upsertQuestHistoryVirtues(database, row.id, update.virtues);
     await applyVirtueDeltas(database, update.virtues, +1);
-    scoringResult = await applyQuestSpecPoints(database, update.quest);
+    scoringResult = await applyQuestSpecPoints(database, update.quest, row.id);
   } else if (wasCompleted && !wantsCompleted) {
     await database.runAsync('UPDATE quest_history SET completed_at = NULL WHERE id = ?', [row.id]);
     await upsertQuestHistoryVirtues(database, row.id, update.virtues);
     await applyVirtueDeltas(database, update.virtues, -1);
+    await reverseSpecPointsForHistory(database, row.id);
   }
 
   await database.runAsync(
@@ -1039,6 +1051,7 @@ async function recordQuestCompleted(quest: QuestRow): Promise<ScoringResult | nu
     [quest.id]
   );
 
+  let historyId: number;
   if (history) {
     // Update the existing assignment row
     await database.runAsync(
@@ -1046,6 +1059,7 @@ async function recordQuestCompleted(quest: QuestRow): Promise<ScoringResult | nu
       [history.id]
     );
     await upsertQuestHistoryVirtues(database, history.id, quest.virtues);
+    historyId = history.id;
   } else {
     // Fallback: insert a new row (e.g. quest completed outside daily flow)
     const today = new Date().toISOString().slice(0, 10);
@@ -1059,15 +1073,17 @@ async function recordQuestCompleted(quest: QuestRow): Promise<ScoringResult | nu
     );
     if (!newHistory) return null;
     await upsertQuestHistoryVirtues(database, newHistory.id, quest.virtues);
+    historyId = newHistory.id;
   }
 
   await applyVirtueDeltas(database, quest.virtues, +1);
-  return applyQuestSpecPoints(database, quest);
+  return applyQuestSpecPoints(database, quest, historyId);
 }
 
 async function applyQuestSpecPoints(
   database: SQLite.SQLiteDatabase,
-  quest: QuestRow
+  quest: QuestRow,
+  historyId: number | null
 ): Promise<ScoringResult | null> {
   if (!quest.difficulty_tier) return null;
 
@@ -1080,7 +1096,7 @@ async function applyQuestSpecPoints(
 
   const specPointsAwarded = specPointsForTier(quest.difficulty_tier);
   const today = getTodayDateString();
-  const result = await awardSpecPoints(database, virtueId, specPointsAwarded, today);
+  const result = await awardSpecPoints(database, virtueId, specPointsAwarded, today, historyId);
 
   return {
     awarded: result.awarded,
@@ -1204,6 +1220,14 @@ async function deleteQuestHistoryForQuest(questId: number) {
     await applyVirtueDeltas(database, deltas, -1);
   }
 
+  const completedHistoryRows = await database.getAllAsync<{ id: number }>(
+    'SELECT id FROM quest_history WHERE quest_id = ? AND completed_at IS NOT NULL',
+    [questId]
+  );
+  for (const row of completedHistoryRows) {
+    await reverseSpecPointsForHistory(database, row.id);
+  }
+
   // Revert to assigned (don't delete — quest stays in today's daily list)
   await database.runAsync(
     `UPDATE quest_history SET completed_at = NULL WHERE quest_id = ? AND completed_at IS NOT NULL`,
@@ -1261,37 +1285,37 @@ export async function addVirtuePoints(deltas: QuestVirtueValues): Promise<void> 
   await applyVirtueDeltas(database, deltas, 1);
 }
 
-/** Count how many quest completions have already awarded spec-points to this virtue today. */
+/** Count quest completions that have already awarded spec-points to this virtue today (excludes bonuses). */
 async function getVirtueSpecPointAwardsToday(
   database: SQLite.SQLiteDatabase,
   virtueId: number,
   date: string
 ): Promise<number> {
   const row = await database.getFirstAsync<{ count: number }>(
-    `SELECT COUNT(DISTINCT qh.id) as count
-     FROM quest_history qh
-     JOIN quest_history_virtues qhv ON qhv.history_id = qh.id
-     WHERE qhv.virtue_id = ?
-       AND qh.completed_at IS NOT NULL
-       AND date(qh.completed_at) = ?`,
+    `SELECT COUNT(*) as count
+     FROM spec_point_awards
+     WHERE virtue_id = ? AND award_date = ? AND kind = 'quest'`,
     [virtueId, date]
   );
   return row?.count ?? 0;
 }
 
+export type SpecPointAwardKind = 'quest' | 'streak_bonus';
+
 /**
- * Award spec-points to a virtue, respecting the daily cap.
+ * Award spec-points to a virtue, respecting the daily cap for 'quest' awards
+ * (bonuses bypass the cap and do not consume a cap slot). Each award is
+ * logged in spec_point_awards so it can be counted and reversed accurately.
  * Returns full scoring details so callers can surface level-ups.
  */
 async function awardSpecPoints(
   database: SQLite.SQLiteDatabase,
   virtueId: number,
   points: number,
-  date: string
+  date: string,
+  historyId: number | null,
+  kind: SpecPointAwardKind = 'quest'
 ): Promise<{ awarded: boolean; newSpecPoints: number; newLevel: number; leveledUp: boolean }> {
-  const cap = gameConfig.quests.difficultyTiers.dailyCapPerVirtue;
-  const awardsToday = await getVirtueSpecPointAwardsToday(database, virtueId, date);
-
   const current = await database.getFirstAsync<{ spec_points: number; level: number }>(
     'SELECT spec_points, level FROM virtue_progress WHERE virtue_id = ?',
     [virtueId]
@@ -1299,19 +1323,60 @@ async function awardSpecPoints(
   const oldLevel = current?.level ?? 1;
   const currentSpecPoints = current?.spec_points ?? 0;
 
-  if (awardsToday >= cap) {
-    return { awarded: false, newSpecPoints: currentSpecPoints, newLevel: oldLevel, leveledUp: false };
+  if (kind === 'quest') {
+    const cap = gameConfig.quests.difficultyTiers.dailyCapPerVirtue;
+    const awardsToday = await getVirtueSpecPointAwardsToday(database, virtueId, date);
+    if (awardsToday >= cap) {
+      return { awarded: false, newSpecPoints: currentSpecPoints, newLevel: oldLevel, leveledUp: false };
+    }
   }
 
   const newSpecPoints = currentSpecPoints + points;
   const newLevel = specPointsToLevel(newSpecPoints);
 
   await database.runAsync(
-    `UPDATE virtue_progress SET spec_points = ?, level = ?, last_activity_date = ? WHERE virtue_id = ?`,
-    [newSpecPoints, newLevel, date, virtueId]
+    `INSERT INTO virtue_progress (virtue_id, spec_points, level, last_activity_date)
+     VALUES (?, ?, ?, ?)
+     ON CONFLICT(virtue_id) DO UPDATE SET
+       spec_points = excluded.spec_points,
+       level = excluded.level,
+       last_activity_date = excluded.last_activity_date`,
+    [virtueId, newSpecPoints, newLevel, date]
+  );
+  await database.runAsync(
+    'INSERT INTO spec_point_awards (history_id, virtue_id, points, award_date, kind) VALUES (?, ?, ?, ?, ?)',
+    [historyId, virtueId, points, date, kind]
   );
 
   return { awarded: true, newSpecPoints, newLevel, leveledUp: newLevel > oldLevel };
+}
+
+/**
+ * Reverse all spec-point awards linked to a quest_history row (used when a
+ * completion is undone the same session/day). Points are subtracted and the
+ * level re-derived; the award log rows are removed so the daily cap frees up.
+ */
+async function reverseSpecPointsForHistory(
+  database: SQLite.SQLiteDatabase,
+  historyId: number
+): Promise<void> {
+  const awards = await database.getAllAsync<{ id: number; virtue_id: number; points: number }>(
+    'SELECT id, virtue_id, points FROM spec_point_awards WHERE history_id = ?',
+    [historyId]
+  );
+  for (const award of awards) {
+    const current = await database.getFirstAsync<{ spec_points: number }>(
+      'SELECT spec_points FROM virtue_progress WHERE virtue_id = ?',
+      [award.virtue_id]
+    );
+    const newSpecPoints = Math.max(0, (current?.spec_points ?? 0) - award.points);
+    const newLevel = specPointsToLevel(newSpecPoints);
+    await database.runAsync(
+      'UPDATE virtue_progress SET spec_points = ?, level = ? WHERE virtue_id = ?',
+      [newSpecPoints, newLevel, award.virtue_id]
+    );
+    await database.runAsync('DELETE FROM spec_point_awards WHERE id = ?', [award.id]);
+  }
 }
 
 async function getVirtueTotals(): Promise<QuestVirtueValues> {
@@ -1523,6 +1588,7 @@ export async function resetDatabase() {
   const database = await getDatabase();
   await database.execAsync(`
     PRAGMA foreign_keys = OFF;
+    DROP TABLE IF EXISTS spec_point_awards;
     DROP TABLE IF EXISTS quest_reflections;
     DROP TABLE IF EXISTS virtue_progress;
     DROP TABLE IF EXISTS streak;
@@ -1560,6 +1626,7 @@ export type TableName =
   | 'virtues'
   | 'virtue_totals'
   | 'virtue_progress'
+  | 'spec_point_awards'
   | 'streak';
 
 export async function getAllFromTable(table: TableName): Promise<any[]> {
