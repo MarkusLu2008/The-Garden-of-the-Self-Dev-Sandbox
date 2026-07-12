@@ -52,13 +52,16 @@ Source spec: `Garden_of_the_Self_Spec.pdf` (Feature Specification & Design Brief
 - Stored privately; surfaced in per-virtue detail view (Phase 10) as history.
 
 ### Phase 8 — Onboarding assessment
-- Replace stub `app/onboarding.tsx` pager: author 12–24 short questions (1–2 per virtue), original wording, inspired by but not copying VIA-IS.
+- Replace stub `app/onboarding.tsx` pager: exactly 12 questions, one per virtue, 1–5 rating scale (comfort/quality with that virtue).
+- Original wording, inspired by but not copying VIA-IS.
 - Produce baseline per-virtue score → seeds initial quest-weighting toward weaker virtues.
 - Present result as encouraging starting map, not judgment.
 
 ### Phase 9 — Adaptive difficulty
-- Track per-virtue completion/skip history per tier.
-- Consistent completion at a tier → surface next tier up; repeated skips/fails → ease back down.
+- Streak-based tier promotion only — no per-skip/fail tracking.
+- N days of consistent small-tier completions → unlock medium-tier quests for that virtue.
+- N days of consistent medium-tier completions → unlock hard-tier quests.
+- Any skip resets user back to small-only zone for that virtue.
 - Suggested tier visible + user-overridable.
 
 ### Phase 10 — Garden dashboard + plant detail view
@@ -79,6 +82,10 @@ Source spec: `Garden_of_the_Self_Spec.pdf` (Feature Specification & Design Brief
 - Mascot component with expression states (happy/thoughtful/concerned) driven by app state.
 - Placeholder art: plain white PNG with "ARISTOTLE" text, generated via script (ImageMagick/sharp/Node canvas) — no image-gen tokens spent.
 - Wire mascot copy into onboarding host role and encouragement moments (reuse Phase 11 quotes).
+- Expression rules:
+  - **concerned** — any plant is wilting (not triggered on first app open)
+  - **happy** — active streak of N+ days
+  - **normal** — default/all other states
 
 ### Phase 14 — QA pass
 - Verify full loop end-to-end: onboarding → weighted quests → complete quest → points/level/streak/reflection update → wilting/reviving → dashboard/detail views reflect state.
