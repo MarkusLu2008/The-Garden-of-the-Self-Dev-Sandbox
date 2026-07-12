@@ -87,3 +87,20 @@ export function generateJournalId(): string {
 export function parseDateString(dateString: string): Date {
   return new Date(dateString + 'T00:00:00');
 }
+
+/** Add (or subtract) whole days to a YYYY-MM-DD string. Noon-anchored to avoid DST edges. */
+export function addDaysToDateString(dateString: string, delta: number): string {
+  const date = new Date(dateString + 'T12:00:00');
+  date.setDate(date.getDate() + delta);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/** Whole days from one YYYY-MM-DD string to another (positive when `to` is later). */
+export function diffInDays(from: string, to: string): number {
+  const a = new Date(from + 'T12:00:00');
+  const b = new Date(to + 'T12:00:00');
+  return Math.round((b.getTime() - a.getTime()) / (24 * 60 * 60 * 1000));
+}

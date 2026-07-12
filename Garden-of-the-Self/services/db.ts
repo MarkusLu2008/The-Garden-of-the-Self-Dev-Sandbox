@@ -3,7 +3,7 @@ import virtues from '@/constants/virtues';
 import { clampQuestRewards, gameConfig } from '@/constants/gameConfig';
 import { questDurationOrder, questsSeed, type QuestDuration, type QuestDifficultyTier } from '@/data/quests-seed';
 import { getDominantVirtue, specPointsForTier, specPointsToLevel, levelStageName } from '@/utils/questScoring';
-import { getTodayDateString } from '@/utils/dateUtils';
+import { addDaysToDateString, diffInDays, getTodayDateString } from '@/utils/dateUtils';
 
 export type VirtueProgressRow = {
   virtue_id: number;
@@ -161,9 +161,15 @@ async function initializeOrMigrateSchema(database: SQLite.SQLiteDatabase): Promi
       FOREIGN KEY (history_id) REFERENCES quest_history(id) ON DELETE SET NULL,
       FOREIGN KEY (virtue_id) REFERENCES virtues(id) ON DELETE CASCADE
     );
+
+    CREATE TABLE IF NOT EXISTS streak_freeze_usage (
+      date TEXT PRIMARY KEY
+    );
   `);
 
-  await database.execAsync('INSERT OR IGNORE INTO streak (id) VALUES (1)');
+  await database.runAsync('INSERT OR IGNORE INTO streak (id, freezes_available) VALUES (1, ?)', [
+    gameConfig.streak.initialFreezes,
+  ]);
 
   // Migration: add unlocked_at to existing virtues tables (or migrate from unlocked)
   const tableInfo = await database.getAllAsync<{ name: string }>('PRAGMA table_info(virtues)');
@@ -960,11 +966,13 @@ async function updateDailyQuestCompletion(update: DailyQuestUpdate): Promise<Dai
     await upsertQuestHistoryVirtues(database, row.id, update.virtues);
     await applyVirtueDeltas(database, update.virtues, +1);
     scoringResult = await applyQuestSpecPoints(database, update.quest, row.id);
+    await updateStreakAfterCompletionChange(database);
   } else if (wasCompleted && !wantsCompleted) {
     await database.runAsync('UPDATE quest_history SET completed_at = NULL WHERE id = ?', [row.id]);
     await upsertQuestHistoryVirtues(database, row.id, update.virtues);
     await applyVirtueDeltas(database, update.virtues, -1);
     await reverseSpecPointsForHistory(database, row.id);
+    await updateStreakAfterCompletionChange(database);
   }
 
   await database.runAsync(
@@ -1077,7 +1085,9 @@ async function recordQuestCompleted(quest: QuestRow): Promise<ScoringResult | nu
   }
 
   await applyVirtueDeltas(database, quest.virtues, +1);
-  return applyQuestSpecPoints(database, quest, historyId);
+  const scoringResult = await applyQuestSpecPoints(database, quest, historyId);
+  await updateStreakAfterCompletionChange(database);
+  return scoringResult;
 }
 
 async function applyQuestSpecPoints(
@@ -1233,6 +1243,7 @@ async function deleteQuestHistoryForQuest(questId: number) {
     `UPDATE quest_history SET completed_at = NULL WHERE quest_id = ? AND completed_at IS NOT NULL`,
     [questId]
   );
+  await updateStreakAfterCompletionChange(database);
 }
 
 async function applyVirtueDeltas(
@@ -1558,6 +1569,94 @@ export async function getStreak(): Promise<StreakRow> {
   return row ?? { current_streak: 0, longest_streak: 0, last_completed_date: null, freezes_available: 0 };
 }
 
+/**
+ * If exactly one day was missed between the last completion and today and a
+ * streak freeze is available, consume it: the missed day is recorded in
+ * streak_freeze_usage and counts as covered when the streak is recomputed.
+ */
+async function maybeConsumeStreakFreeze(database: SQLite.SQLiteDatabase, today: string): Promise<void> {
+  const streak = await getStreak();
+  if (!streak.last_completed_date || streak.freezes_available <= 0) return;
+  if (diffInDays(streak.last_completed_date, today) !== 2) return;
+
+  const missedDay = addDaysToDateString(today, -1);
+  const alreadyFrozen = await database.getFirstAsync<{ date: string }>(
+    'SELECT date FROM streak_freeze_usage WHERE date = ?',
+    [missedDay]
+  );
+  if (alreadyFrozen) return;
+
+  await database.runAsync('INSERT INTO streak_freeze_usage (date) VALUES (?)', [missedDay]);
+  await database.runAsync(
+    'UPDATE streak SET freezes_available = MAX(0, freezes_available - 1) WHERE id = 1'
+  );
+}
+
+/**
+ * Recompute current/longest streak from quest_history completion dates plus
+ * freeze-covered days. Self-healing: works after completions are undone too.
+ * A day with no completion yet does not break the streak until it is over,
+ * so the current streak anchors on today or yesterday.
+ */
+export async function recomputeStreak(): Promise<StreakRow> {
+  const database = await getDatabase();
+
+  const completionRows = await database.getAllAsync<{ d: string }>(
+    `SELECT DISTINCT date(completed_at, 'localtime') AS d
+     FROM quest_history
+     WHERE completed_at IS NOT NULL
+     ORDER BY d ASC`
+  );
+  const frozenRows = await database.getAllAsync<{ date: string }>(
+    'SELECT date FROM streak_freeze_usage'
+  );
+
+  const completionDates = completionRows.map((r) => r.d);
+  const coveredDays = new Set<string>([...completionDates, ...frozenRows.map((r) => r.date)]);
+
+  let longest = 0;
+  for (const day of coveredDays) {
+    if (coveredDays.has(addDaysToDateString(day, -1))) continue; // not a run start
+    let length = 1;
+    let cursor = day;
+    while (coveredDays.has(addDaysToDateString(cursor, 1))) {
+      cursor = addDaysToDateString(cursor, 1);
+      length++;
+    }
+    longest = Math.max(longest, length);
+  }
+
+  const today = getTodayDateString();
+  const yesterday = addDaysToDateString(today, -1);
+  const anchor = coveredDays.has(today) ? today : coveredDays.has(yesterday) ? yesterday : null;
+  let current = 0;
+  if (anchor) {
+    current = 1;
+    let cursor = anchor;
+    while (coveredDays.has(addDaysToDateString(cursor, -1))) {
+      cursor = addDaysToDateString(cursor, -1);
+      current++;
+    }
+  }
+
+  const lastCompletedDate =
+    completionDates.length > 0 ? completionDates[completionDates.length - 1] : null;
+
+  await database.runAsync(
+    `UPDATE streak
+     SET current_streak = ?, longest_streak = MAX(longest_streak, ?), last_completed_date = ?
+     WHERE id = 1`,
+    [current, Math.max(longest, current), lastCompletedDate]
+  );
+  return getStreak();
+}
+
+/** Run after any completion change: consume a freeze if it saves the streak, then recompute. */
+async function updateStreakAfterCompletionChange(database: SQLite.SQLiteDatabase): Promise<void> {
+  await maybeConsumeStreakFreeze(database, getTodayDateString());
+  await recomputeStreak();
+}
+
 // ---- Quest reflection helpers ----
 
 export async function insertQuestReflection(
@@ -1588,6 +1687,7 @@ export async function resetDatabase() {
   const database = await getDatabase();
   await database.execAsync(`
     PRAGMA foreign_keys = OFF;
+    DROP TABLE IF EXISTS streak_freeze_usage;
     DROP TABLE IF EXISTS spec_point_awards;
     DROP TABLE IF EXISTS quest_reflections;
     DROP TABLE IF EXISTS virtue_progress;
@@ -1627,7 +1727,8 @@ export type TableName =
   | 'virtue_totals'
   | 'virtue_progress'
   | 'spec_point_awards'
-  | 'streak';
+  | 'streak'
+  | 'streak_freeze_usage';
 
 export async function getAllFromTable(table: TableName): Promise<any[]> {
   const database = await getDatabase();
