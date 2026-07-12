@@ -1,6 +1,19 @@
 import { gameConfig } from '@/constants/gameConfig';
 import type { QuestDifficultyTier } from '@/data/quests-seed';
+import { getTodayDateString, diffInDays } from '@/utils/dateUtils';
 import { levelFromPoints, pacingTable, progressWithinLevel, stageNameForLevel } from '@/utils/leveling';
+
+/**
+ * A virtue's plant wilts after gameConfig.wilting.staleDays without
+ * spec-point activity. Virtues that never earned spec points don't wilt
+ * (there is nothing grown to wilt yet). Soft penalty only: points and level
+ * are never removed, and the first completed quest revives the plant by
+ * refreshing last_activity_date.
+ */
+export function virtueIsWilted(lastActivityDate: string | null | undefined): boolean {
+  if (!lastActivityDate) return false;
+  return diffInDays(lastActivityDate, getTodayDateString()) >= gameConfig.wilting.staleDays;
+}
 
 /** Dominant virtue = the one with the highest reward value. */
 export function getDominantVirtue(virtues: Record<string, number>): string | null {

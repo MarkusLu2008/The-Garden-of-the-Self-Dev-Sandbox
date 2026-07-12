@@ -78,6 +78,10 @@ export type GameConfig = {
     /** Freezes a fresh install starts with (grace for one missed day). */
     initialFreezes: number;
   };
+  wilting: {
+    /** Days without spec-point activity before a virtue's plant wilts (spec: 5–7). */
+    staleDays: number;
+  };
   journal: {
     totalPointsPerEntry: number;
     maxVirtuesPerEntry: number;
@@ -125,6 +129,9 @@ export const gameConfig: GameConfig = {
   },
   streak: {
     initialFreezes: 1,
+  },
+  wilting: {
+    staleDays: 6,
   },
   journal: {
     totalPointsPerEntry: 5,
