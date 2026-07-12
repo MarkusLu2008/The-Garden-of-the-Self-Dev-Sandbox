@@ -269,8 +269,8 @@ async function seedQuestsIfEmpty(database: SQLite.SQLiteDatabase): Promise<void>
   const virtueRows = await database.getAllAsync<VirtueRow>('SELECT id, name, slug, unlocked_at FROM virtues');
   const virtueIdByNameMap = new Map(virtueRows.map((v) => [v.name, v.id]));
   const insertQuestStmt = await database.prepareAsync(
-    `INSERT INTO quests (completed, prompt, duration, created_at, updated_at)
-     VALUES (0, ?, ?, datetime('now'), datetime('now'))`
+    `INSERT INTO quests (completed, prompt, duration, difficulty_tier, created_at, updated_at)
+     VALUES (0, ?, ?, ?, datetime('now'), datetime('now'))`
   );
   const insertQuestVirtueStmt = await database.prepareAsync(
     'INSERT INTO quest_virtues (quest_id, virtue_id, value) VALUES (?, ?, ?)'
@@ -278,7 +278,7 @@ async function seedQuestsIfEmpty(database: SQLite.SQLiteDatabase): Promise<void>
   try {
     for (const q of questsSeed) {
       const clampedVirtues = clampQuestRewards(q.virtues);
-      await insertQuestStmt.executeAsync([q.prompt, q.duration]);
+      await insertQuestStmt.executeAsync([q.prompt, q.duration, q.difficultyTier]);
       const questRow = await database.getFirstAsync<{ id: number }>(
         'SELECT id FROM quests WHERE rowid = last_insert_rowid()'
       );
@@ -661,17 +661,18 @@ export function getQuestDurationLabel(duration: QuestDuration): string {
   return QUEST_DURATION_LABELS[duration];
 }
 
-async function insertQuest(
+export async function insertQuest(
   prompt: string,
   virtueValues: QuestVirtueValues = {},
-  duration: QuestDuration = 'Medium'
+  duration: QuestDuration = 'Medium',
+  difficultyTier: QuestDifficultyTier | null = null,
 ) {
   const database = await getDatabase();
   const clampedVirtues = clampQuestRewards(virtueValues);
   await database.runAsync(
-    `INSERT INTO quests (completed, prompt, duration, created_at, updated_at)
-     VALUES (0, ?, ?, datetime('now'), datetime('now'))`,
-    [prompt, duration]
+    `INSERT INTO quests (completed, prompt, duration, difficulty_tier, created_at, updated_at)
+     VALUES (0, ?, ?, ?, datetime('now'), datetime('now'))`,
+    [prompt, duration, difficultyTier]
   );
 
   const quest = await database.getFirstAsync<{ id: number }>(
@@ -871,6 +872,55 @@ async function getDailyQuests(dateString: string): Promise<QuestRow[]> {
     }
   }
   return orderedPicked.map((q) => ({ ...q, completed: 0 }));
+}
+
+/**
+ * Swap one of today's assigned (not yet completed) quests for another quest
+ * with the same dominant virtue and difficulty tier. The existing
+ * quest_history row is repointed at the replacement so the daily list keeps
+ * its size, and the original quest stays in the pool for future days.
+ * Returns the replacement quest, or null if no eligible replacement exists.
+ */
+async function rerollDailyQuest(oldQuestId: number, dateString: string): Promise<QuestRow | null> {
+  const database = await getDatabase();
+
+  const historyRow = await database.getFirstAsync<{ id: number; completed_at: string | null }>(
+    `SELECT id, completed_at FROM quest_history
+     WHERE quest_id = ? AND assigned_at = ?
+     ORDER BY id DESC LIMIT 1`,
+    [oldQuestId, dateString]
+  );
+  if (!historyRow || historyRow.completed_at != null) return null;
+
+  const oldQuest = await getQuest(oldQuestId);
+  if (!oldQuest || !oldQuest.difficulty_tier) return null;
+  const dominantVirtue = getDominantVirtue(oldQuest.virtues);
+  if (!dominantVirtue) return null;
+
+  const assignedToday = await database.getAllAsync<{ quest_id: number | null }>(
+    'SELECT quest_id FROM quest_history WHERE assigned_at = ? AND quest_id IS NOT NULL',
+    [dateString]
+  );
+  const assignedIds = new Set(assignedToday.map((r) => r.quest_id));
+
+  const all = await getAllQuests();
+  const candidates = all.filter(
+    (q) =>
+      q.id !== oldQuestId &&
+      !assignedIds.has(q.id) &&
+      q.difficulty_tier === oldQuest.difficulty_tier &&
+      getDominantVirtue(q.virtues) === dominantVirtue
+  );
+  if (candidates.length === 0) return null;
+
+  const replacement = candidates[Math.floor(Math.random() * candidates.length)];
+  await database.runAsync('UPDATE quest_history SET quest_id = ? WHERE id = ?', [
+    replacement.id,
+    historyRow.id,
+  ]);
+  await upsertQuestHistoryVirtues(database, historyRow.id, replacement.virtues);
+
+  return { ...replacement, completed: 0 };
 }
 
 type DailyQuestCompletionResult =
@@ -1526,5 +1576,5 @@ export {
   canAwardJournalPointsForDate,
   canAwardJournalPointsToday,
 };
-export { insertQuest, getQuest, getAllQuests, getDailyQuests, updateQuest, deleteQuest, deleteAllQuests };
+export { getQuest, getAllQuests, getDailyQuests, updateQuest, deleteQuest, deleteAllQuests, rerollDailyQuest };
 export { getAllQuestHistory, getQuestHistory, getVirtueTotals, getQuestReflectionUsageMap };

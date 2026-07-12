@@ -8,10 +8,12 @@ import {
   getDailyQuests,
   getQuestDurationLabel,
   getQuestReflectionUsageMap,
+  rerollDailyQuest,
   updateQuest,
   type QuestRow,
   type ScoringResult,
 } from '@/services/db';
+import { type QuestDifficultyTier } from '@/data/quests-seed';
 import { getTodayDateString } from '@/utils/dateUtils';
 import { borderRadius, journalStyles, spacing } from '@/utils/styles';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -24,6 +26,20 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+function tierEmoji(tier: QuestDifficultyTier | null | undefined): string {
+  if (tier === 'Gentle') return '🌱';
+  if (tier === 'Moderate') return '⚡';
+  if (tier === 'Stretch') return '🔥';
+  return '⭐';
+}
+
+function dominantVirtueName(virtues: Record<string, number>): string {
+  const entries = Object.entries(virtues).filter(([, v]) => v > 0);
+  if (entries.length === 0) return '';
+  entries.sort(([, a], [, b]) => b - a);
+  return entries[0][0];
+}
 
 export default function QuestsScreen() {
   const [quests, setQuests] = useState<QuestRow[]>([]);
@@ -107,6 +123,45 @@ export default function QuestsScreen() {
     );
   };
 
+  const [rerollingId, setRerollingId] = useState<number | null>(null);
+
+  const handleReroll = async (quest: QuestRow) => {
+    if (!quest.difficulty_tier) {
+      Alert.alert('Cannot reroll', 'This quest is missing a difficulty tier.');
+      return;
+    }
+    const dominantVirtue = dominantVirtueName(quest.virtues);
+    Alert.alert(
+      'Reroll Quest?',
+      `Swap this for another ${quest.difficulty_tier} quest for ${dominantVirtue || 'this virtue'}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reroll',
+          onPress: async () => {
+            setRerollingId(quest.id);
+            try {
+              const replacement = await rerollDailyQuest(quest.id, getTodayDateString());
+              if (!replacement) {
+                Alert.alert(
+                  'No replacement',
+                  `No other ${quest.difficulty_tier} quest available for ${dominantVirtue || 'this virtue'}.`,
+                );
+                return;
+              }
+              setQuests((prev) => prev.map((q) => (q.id === quest.id ? replacement : q)));
+            } catch (err) {
+              console.error('Failed to reroll quest:', err);
+              Alert.alert('Error', 'Failed to reroll quest');
+            } finally {
+              setRerollingId(null);
+            }
+          },
+        },
+      ],
+    );
+  };
+
   const renderQuestItem = ({ item }: { item: QuestRow }) => {
     const virtueRewardSummary = Object.entries(item.virtues)
       .filter(([, value]) => value > 0)
@@ -117,11 +172,16 @@ export default function QuestsScreen() {
       .join(' · ');
     const questVirtuesParam = encodeURIComponent(JSON.stringify(item.virtues));
     const isReflectionUsed = questReflectionUsedMap[item.id] === true;
+    const dominantVirtue = dominantVirtueName(item.virtues);
+    const tierLabel = item.difficulty_tier ?? '—';
+    const headingText = item.difficulty_tier
+      ? `${tierEmoji(item.difficulty_tier)} ${tierLabel} · ${dominantVirtue}`
+      : getQuestDurationLabel(item.duration);
 
     return (
       <ThemedView style={styles.questItemContainer}>
         <ThemedText type="subtitle" style={styles.durationHeading}>
-          {getQuestDurationLabel(item.duration)}
+          {headingText}
         </ThemedText>
         <TouchableOpacity
           style={styles.questItem}
@@ -159,7 +219,21 @@ export default function QuestsScreen() {
                   </ThemedText>
                 </TouchableOpacity>
               </>
-            ) : null}
+            ) : (
+              <TouchableOpacity
+                style={styles.rerollButton}
+                onPress={(event) => {
+                  event.stopPropagation();
+                  handleReroll(item);
+                }}
+                disabled={rerollingId === item.id}
+                activeOpacity={0.7}
+              >
+                <ThemedText style={styles.rerollButtonText}>
+                  {rerollingId === item.id ? '🔄 Rerolling…' : '🔄 Reroll'}
+                </ThemedText>
+              </TouchableOpacity>
+            )}
           </ThemedView>
         </TouchableOpacity>
       </ThemedView>
@@ -277,6 +351,20 @@ const styles = StyleSheet.create({
   },
   reflectButtonDisabled: {
     opacity: 0.45,
+  },
+  rerollButton: {
+    marginTop: spacing.md,
+    alignSelf: 'flex-end',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+    backgroundColor: 'rgba(122, 162, 247, 0.1)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(122, 162, 247, 0.3)',
+  },
+  rerollButtonText: {
+    fontSize: 13,
+    opacity: 0.85,
   },
   emptyContainer: {
     flex: 1,
