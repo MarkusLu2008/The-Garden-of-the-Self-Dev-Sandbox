@@ -8,12 +8,12 @@ import {
   getDailyQuests,
   getQuestDurationLabel,
   getQuestReflectionUsageMap,
-  insertQuest,
+  rerollDailyQuest,
   updateQuest,
   type QuestRow,
   type ScoringResult,
 } from '@/services/db';
-import { questsSeed, type QuestDifficultyTier } from '@/data/quests-seed';
+import { type QuestDifficultyTier } from '@/data/quests-seed';
 import { getTodayDateString } from '@/utils/dateUtils';
 import { borderRadius, journalStyles, spacing } from '@/utils/styles';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -26,25 +26,6 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-/**
- * Find a replacement quest seed for the same dominant virtue + tier,
- * excluding the current quest's prompt.
- */
-function findReplacementQuestSeed(
-  currentPrompt: string,
-  dominantVirtue: string,
-  tier: QuestDifficultyTier,
-) {
-  const candidates = questsSeed.filter(
-    (q) =>
-      q.difficultyTier === tier &&
-      q.prompt !== currentPrompt &&
-      Object.entries(q.virtues).some(([name, val]) => name === dominantVirtue && val > 0),
-  );
-  if (candidates.length === 0) return null;
-  return candidates[Math.floor(Math.random() * candidates.length)];
-}
 
 function tierEmoji(tier: QuestDifficultyTier | null | undefined): string {
   if (tier === 'Gentle') return '🌱';
@@ -150,21 +131,9 @@ export default function QuestsScreen() {
       return;
     }
     const dominantVirtue = dominantVirtueName(quest.virtues);
-    const replacement = findReplacementQuestSeed(
-      quest.prompt,
-      dominantVirtue,
-      quest.difficulty_tier,
-    );
-    if (!replacement) {
-      Alert.alert(
-        'No replacement',
-        `No other ${quest.difficulty_tier} quest available for ${dominantVirtue || 'this virtue'}.`,
-      );
-      return;
-    }
     Alert.alert(
       'Reroll Quest?',
-      `Swap this for: "${replacement.prompt.slice(0, 60)}${replacement.prompt.length > 60 ? '…' : ''}"`,
+      `Swap this for another ${quest.difficulty_tier} quest for ${dominantVirtue || 'this virtue'}?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -172,14 +141,15 @@ export default function QuestsScreen() {
           onPress: async () => {
             setRerollingId(quest.id);
             try {
-              await deleteQuest(quest.id);
-              await insertQuest(
-                replacement.prompt,
-                replacement.virtues,
-                replacement.duration,
-                replacement.difficultyTier,
-              );
-              await loadQuests(false);
+              const replacement = await rerollDailyQuest(quest.id, getTodayDateString());
+              if (!replacement) {
+                Alert.alert(
+                  'No replacement',
+                  `No other ${quest.difficulty_tier} quest available for ${dominantVirtue || 'this virtue'}.`,
+                );
+                return;
+              }
+              setQuests((prev) => prev.map((q) => (q.id === quest.id ? replacement : q)));
             } catch (err) {
               console.error('Failed to reroll quest:', err);
               Alert.alert('Error', 'Failed to reroll quest');

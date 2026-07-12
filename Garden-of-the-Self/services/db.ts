@@ -874,6 +874,55 @@ async function getDailyQuests(dateString: string): Promise<QuestRow[]> {
   return orderedPicked.map((q) => ({ ...q, completed: 0 }));
 }
 
+/**
+ * Swap one of today's assigned (not yet completed) quests for another quest
+ * with the same dominant virtue and difficulty tier. The existing
+ * quest_history row is repointed at the replacement so the daily list keeps
+ * its size, and the original quest stays in the pool for future days.
+ * Returns the replacement quest, or null if no eligible replacement exists.
+ */
+async function rerollDailyQuest(oldQuestId: number, dateString: string): Promise<QuestRow | null> {
+  const database = await getDatabase();
+
+  const historyRow = await database.getFirstAsync<{ id: number; completed_at: string | null }>(
+    `SELECT id, completed_at FROM quest_history
+     WHERE quest_id = ? AND assigned_at = ?
+     ORDER BY id DESC LIMIT 1`,
+    [oldQuestId, dateString]
+  );
+  if (!historyRow || historyRow.completed_at != null) return null;
+
+  const oldQuest = await getQuest(oldQuestId);
+  if (!oldQuest || !oldQuest.difficulty_tier) return null;
+  const dominantVirtue = getDominantVirtue(oldQuest.virtues);
+  if (!dominantVirtue) return null;
+
+  const assignedToday = await database.getAllAsync<{ quest_id: number | null }>(
+    'SELECT quest_id FROM quest_history WHERE assigned_at = ? AND quest_id IS NOT NULL',
+    [dateString]
+  );
+  const assignedIds = new Set(assignedToday.map((r) => r.quest_id));
+
+  const all = await getAllQuests();
+  const candidates = all.filter(
+    (q) =>
+      q.id !== oldQuestId &&
+      !assignedIds.has(q.id) &&
+      q.difficulty_tier === oldQuest.difficulty_tier &&
+      getDominantVirtue(q.virtues) === dominantVirtue
+  );
+  if (candidates.length === 0) return null;
+
+  const replacement = candidates[Math.floor(Math.random() * candidates.length)];
+  await database.runAsync('UPDATE quest_history SET quest_id = ? WHERE id = ?', [
+    replacement.id,
+    historyRow.id,
+  ]);
+  await upsertQuestHistoryVirtues(database, historyRow.id, replacement.virtues);
+
+  return { ...replacement, completed: 0 };
+}
+
 type DailyQuestCompletionResult =
   | { handled: false }
   | { handled: true; scoringResult: ScoringResult | null };
@@ -1527,5 +1576,5 @@ export {
   canAwardJournalPointsForDate,
   canAwardJournalPointsToday,
 };
-export { getQuest, getAllQuests, getDailyQuests, updateQuest, deleteQuest, deleteAllQuests };
+export { getQuest, getAllQuests, getDailyQuests, updateQuest, deleteQuest, deleteAllQuests, rerollDailyQuest };
 export { getAllQuestHistory, getQuestHistory, getVirtueTotals, getQuestReflectionUsageMap };
