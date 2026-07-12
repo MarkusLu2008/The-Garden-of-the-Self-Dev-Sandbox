@@ -42,6 +42,17 @@ export type VirtueSeedShownConfig = {
   rounding: 'round' | 'ceil' | 'floor';
 };
 
+export type StreakMilestone = {
+  /** Current streak length that triggers this milestone (once ever). */
+  days: number;
+  /** Streak freezes granted when reached. */
+  freezes: number;
+  /** Stable id recorded as a cosmetic unlock. */
+  cosmetic: string;
+  /** Display name for celebration + badges. */
+  label: string;
+};
+
 export type GameConfig = {
   virtues: {
     list: string[];
@@ -77,6 +88,9 @@ export type GameConfig = {
   streak: {
     /** Freezes a fresh install starts with (grace for one missed day). */
     initialFreezes: number;
+    /** Spec-points bonus for the first completed quest of each day (spec 2.4). */
+    dailyBonusPoints: number;
+    milestones: StreakMilestone[];
   };
   wilting: {
     /** Days without spec-point activity before a virtue's plant wilts (spec: 5–7). */
@@ -129,6 +143,12 @@ export const gameConfig: GameConfig = {
   },
   streak: {
     initialFreezes: 1,
+    dailyBonusPoints: 5,
+    milestones: [
+      { days: 7, freezes: 1, cosmetic: 'bronze_leaf', label: 'Bronze Leaf' },
+      { days: 30, freezes: 1, cosmetic: 'silver_bloom', label: 'Silver Bloom' },
+      { days: 100, freezes: 2, cosmetic: 'golden_tree', label: 'Golden Tree' },
+    ],
   },
   wilting: {
     staleDays: 6,
