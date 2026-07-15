@@ -74,6 +74,10 @@ export type GameConfig = {
       levelStageNames: string[];
     };
   };
+  streak: {
+    /** Freezes a fresh install starts with (grace for one missed day). */
+    initialFreezes: number;
+  };
   journal: {
     totalPointsPerEntry: number;
     maxVirtuesPerEntry: number;
@@ -118,6 +122,9 @@ export const gameConfig: GameConfig = {
       levelThresholds: [0, 50, 150, 350, 700, 1250, 2100],
       levelStageNames: ['Seedling', 'Sprouting', 'Growing', 'Budding', 'Flourishing', 'Thriving', 'Radiant'],
     },
+  },
+  streak: {
+    initialFreezes: 1,
   },
   journal: {
     totalPointsPerEntry: 5,

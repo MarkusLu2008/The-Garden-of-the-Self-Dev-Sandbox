@@ -82,8 +82,43 @@ export function generateJournalId(): string {
 }
 
 /**
+ * App-level "now" as a SQLite-compatible `datetime('now')`-shaped string
+ * (`YYYY-MM-DD HH:MM:SS`). Date part respects the devtools date override;
+ * time part is always real clock time. Use this instead of SQL `datetime('now')`
+ * for any timestamp column so all app time flows through one clock.
+ */
+export function getAppNowTimestamp(): string {
+  const dateSource = getCurrentDate();
+  const now = new Date();
+  const year = dateSource.getFullYear();
+  const month = String(dateSource.getMonth() + 1).padStart(2, '0');
+  const day = String(dateSource.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
+/**
  * Parse a date string (YYYY-MM-DD) to Date object
  */
 export function parseDateString(dateString: string): Date {
   return new Date(dateString + 'T00:00:00');
+}
+
+/** Add (or subtract) whole days to a YYYY-MM-DD string. Noon-anchored to avoid DST edges. */
+export function addDaysToDateString(dateString: string, delta: number): string {
+  const date = new Date(dateString + 'T12:00:00');
+  date.setDate(date.getDate() + delta);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/** Whole days from one YYYY-MM-DD string to another (positive when `to` is later). */
+export function diffInDays(from: string, to: string): number {
+  const a = new Date(from + 'T12:00:00');
+  const b = new Date(to + 'T12:00:00');
+  return Math.round((b.getTime() - a.getTime()) / (24 * 60 * 60 * 1000));
 }

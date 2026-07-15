@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
   Platform,
   ScrollView,
@@ -20,10 +21,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { InfoModal } from '@/components/ui/info-modal';
 import { useUnistyles } from '@/lib/unistyles-compat';
-import { journalStyles, spacing } from '@/utils/styles';
+import { borderRadius, journalStyles, spacing } from '@/utils/styles';
 import { Fonts } from '@/constants/theme';
-import { getVirtueTotalsAndUnlocked, getAllVirtueProgress, type VirtueProgressRow } from '@/services/db';
+import { getVirtueTotalsAndUnlocked, getAllVirtueProgress, recomputeStreak, type StreakRow, type VirtueProgressRow } from '@/services/db';
 import { useFocusEffect } from 'expo-router';
 import virtues from '@/constants/virtues';
 import { gameConfig } from '@/constants/gameConfig';
@@ -192,7 +195,9 @@ export default function GardenScreen() {
     curiosityEverCrossed5: boolean;
   } | null>(null);
   const [virtueProgressMap, setVirtueProgressMap] = useState<Record<string, VirtueProgressRow>>({});
+  const [streak, setStreak] = useState<StreakRow | null>(null);
   const [pageIndex, setPageIndex] = useState(0);
+  const [infoModal, setInfoModal] = useState<'streak' | 'freeze' | null>(null);
 
   const breathingStyle = useBreathingAnimation();
 
@@ -201,13 +206,15 @@ export default function GardenScreen() {
       let cancelled = false;
       (async () => {
         try {
-          const [data, progress] = await Promise.all([
+          const [data, progress, streakRow] = await Promise.all([
             getVirtueTotalsAndUnlocked(),
             getAllVirtueProgress(),
+            recomputeStreak(),
           ]);
           if (!cancelled) {
             setVirtueData(data);
             setVirtueProgressMap(progress);
+            setStreak(streakRow);
           }
         } catch (e) {
           console.warn('Failed to load virtue totals and unlocked', e);
@@ -250,12 +257,58 @@ export default function GardenScreen() {
 
   const pageContent = (
     <>
-      <ThemedText type="title" style={styles.title}>
-        Your Garden
-      </ThemedText>
+      <View style={styles.titleRow}>
+        {streak != null ? (
+          <TouchableOpacity
+            style={styles.statChip}
+            onPress={() => setInfoModal('streak')}
+            accessibilityRole="button"
+            accessibilityLabel={`Current streak: ${streak.current_streak} days. Tap to learn more.`}
+          >
+            <IconSymbol name="flame.fill" size={18} color={theme.colors.error} />
+            <ThemedText style={styles.statChipText}>{streak.current_streak}</ThemedText>
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.statChipPlaceholder} />
+        )}
+        <ThemedText type="title" style={styles.title}>
+          Your Garden
+        </ThemedText>
+        {streak != null ? (
+          <TouchableOpacity
+            style={[styles.statChip, streak.freezes_available === 0 && styles.statChipDimmed]}
+            onPress={() => setInfoModal('freeze')}
+            accessibilityRole="button"
+            accessibilityLabel={`Freezes available: ${streak.freezes_available}. Tap to learn more.`}
+          >
+            <IconSymbol name="snowflake" size={18} color={theme.colors.accent} />
+            <ThemedText style={styles.statChipText}>{streak.freezes_available}</ThemedText>
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.statChipPlaceholder} />
+        )}
+      </View>
       <ThemedText style={styles.pageIndicator}>
         {visibleVirtues.length > 0 ? `${pageIndex + 1} / ${visibleVirtues.length}` : ''}
       </ThemedText>
+      <InfoModal
+        visible={infoModal === 'streak'}
+        onClose={() => setInfoModal(null)}
+        icon="flame.fill"
+        title="Streak"
+      >
+        {streak && streak.current_streak > 0
+          ? `You've completed a quest ${streak.current_streak} day${streak.current_streak === 1 ? '' : 's'} in a row. Your best streak is ${streak.longest_streak} day${streak.longest_streak === 1 ? '' : 's'}.`
+          : `Complete a quest today to start a streak.${streak && streak.longest_streak > 0 ? ` Your best streak so far is ${streak.longest_streak} days.` : ''}`}
+      </InfoModal>
+      <InfoModal
+        visible={infoModal === 'freeze'}
+        onClose={() => setInfoModal(null)}
+        icon="snowflake"
+        title="Freezes"
+      >
+        {`A freeze is a grace day: if you miss a day, one freeze is automatically used to protect your streak instead of resetting it. You have ${streak?.freezes_available ?? 0} freeze${(streak?.freezes_available ?? 0) === 1 ? '' : 's'} available.`}
+      </InfoModal>
     </>
   );
 
@@ -367,8 +420,34 @@ const styles = StyleSheet.create({
     paddingTop: spacing.lg,
   },
   title: {
-    marginBottom: spacing.sm,
+    flex: 1,
     textAlign: 'center',
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: spacing.sm,
+  },
+  statChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.lg,
+    backgroundColor: 'rgba(128,128,128,0.12)',
+  },
+  statChipPlaceholder: {
+    width: 50,
+  },
+  statChipDimmed: {
+    opacity: 0.4,
+  },
+  statChipText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   pageIndicator: {
     marginBottom: spacing.md,

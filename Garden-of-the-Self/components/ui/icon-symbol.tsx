@@ -28,6 +28,8 @@ const MAPPING: Record<string, MaterialIconName> = {
   'leaf.circle.fill': 'local-florist',
   'questionmark.circle': 'help-outline',
   'gearshape.fill': 'settings',
+  'flame.fill': 'local-fire-department',
+  'snowflake': 'ac-unit',
 };
 
 export type IconSymbolName = keyof typeof MAPPING;
