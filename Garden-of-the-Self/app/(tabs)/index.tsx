@@ -32,7 +32,7 @@ import virtues from '@/constants/virtues';
 import { gameConfig } from '@/constants/gameConfig';
 import { VIRTUE_TREE_IMAGES, treeScoreToStage } from '@/constants/virtueTreeImages';
 import { getSeedShownThresholdFromUnlockedCount } from '@/utils/virtueGraph';
-import { levelProgress, levelStageName } from '@/utils/questScoring';
+import { levelProgress, levelStageName, virtueIsWilted } from '@/utils/questScoring';
 
 const LINES = 10;
 const WIDTH = 20;
@@ -145,6 +145,7 @@ function VirtueGardenPage({
   const progress = levelProgress(specPts);
   const stageName = levelStageName(level);
   const progressPercent = `${Math.round(progress * 100)}%` as const;
+  const wilted = isUnlocked && virtueIsWilted(virtueProgress?.last_activity_date);
 
   return (
     <View style={styles.page}>
@@ -158,10 +159,21 @@ function VirtueGardenPage({
         Lv. {level} · {stageName}
       </ThemedText>
       <View style={styles.progressBarContainer}>
-        <View style={[styles.progressBarFill, { width: progressPercent }]} />
+        <View
+          style={[
+            styles.progressBarFill,
+            wilted ? styles.progressBarFillWilted : null,
+            { width: progressPercent },
+          ]}
+        />
       </View>
+      {wilted && (
+        <ThemedText style={styles.wiltedText}>
+          🥀 Wilting — complete a {virtueName} quest to revive it
+        </ThemedText>
+      )}
       <Animated.View
-        style={[styles.asciiWrapper, animatedStyle] as React.ComponentProps<typeof Animated.View>['style']}
+        style={[styles.asciiWrapper, wilted ? styles.wiltedPlant : null, animatedStyle] as React.ComponentProps<typeof Animated.View>['style']}
       >
         {hasTreeImages ? (
           <Image
@@ -483,6 +495,18 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 3,
     backgroundColor: 'rgba(122, 162, 247, 0.8)',
+  },
+  progressBarFillWilted: {
+    backgroundColor: 'rgba(191, 151, 80, 0.7)',
+  },
+  wiltedText: {
+    fontSize: 13,
+    opacity: 0.85,
+    marginBottom: spacing.sm,
+    textAlign: 'center',
+  },
+  wiltedPlant: {
+    opacity: 0.45,
   },
   asciiWrapper: {
     marginVertical: spacing.xl,
