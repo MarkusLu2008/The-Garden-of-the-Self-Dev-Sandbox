@@ -257,11 +257,8 @@ export default function GardenScreen() {
 
   const pageContent = (
     <>
-      <ThemedText type="title" style={styles.title}>
-        Your Garden
-      </ThemedText>
-      {streak != null && (
-        <View style={styles.statBar}>
+      <View style={styles.titleRow}>
+        {streak != null ? (
           <TouchableOpacity
             style={styles.statChip}
             onPress={() => setInfoModal('streak')}
@@ -271,6 +268,13 @@ export default function GardenScreen() {
             <IconSymbol name="flame.fill" size={18} color={theme.colors.error} />
             <ThemedText style={styles.statChipText}>{streak.current_streak}</ThemedText>
           </TouchableOpacity>
+        ) : (
+          <View style={styles.statChipPlaceholder} />
+        )}
+        <ThemedText type="title" style={styles.title}>
+          Your Garden
+        </ThemedText>
+        {streak != null ? (
           <TouchableOpacity
             style={[styles.statChip, streak.freezes_available === 0 && styles.statChipDimmed]}
             onPress={() => setInfoModal('freeze')}
@@ -280,8 +284,10 @@ export default function GardenScreen() {
             <IconSymbol name="snowflake" size={18} color={theme.colors.accent} />
             <ThemedText style={styles.statChipText}>{streak.freezes_available}</ThemedText>
           </TouchableOpacity>
-        </View>
-      )}
+        ) : (
+          <View style={styles.statChipPlaceholder} />
+        )}
+      </View>
       <ThemedText style={styles.pageIndicator}>
         {visibleVirtues.length > 0 ? `${pageIndex + 1} / ${visibleVirtues.length}` : ''}
       </ThemedText>
@@ -414,12 +420,14 @@ const styles = StyleSheet.create({
     paddingTop: spacing.lg,
   },
   title: {
-    marginBottom: spacing.sm,
+    flex: 1,
     textAlign: 'center',
   },
-  statBar: {
+  titleRow: {
     flexDirection: 'row',
-    gap: spacing.md,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
     marginBottom: spacing.sm,
   },
   statChip: {
@@ -430,6 +438,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     borderRadius: borderRadius.lg,
     backgroundColor: 'rgba(128,128,128,0.12)',
+  },
+  statChipPlaceholder: {
+    width: 50,
   },
   statChipDimmed: {
     opacity: 0.4,
