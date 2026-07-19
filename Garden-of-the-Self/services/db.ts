@@ -1671,6 +1671,17 @@ export async function recomputeStreak(): Promise<StreakRow> {
   return getStreak();
 }
 
+/** True when at least one quest was completed on the given YYYY-MM-DD local date. */
+export async function hasQuestCompletionOnDate(date: string): Promise<boolean> {
+  const database = await getDatabase();
+  const row = await database.getFirstAsync<{ count: number }>(
+    `SELECT COUNT(*) as count FROM quest_history
+     WHERE completed_at IS NOT NULL AND date(completed_at, 'localtime') = ?`,
+    [date]
+  );
+  return (row?.count ?? 0) > 0;
+}
+
 /** Run after any completion change: consume a freeze if it saves the streak, then recompute. */
 async function updateStreakAfterCompletionChange(database: SQLite.SQLiteDatabase): Promise<void> {
   await maybeConsumeStreakFreeze(database, getTodayDateString());

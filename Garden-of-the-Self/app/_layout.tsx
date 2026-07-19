@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { AppState } from 'react-native';
 import { ThemeProvider, type Theme } from '@react-navigation/native';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -6,7 +7,8 @@ import { UnistylesProvider, UnistylesRuntime, useUnistyles } from '@/lib/unistyl
 import { Colors } from '@/constants/theme';
 import { DateOverrideProvider } from '@/contexts/DateOverrideContext';
 import { OnboardingProvider, useOnboarding } from '@/contexts/OnboardingContext';
-import { AppPreferencesProvider } from '@/contexts/AppPreferencesContext';
+import { AppPreferencesProvider, useAppPreferences } from '@/contexts/AppPreferencesContext';
+import { syncNotifications } from '@/services/notificationManager';
 import 'react-native-reanimated';
 
 import '@/lib/unistyles';
@@ -56,6 +58,7 @@ function RootLayoutContent() {
   const themeName = UnistylesRuntime.themeName;
   const router = useRouter();
   const { hasCompletedOnboarding } = useOnboarding();
+  const { preferences, hydrated } = useAppPreferences();
 
   UnistylesRuntime.setRootViewBackgroundColor(theme.colors.background);
 
@@ -64,6 +67,19 @@ function RootLayoutContent() {
       router.push('/onboarding' as any);
     }
   }, [hasCompletedOnboarding, router]);
+
+  // Re-sync reminders whenever preferences change or the app returns to the
+  // foreground, so contextual copy and the streak reminder stay current.
+  useEffect(() => {
+    if (!hydrated) return;
+    syncNotifications(preferences);
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        syncNotifications(preferences);
+      }
+    });
+    return () => subscription.remove();
+  }, [hydrated, preferences]);
 
   return (
     <ThemeProvider value={themeName === 'dark' ? DarkNavTheme : LightNavTheme}>

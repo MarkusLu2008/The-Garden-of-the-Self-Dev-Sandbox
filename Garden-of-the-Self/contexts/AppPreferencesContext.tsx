@@ -1,11 +1,17 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { gameConfig } from '@/constants/gameConfig';
 
 const STORAGE_KEY = 'app:preferences:v1';
 
 export type AppPreferences = {
   showQuestPointRewards: boolean;
   dailyReminderNotifications: boolean;
+  /** Hour (24h clock) the daily reminder fires. */
+  dailyReminderHour: number;
+  streakReminderNotifications: boolean;
+  /** Hour (24h clock) the streak-protection reminder fires. */
+  streakReminderHour: number;
   soundEffectsEnabled: boolean;
   hapticsEnabled: boolean;
   confirmBeforeAbandoningQuest: boolean;
@@ -14,6 +20,9 @@ export type AppPreferences = {
 const DEFAULT_PREFERENCES: AppPreferences = {
   showQuestPointRewards: true,
   dailyReminderNotifications: false,
+  dailyReminderHour: gameConfig.notifications.defaultDailyReminderHour,
+  streakReminderNotifications: false,
+  streakReminderHour: gameConfig.notifications.defaultStreakReminderHour,
   soundEffectsEnabled: true,
   hapticsEnabled: true,
   confirmBeforeAbandoningQuest: true,

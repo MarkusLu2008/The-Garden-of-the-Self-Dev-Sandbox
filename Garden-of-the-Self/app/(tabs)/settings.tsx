@@ -1,12 +1,18 @@
 import '@/lib/unistyles';
-import { ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Switch, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DevtoolsSections } from '@/components/settings/devtools-sections';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { gameConfig } from '@/constants/gameConfig';
 import { useAppPreferences } from '@/contexts/AppPreferencesContext';
-import { journalStyles, spacing } from '@/utils/styles';
+import {
+  ensureNotificationPermissions,
+  formatHourLabel,
+  isWithinQuietHours,
+} from '@/services/notificationManager';
+import { borderRadius, journalStyles, spacing } from '@/utils/styles';
 
 type PreferenceToggleProps = {
   label: string;
@@ -32,8 +38,68 @@ function PreferenceToggle({
   );
 }
 
+type HourStepperProps = {
+  label: string;
+  hour: number;
+  onChange: (nextHour: number) => void;
+};
+
+/** Simple hour picker (no extra deps): step through 0–23, skipping quiet hours. */
+function HourStepper({ label, hour, onChange }: HourStepperProps) {
+  const step = (direction: 1 | -1) => {
+    let next = hour;
+    // Skip hours inside the quiet window; 24 iterations max guards against a full-quiet config.
+    for (let i = 0; i < 24; i++) {
+      next = (next + direction + 24) % 24;
+      if (!isWithinQuietHours(next)) break;
+    }
+    onChange(next);
+  };
+
+  return (
+    <View style={styles.preferenceRow}>
+      <View style={styles.preferenceTextWrap}>
+        <ThemedText type="defaultSemiBold">{label}</ThemedText>
+      </View>
+      <View style={styles.hourStepper}>
+        <TouchableOpacity style={styles.hourStepperButton} onPress={() => step(-1)}>
+          <ThemedText type="defaultSemiBold">−</ThemedText>
+        </TouchableOpacity>
+        <ThemedText style={styles.hourStepperValue}>{formatHourLabel(hour)}</ThemedText>
+        <TouchableOpacity style={styles.hourStepperButton} onPress={() => step(1)}>
+          <ThemedText type="defaultSemiBold">+</ThemedText>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
 export default function SettingsScreen() {
   const { preferences, hydrated, setPreference } = useAppPreferences();
+
+  const quietHours = gameConfig.notifications.quietHours;
+  const quietHoursLabel = `${formatHourLabel(quietHours.startHour)}–${formatHourLabel(quietHours.endHour)}`;
+
+  const handleReminderToggle = async (
+    key: 'dailyReminderNotifications' | 'streakReminderNotifications',
+    value: boolean
+  ) => {
+    if (value) {
+      const allowed = await ensureNotificationPermissions();
+      if (!allowed) {
+        Alert.alert(
+          'Notifications are off',
+          'Allow notifications for Garden of the Self in your system settings to receive reminders.'
+        );
+        return;
+      }
+    }
+    setPreference(key, value);
+  };
+
+  const setHourPreference = (key: 'dailyReminderHour' | 'streakReminderHour', hour: number) => {
+    setPreference(key, hour);
+  };
 
   return (
     <SafeAreaView style={journalStyles.container} edges={['top']}>
@@ -54,10 +120,35 @@ export default function SettingsScreen() {
           />
           <PreferenceToggle
             label="Daily reminder notifications"
-            description="Enable daily reminders for your reflection habit."
+            description="A daily nudge to tend your garden — mentions wilting plants and near level-ups."
             value={preferences.dailyReminderNotifications}
-            onValueChange={(value) => setPreference('dailyReminderNotifications', value)}
+            onValueChange={(value) => handleReminderToggle('dailyReminderNotifications', value)}
           />
+          {preferences.dailyReminderNotifications ? (
+            <HourStepper
+              label="Daily reminder time"
+              hour={preferences.dailyReminderHour}
+              onChange={(hour) => setHourPreference('dailyReminderHour', hour)}
+            />
+          ) : null}
+          <PreferenceToggle
+            label="Streak protection reminder"
+            description="A later-in-the-day heads-up when no quest is done yet and your streak is at risk."
+            value={preferences.streakReminderNotifications}
+            onValueChange={(value) => handleReminderToggle('streakReminderNotifications', value)}
+          />
+          {preferences.streakReminderNotifications ? (
+            <HourStepper
+              label="Streak reminder time"
+              hour={preferences.streakReminderHour}
+              onChange={(hour) => setHourPreference('streakReminderHour', hour)}
+            />
+          ) : null}
+          {preferences.dailyReminderNotifications || preferences.streakReminderNotifications ? (
+            <ThemedText style={styles.quietHoursNote}>
+              Quiet hours {quietHoursLabel} are always respected.
+            </ThemedText>
+          ) : null}
           <PreferenceToggle
             label="Sound effects"
             description="Play subtle sounds for app feedback."
@@ -134,6 +225,27 @@ const styles = StyleSheet.create({
   },
   hydrationText: {
     opacity: 0.65,
+    fontSize: 12,
+  },
+  hourStepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  hourStepperButton: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(122, 122, 122, 0.45)',
+  },
+  hourStepperValue: {
+    minWidth: 76,
+    textAlign: 'center',
+    fontVariant: ['tabular-nums'],
+  },
+  quietHoursNote: {
+    opacity: 0.6,
     fontSize: 12,
   },
   devtoolsHeader: {

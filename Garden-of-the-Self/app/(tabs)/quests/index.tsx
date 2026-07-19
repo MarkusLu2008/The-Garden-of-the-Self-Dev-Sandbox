@@ -15,6 +15,7 @@ import {
   type ScoringResult,
 } from '@/services/db';
 import { type QuestDifficultyTier } from '@/data/quests-seed';
+import { syncNotifications } from '@/services/notificationManager';
 import { getTodayDateString } from '@/utils/dateUtils';
 import { borderRadius, journalStyles, spacing } from '@/utils/styles';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -97,6 +98,8 @@ export default function QuestsScreen() {
           Alert.alert('Streak Milestone! 🔥', message);
         }
       }
+      // Completion state changed: cancel/reschedule today's streak-protection reminder.
+      syncNotifications(preferences);
     } catch (error) {
       // Revert on failure
       setQuests((prev) =>
