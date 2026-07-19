@@ -10,7 +10,8 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "test:scoring": "node --test scripts/scoring.test.ts",
-    "test:content": "node --test scripts/virtue-content.test.ts"
+    "test:content": "node --test scripts/virtue-content.test.ts",
+    "test:adaptive": "node --test scripts/adaptive.test.ts"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

@@ -46,21 +46,21 @@ Source spec: `Garden_of_the_Self_Spec.pdf` (Feature Specification & Design Brief
 - Milestone rewards at 7/30/100-day streaks: cosmetic unlocks + streak-freeze grant.
 - Streak freeze consumable protects one missed day.
 
-### Phase 7 — Reminders & notifications
+### Phase 7 — Reminders & notifications ✅ (PR #10; local-only via expo-notifications, contextual copy, quiet hours, streak-protection one-shot)
 - Add `expo-notifications` (not currently a dependency).
 - Daily reminder at user-set time(s); contextual variants (wilting plant, near level-up).
 - Streak-protection reminder later in day if no quest done. Respect quiet hours/OS permissions, easy opt-out.
 
-### Phase 8 — "Why this virtue matters" + quote content
+### Phase 8 — "Why this virtue matters" + quote content ✅ (PR #11; data/virtue-content.ts, all 13 virtues kept, paraphrases marked)
 - Author explainer copy for all virtues + plant-symbolism rationale + Aristotle quotes/paraphrases (mark paraphrases explicitly per spec's attribution caution).
 - Resolve the 12 vs 13 virtue-count discrepancy here or earlier.
 
-### Phase 9 — Reflection journal (post-quest)
+### Phase 9 — Reflection journal (post-quest) ✅ (PR #12; skippable modal, rotating prompts, quest_reflections table)
 - New optional short textbox after quest completion; separate table from existing free-form journal (`services/journalManager.ts` untouched).
 - Rotating prompt pool ("How did it feel?", "What was hardest?", etc.).
 - Stored privately; surfaced in per-virtue detail view (Phase 12) as history.
 
-### Phase 10 — Adaptive difficulty
+### Phase 10 — Adaptive difficulty ✅ (PR #13; per-virtue streak ladder: 3 qualifying days promote, reroll demotes to Gentle, long-press override)
 - Track per-virtue completion/skip history per tier.
 - Consistent completion at a tier → surface next tier up; repeated skips/fails → ease back down.
 - Suggested tier visible + user-overridable.

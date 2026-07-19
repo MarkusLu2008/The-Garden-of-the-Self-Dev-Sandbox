@@ -10,12 +10,16 @@ import {
   getQuestDurationLabel,
   getQuestHistoryIdForQuest,
   getQuestReflectionUsageMap,
+  getVirtueDifficultyByName,
   insertQuestReflection,
   rerollDailyQuest,
+  setVirtueTierOverride,
   updateQuest,
   type QuestRow,
   type ScoringResult,
+  type VirtueDifficultyInfo,
 } from '@/services/db';
+import type { DifficultyTierName } from '@/utils/adaptiveDifficulty';
 import { ReflectionModal } from '@/components/reflection-modal';
 import { type QuestDifficultyTier } from '@/data/quests-seed';
 import { reflectionPromptFor } from '@/data/reflection-prompts';
@@ -68,6 +72,7 @@ export default function QuestsScreen() {
   const [quests, setQuests] = useState<QuestRow[]>([]);
   const [questReflectionUsedMap, setQuestReflectionUsedMap] = useState<Record<number, boolean>>({});
   const [pendingReflection, setPendingReflection] = useState<PendingReflection | null>(null);
+  const [difficultyByVirtue, setDifficultyByVirtue] = useState<Record<string, VirtueDifficultyInfo>>({});
   const [loading, setLoading] = useState(true);
   const { theme } = useUnistyles();
   const router = useRouter();
@@ -79,8 +84,10 @@ export default function QuestsScreen() {
       const today = getTodayDateString();
       const daily = await getDailyQuests(today);
       const reflectionUsage = await getQuestReflectionUsageMap(daily.map((quest) => quest.id));
+      const difficulty = await getVirtueDifficultyByName();
       setQuests(daily);
       setQuestReflectionUsedMap(reflectionUsage);
+      setDifficultyByVirtue(difficulty);
     } catch (error) {
       console.error('Failed to load quests:', error);
       Alert.alert('Error', 'Failed to load quests');
@@ -214,6 +221,7 @@ export default function QuestsScreen() {
     const questVirtuesParam = encodeURIComponent(JSON.stringify(item.virtues));
     const isReflectionUsed = questReflectionUsedMap[item.id] === true;
     const dominantVirtue = dominantVirtueName(item.virtues);
+    const difficultyInfo = dominantVirtue ? difficultyByVirtue[dominantVirtue] : undefined;
     const tierLabel = item.difficulty_tier ?? '—';
     const headingText = item.difficulty_tier
       ? `${tierEmoji(item.difficulty_tier)} ${tierLabel} · ${dominantVirtue}`
@@ -223,11 +231,18 @@ export default function QuestsScreen() {
       <ThemedView style={styles.questItemContainer}>
         <TouchableOpacity
           onPress={() => dominantVirtue && showVirtueInfo(dominantVirtue)}
+          onLongPress={() => dominantVirtue && handleTierOverride(dominantVirtue)}
           activeOpacity={0.7}
         >
           <ThemedText type="subtitle" style={styles.durationHeading}>
             {headingText}
           </ThemedText>
+          {difficultyInfo ? (
+            <ThemedText style={styles.suggestedTierText}>
+              Suggested tier: {difficultyInfo.effectiveTier}
+              {difficultyInfo.overrideTier ? ' (manual)' : ''} · hold to change
+            </ThemedText>
+          ) : null}
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.questItem}
@@ -302,6 +317,33 @@ export default function QuestsScreen() {
       </ThemedText>
     </ThemedView>
   );
+
+  const handleTierOverride = (virtueName: string) => {
+    const info = difficultyByVirtue[virtueName];
+    if (!info) return;
+    const applyOverride = async (tier: DifficultyTierName | null) => {
+      try {
+        await setVirtueTierOverride(virtueName, tier);
+        setDifficultyByVirtue(await getVirtueDifficultyByName());
+      } catch (error) {
+        console.error('Failed to set tier override:', error);
+        Alert.alert('Error', 'Failed to update difficulty');
+      }
+    };
+    Alert.alert(
+      `Difficulty for ${virtueName}`,
+      `Suggested by your recent streak: ${info.suggestedTier}` +
+        (info.overrideTier ? ` (currently overridden to ${info.overrideTier})` : '') +
+        '. Changes apply to future daily quests.',
+      [
+        { text: `Auto (${info.suggestedTier})`, onPress: () => applyOverride(null) },
+        { text: 'Gentle 🌱', onPress: () => applyOverride('Gentle') },
+        { text: 'Moderate ⚡', onPress: () => applyOverride('Moderate') },
+        { text: 'Stretch 🔥', onPress: () => applyOverride('Stretch') },
+        { text: 'Cancel', style: 'cancel' },
+      ]
+    );
+  };
 
   const handleSaveReflection = async (text: string) => {
     const target = pendingReflection;
@@ -378,6 +420,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   durationHeading: {
+    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.xs,
+  },
+  suggestedTierText: {
+    fontSize: 12,
+    opacity: 0.55,
+    marginTop: -spacing.sm,
     marginBottom: spacing.sm,
     paddingHorizontal: spacing.xs,
   },
