@@ -15,6 +15,7 @@ import {
   type ScoringResult,
 } from '@/services/db';
 import { type QuestDifficultyTier } from '@/data/quests-seed';
+import { formatVirtueQuote, getVirtueContent } from '@/data/virtue-content';
 import { syncNotifications } from '@/services/notificationManager';
 import { getTodayDateString } from '@/utils/dateUtils';
 import { borderRadius, journalStyles, spacing } from '@/utils/styles';
@@ -41,6 +42,16 @@ function dominantVirtueName(virtues: Record<string, number>): string {
   if (entries.length === 0) return '';
   entries.sort(([, a], [, b]) => b - a);
   return entries[0][0];
+}
+
+/** "Why this virtue matters" popup: explainer, plant symbolism, and quote. */
+function showVirtueInfo(virtueName: string): void {
+  const content = getVirtueContent(virtueName);
+  if (!content) return;
+  Alert.alert(
+    `${content.virtue} · ${content.plant}`,
+    `${content.whyItMatters}\n\n🪴 ${content.plantSymbolism}\n\n${formatVirtueQuote(content.quote)}`
+  );
 }
 
 export default function QuestsScreen() {
@@ -190,9 +201,14 @@ export default function QuestsScreen() {
 
     return (
       <ThemedView style={styles.questItemContainer}>
-        <ThemedText type="subtitle" style={styles.durationHeading}>
-          {headingText}
-        </ThemedText>
+        <TouchableOpacity
+          onPress={() => dominantVirtue && showVirtueInfo(dominantVirtue)}
+          activeOpacity={0.7}
+        >
+          <ThemedText type="subtitle" style={styles.durationHeading}>
+            {headingText}
+          </ThemedText>
+        </TouchableOpacity>
         <TouchableOpacity
           style={styles.questItem}
           onPress={() => handleToggleCompleted(item)}
