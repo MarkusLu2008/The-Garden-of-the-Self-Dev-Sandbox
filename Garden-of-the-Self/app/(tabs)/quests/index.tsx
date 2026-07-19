@@ -8,13 +8,17 @@ import {
   deleteQuest,
   getDailyQuests,
   getQuestDurationLabel,
+  getQuestHistoryIdForQuest,
   getQuestReflectionUsageMap,
+  insertQuestReflection,
   rerollDailyQuest,
   updateQuest,
   type QuestRow,
   type ScoringResult,
 } from '@/services/db';
+import { ReflectionModal } from '@/components/reflection-modal';
 import { type QuestDifficultyTier } from '@/data/quests-seed';
+import { reflectionPromptFor } from '@/data/reflection-prompts';
 import { formatVirtueQuote, getVirtueContent } from '@/data/virtue-content';
 import { syncNotifications } from '@/services/notificationManager';
 import { getTodayDateString } from '@/utils/dateUtils';
@@ -54,9 +58,16 @@ function showVirtueInfo(virtueName: string): void {
   );
 }
 
+type PendingReflection = {
+  questHistoryId: number | null;
+  questPrompt: string;
+  reflectionPrompt: string;
+};
+
 export default function QuestsScreen() {
   const [quests, setQuests] = useState<QuestRow[]>([]);
   const [questReflectionUsedMap, setQuestReflectionUsedMap] = useState<Record<number, boolean>>({});
+  const [pendingReflection, setPendingReflection] = useState<PendingReflection | null>(null);
   const [loading, setLoading] = useState(true);
   const { theme } = useUnistyles();
   const router = useRouter();
@@ -111,6 +122,15 @@ export default function QuestsScreen() {
       }
       // Completion state changed: cancel/reschedule today's streak-protection reminder.
       syncNotifications(preferences);
+      if (newCompleted === 1) {
+        // Offer the optional quick reflection (skippable, separate from journal).
+        const historyId = await getQuestHistoryIdForQuest(quest.id, today);
+        setPendingReflection({
+          questHistoryId: historyId,
+          questPrompt: quest.prompt,
+          reflectionPrompt: reflectionPromptFor(historyId ?? quest.id),
+        });
+      }
     } catch (error) {
       // Revert on failure
       setQuests((prev) =>
@@ -283,6 +303,18 @@ export default function QuestsScreen() {
     </ThemedView>
   );
 
+  const handleSaveReflection = async (text: string) => {
+    const target = pendingReflection;
+    setPendingReflection(null);
+    if (!target) return;
+    try {
+      await insertQuestReflection(target.questHistoryId, text, target.reflectionPrompt);
+    } catch (error) {
+      console.error('Failed to save reflection:', error);
+      Alert.alert('Error', 'Failed to save reflection');
+    }
+  };
+
   return (
     <SafeAreaView style={journalStyles.container} edges={['top']}>
       <ThemedView style={styles.header}>
@@ -290,6 +322,14 @@ export default function QuestsScreen() {
           Daily Quests
         </ThemedText>
       </ThemedView>
+
+      <ReflectionModal
+        visible={pendingReflection != null}
+        prompt={pendingReflection?.reflectionPrompt ?? ''}
+        questPrompt={pendingReflection?.questPrompt ?? ''}
+        onSave={handleSaveReflection}
+        onSkip={() => setPendingReflection(null)}
+      />
 
       {loading ? (
         <ThemedView style={styles.loadingContainer}>

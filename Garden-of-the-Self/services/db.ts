@@ -1816,6 +1816,50 @@ async function maybeAwardDailyConsistencyBonus(
 
 // ---- Quest reflection helpers ----
 
+/** History row id for a quest assigned on a given date (used to link reflections). */
+export async function getQuestHistoryIdForQuest(
+  questId: number,
+  assignedDate: string
+): Promise<number | null> {
+  const database = await getDatabase();
+  const row = await database.getFirstAsync<{ id: number }>(
+    `SELECT id FROM quest_history
+     WHERE quest_id = ? AND assigned_at = ?
+     ORDER BY id DESC LIMIT 1`,
+    [questId, assignedDate]
+  );
+  return row?.id ?? null;
+}
+
+export type QuestReflectionWithContext = QuestReflectionRow & {
+  quest_prompt: string | null;
+  /** Virtue values of the completed quest (dominant virtue derivable via getDominantVirtue). */
+  virtues: QuestVirtueValues;
+};
+
+/** Recent reflections joined with their quest prompt + virtues (for detail views). */
+export async function getRecentQuestReflections(limit = 50): Promise<QuestReflectionWithContext[]> {
+  const database = await getDatabase();
+  const rows = await database.getAllAsync<QuestReflectionRow & { quest_prompt: string | null }>(
+    `SELECT r.id, r.quest_history_id, r.text, r.prompt, r.created_at, q.prompt AS quest_prompt
+     FROM quest_reflections r
+     LEFT JOIN quest_history h ON h.id = r.quest_history_id
+     LEFT JOIN quests q ON q.id = h.quest_id
+     ORDER BY r.created_at DESC
+     LIMIT ?`,
+    [limit]
+  );
+  const result: QuestReflectionWithContext[] = [];
+  for (const row of rows) {
+    const virtues =
+      row.quest_history_id != null
+        ? await getQuestHistoryVirtues(database, row.quest_history_id)
+        : {};
+    result.push({ ...row, virtues });
+  }
+  return result;
+}
+
 export async function insertQuestReflection(
   questHistoryId: number | null,
   text: string,
