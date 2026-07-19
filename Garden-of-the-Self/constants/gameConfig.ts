@@ -192,7 +192,8 @@ export const gameConfig: GameConfig = {
     growthMultiplier: 2,
   },
   devtools: {
-    show: __DEV__,
+    // typeof guard keeps this module importable outside React Native (node --test).
+    show: typeof __DEV__ !== 'undefined' && __DEV__,
   }
 };
 

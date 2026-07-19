@@ -11,7 +11,7 @@ Source spec: `Garden_of_the_Self_Spec.pdf` (Feature Specification & Design Brief
 
 ## Open items to resolve before/while starting
 
-- `gameConfig.VIRTUE_LIST` has 13 entries; spec says twelve virtues. Need to confirm which is extra/wrong.
+- ~~`gameConfig.VIRTUE_LIST` has 13 entries; spec says twelve virtues.~~ Resolved in Phase 8: keep all 13, spec count treated as stale (no migration, no retagging). `data/virtue-content.ts` covers all 13.
 - Phase 2 duration→tier retagging involves judgment calls (e.g. a "Long" research quest may actually be Gentle). Decide: do it wholesale, or review a proposed mapping first.
 
 ## Phases
