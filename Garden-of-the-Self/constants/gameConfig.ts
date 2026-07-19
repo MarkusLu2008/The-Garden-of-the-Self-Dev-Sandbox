@@ -96,6 +96,10 @@ export type GameConfig = {
     /** Days without spec-point activity before a virtue's plant wilts (spec: 5–7). */
     staleDays: number;
   };
+  adaptiveDifficulty: {
+    /** Consecutive qualifying days before a virtue's suggested tier moves up. */
+    promoteAfterDays: number;
+  };
   notifications: {
     /** Default hour (24h clock) for the daily reminder. */
     defaultDailyReminderHour: number;
@@ -162,6 +166,9 @@ export const gameConfig: GameConfig = {
   },
   wilting: {
     staleDays: 6,
+  },
+  adaptiveDifficulty: {
+    promoteAfterDays: 3,
   },
   notifications: {
     defaultDailyReminderHour: 9,

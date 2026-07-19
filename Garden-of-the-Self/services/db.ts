@@ -3,6 +3,14 @@ import virtues from '@/constants/virtues';
 import { clampQuestRewards, gameConfig } from '@/constants/gameConfig';
 import { questDurationOrder, questsSeed, type QuestDuration, type QuestDifficultyTier } from '@/data/quests-seed';
 import { getDominantVirtue, specPointsForTier, specPointsToLevel, levelStageName } from '@/utils/questScoring';
+import {
+  applyCompletion,
+  applySkip,
+  initialAdaptiveState,
+  normalizeTier,
+  type AdaptiveState,
+  type DifficultyTierName,
+} from '@/utils/adaptiveDifficulty';
 import { addDaysToDateString, diffInDays, getTodayDateString } from '@/utils/dateUtils';
 
 export type VirtueProgressRow = {
@@ -164,6 +172,15 @@ async function initializeOrMigrateSchema(database: SQLite.SQLiteDatabase): Promi
 
     CREATE TABLE IF NOT EXISTS streak_freeze_usage (
       date TEXT PRIMARY KEY
+    );
+
+    CREATE TABLE IF NOT EXISTS virtue_difficulty (
+      virtue_id INTEGER PRIMARY KEY,
+      suggested_tier TEXT NOT NULL DEFAULT 'Gentle',
+      consecutive_days INTEGER NOT NULL DEFAULT 0,
+      last_counted_date TEXT,
+      override_tier TEXT,
+      FOREIGN KEY (virtue_id) REFERENCES virtues(id) ON DELETE CASCADE
     );
   `);
 
@@ -838,10 +855,23 @@ async function getDailyQuests(dateString: string): Promise<QuestRow[]> {
     'SELECT name FROM virtues WHERE unlocked_at IS NOT NULL'
   );
   const unlockedVirtues = new Set(unlockedRows.map((row) => row.name));
-  const pool = all.filter((q) => {
+  const fullPool = all.filter((q) => {
     const primaryVirtue = getPrimaryVirtueNameFromValues(q.virtues);
     return primaryVirtue != null && unlockedVirtues.has(primaryVirtue);
   });
+
+  // Adaptive difficulty: prefer quests at each virtue's effective tier
+  // (override ?? ladder suggestion). Fall back to the full pool when the
+  // preferred set is too small to fill the day.
+  const difficultyByVirtue = await getVirtueDifficultyByName();
+  const preferredPool = fullPool.filter((q) => {
+    const primaryVirtue = getPrimaryVirtueNameFromValues(q.virtues);
+    if (primaryVirtue == null) return false;
+    const info = difficultyByVirtue[primaryVirtue];
+    return info != null && normalizeTier(q.difficulty_tier) === info.effectiveTier;
+  });
+  const pool = preferredPool.length >= dailyQuestCount ? preferredPool : fullPool;
+
   const nextRandom = createDateSeededRandom(dateString);
   const byDuration = new Map<QuestDuration, QuestRow[]>(
     questDurationOrder.map((duration) => [duration, [] as QuestRow[]])
@@ -937,6 +967,9 @@ async function rerollDailyQuest(oldQuestId: number, dateString: string): Promise
   ]);
   await upsertQuestHistoryVirtues(database, historyRow.id, replacement.virtues);
 
+  // Adaptive difficulty: rerolling counts as a skip — back to the gentle zone.
+  await recordAdaptiveSkip(database, dominantVirtue);
+
   return { ...replacement, completed: 0 };
 }
 
@@ -966,6 +999,7 @@ async function updateDailyQuestCompletion(update: DailyQuestUpdate): Promise<Dai
     await upsertQuestHistoryVirtues(database, row.id, update.virtues);
     await applyVirtueDeltas(database, update.virtues, +1);
     scoringResult = await applyQuestSpecPoints(database, update.quest, row.id);
+    await recordAdaptiveCompletion(database, update.quest);
     const bonusResult = await maybeAwardDailyConsistencyBonus(database, update.quest, row.id);
     if (scoringResult && bonusResult) {
       scoringResult = {
@@ -1096,6 +1130,7 @@ async function recordQuestCompleted(quest: QuestRow): Promise<ScoringResult | nu
 
   await applyVirtueDeltas(database, quest.virtues, +1);
   let scoringResult = await applyQuestSpecPoints(database, quest, historyId);
+  await recordAdaptiveCompletion(database, quest);
   const bonusResult = await maybeAwardDailyConsistencyBonus(database, quest, historyId);
   if (scoringResult && bonusResult) {
     scoringResult = {
@@ -1814,6 +1849,124 @@ async function maybeAwardDailyConsistencyBonus(
   return { leveledUp: result.leveledUp, newLevel: result.newLevel, newSpecPoints: result.newSpecPoints };
 }
 
+// ---- Adaptive difficulty (Phase 10) ----
+
+type VirtueDifficultyDbRow = {
+  suggested_tier: string;
+  consecutive_days: number;
+  last_counted_date: string | null;
+  override_tier: string | null;
+};
+
+async function getAdaptiveStateRow(
+  database: SQLite.SQLiteDatabase,
+  virtueId: number
+): Promise<{ state: AdaptiveState; overrideTier: DifficultyTierName | null }> {
+  const row = await database.getFirstAsync<VirtueDifficultyDbRow>(
+    'SELECT suggested_tier, consecutive_days, last_counted_date, override_tier FROM virtue_difficulty WHERE virtue_id = ?',
+    [virtueId]
+  );
+  if (!row) return { state: initialAdaptiveState, overrideTier: null };
+  return {
+    state: {
+      suggestedTier: normalizeTier(row.suggested_tier) ?? 'Gentle',
+      consecutiveDays: row.consecutive_days,
+      lastCountedDate: row.last_counted_date,
+    },
+    overrideTier: normalizeTier(row.override_tier),
+  };
+}
+
+async function saveAdaptiveState(
+  database: SQLite.SQLiteDatabase,
+  virtueId: number,
+  state: AdaptiveState
+): Promise<void> {
+  await database.runAsync(
+    `INSERT INTO virtue_difficulty (virtue_id, suggested_tier, consecutive_days, last_counted_date)
+     VALUES (?, ?, ?, ?)
+     ON CONFLICT(virtue_id) DO UPDATE SET
+       suggested_tier = excluded.suggested_tier,
+       consecutive_days = excluded.consecutive_days,
+       last_counted_date = excluded.last_counted_date`,
+    [virtueId, state.suggestedTier, state.consecutiveDays, state.lastCountedDate]
+  );
+}
+
+/** Fold a completion into the virtue's ladder (first qualifying completion per day counts). */
+async function recordAdaptiveCompletion(
+  database: SQLite.SQLiteDatabase,
+  quest: QuestRow
+): Promise<void> {
+  const tier = normalizeTier(quest.difficulty_tier);
+  if (!tier) return;
+  const dominantVirtue = getDominantVirtue(quest.virtues);
+  if (!dominantVirtue) return;
+  const virtueId = await getVirtueIdFromName(dominantVirtue);
+  if (virtueId == null) return;
+
+  const { state } = await getAdaptiveStateRow(database, virtueId);
+  const next = applyCompletion(
+    state,
+    tier,
+    getTodayDateString(),
+    gameConfig.adaptiveDifficulty.promoteAfterDays
+  );
+  if (next !== state) {
+    await saveAdaptiveState(database, virtueId, next);
+  }
+}
+
+/** A reroll counts as a skip: the virtue drops back to the gentle-only zone. */
+async function recordAdaptiveSkip(
+  database: SQLite.SQLiteDatabase,
+  virtueName: string
+): Promise<void> {
+  const virtueId = await getVirtueIdFromName(virtueName);
+  if (virtueId == null) return;
+  const { state } = await getAdaptiveStateRow(database, virtueId);
+  await saveAdaptiveState(database, virtueId, applySkip(state));
+}
+
+export type VirtueDifficultyInfo = {
+  suggestedTier: DifficultyTierName;
+  overrideTier: DifficultyTierName | null;
+  /** overrideTier when set, else suggestedTier. */
+  effectiveTier: DifficultyTierName;
+};
+
+/** Effective tier (override ?? ladder suggestion) for every virtue, keyed by display name. */
+export async function getVirtueDifficultyByName(): Promise<Record<string, VirtueDifficultyInfo>> {
+  const database = await getDatabase();
+  await ensureVirtuesLoaded();
+  const result: Record<string, VirtueDifficultyInfo> = {};
+  for (const virtue of virtuesCache ?? []) {
+    const { state, overrideTier } = await getAdaptiveStateRow(database, virtue.id);
+    result[virtue.name] = {
+      suggestedTier: state.suggestedTier,
+      overrideTier,
+      effectiveTier: overrideTier ?? state.suggestedTier,
+    };
+  }
+  return result;
+}
+
+/** User override for a virtue's tier; null returns to the automatic ladder. */
+export async function setVirtueTierOverride(
+  virtueName: string,
+  tier: DifficultyTierName | null
+): Promise<void> {
+  const database = await getDatabase();
+  const virtueId = await getVirtueIdFromName(virtueName);
+  if (virtueId == null) return;
+  await database.runAsync(
+    `INSERT INTO virtue_difficulty (virtue_id, override_tier)
+     VALUES (?, ?)
+     ON CONFLICT(virtue_id) DO UPDATE SET override_tier = excluded.override_tier`,
+    [virtueId, tier]
+  );
+}
+
 // ---- Quest reflection helpers ----
 
 /** History row id for a quest assigned on a given date (used to link reflections). */
@@ -1888,6 +2041,7 @@ export async function resetDatabase() {
   const database = await getDatabase();
   await database.execAsync(`
     PRAGMA foreign_keys = OFF;
+    DROP TABLE IF EXISTS virtue_difficulty;
     DROP TABLE IF EXISTS streak_freeze_usage;
     DROP TABLE IF EXISTS spec_point_awards;
     DROP TABLE IF EXISTS quest_reflections;
@@ -1929,7 +2083,8 @@ export type TableName =
   | 'virtue_progress'
   | 'spec_point_awards'
   | 'streak'
-  | 'streak_freeze_usage';
+  | 'streak_freeze_usage'
+  | 'virtue_difficulty';
 
 export async function getAllFromTable(table: TableName): Promise<any[]> {
   const database = await getDatabase();
