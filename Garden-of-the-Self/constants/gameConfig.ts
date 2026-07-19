@@ -96,6 +96,16 @@ export type GameConfig = {
     /** Days without spec-point activity before a virtue's plant wilts (spec: 5–7). */
     staleDays: number;
   };
+  notifications: {
+    /** Default hour (24h clock) for the daily reminder. */
+    defaultDailyReminderHour: number;
+    /** Default hour (24h clock) for the streak-protection reminder. */
+    defaultStreakReminderHour: number;
+    /** Reminders are never scheduled inside this window (start may wrap past midnight). */
+    quietHours: { startHour: number; endHour: number };
+    /** Progress-within-level fraction that counts as "near level-up" for reminder copy. */
+    nearLevelUpProgress: number;
+  };
   journal: {
     totalPointsPerEntry: number;
     maxVirtuesPerEntry: number;
@@ -152,6 +162,12 @@ export const gameConfig: GameConfig = {
   },
   wilting: {
     staleDays: 6,
+  },
+  notifications: {
+    defaultDailyReminderHour: 9,
+    defaultStreakReminderHour: 20,
+    quietHours: { startHour: 22, endHour: 8 },
+    nearLevelUpProgress: 0.8,
   },
   journal: {
     totalPointsPerEntry: 5,

@@ -46,39 +46,40 @@ Source spec: `Garden_of_the_Self_Spec.pdf` (Feature Specification & Design Brief
 - Milestone rewards at 7/30/100-day streaks: cosmetic unlocks + streak-freeze grant.
 - Streak freeze consumable protects one missed day.
 
-### Phase 7 — Reflection journal (post-quest)
-- New optional short textbox after quest completion; separate table from existing free-form journal (`services/journalManager.ts` untouched).
-- Rotating prompt pool ("How did it feel?", "What was hardest?", etc.).
-- Stored privately; surfaced in per-virtue detail view (Phase 10) as history.
-
-### Phase 8 — Onboarding assessment
-- Replace stub `app/onboarding.tsx` pager: author 12–24 short questions (1–2 per virtue), original wording, inspired by but not copying VIA-IS.
-- Produce baseline per-virtue score → seeds initial quest-weighting toward weaker virtues.
-- Present result as encouraging starting map, not judgment.
-
-### Phase 9 — Adaptive difficulty
-- Track per-virtue completion/skip history per tier.
-- Consistent completion at a tier → surface next tier up; repeated skips/fails → ease back down.
-- Suggested tier visible + user-overridable.
-
-### Phase 10 — Garden dashboard + plant detail view
-- Rework `app/(tabs)/index.tsx`: 12 plants, health state (thriving/growing/wilting), streak + today's quests + attention indicators.
-- Tap → detail view: virtue description, "why this plant," level/stage, progress bar, quest history, hardest quest completed, reflections list, today's suggested quest with reroll, milestone/quote note.
-- Growth animation on completion via `react-native-reanimated`.
-
-### Phase 11 — "Why this virtue matters" + quote content
-- Author explainer copy for all virtues + plant-symbolism rationale + Aristotle quotes/paraphrases (mark paraphrases explicitly per spec's attribution caution).
-- Resolve the 12 vs 13 virtue-count discrepancy here or earlier.
-
-### Phase 12 — Reminders & notifications
+### Phase 7 — Reminders & notifications
 - Add `expo-notifications` (not currently a dependency).
 - Daily reminder at user-set time(s); contextual variants (wilting plant, near level-up).
 - Streak-protection reminder later in day if no quest done. Respect quiet hours/OS permissions, easy opt-out.
 
-### Phase 13 — Mascot (Aristotle) scaffolding
+### Phase 8 — "Why this virtue matters" + quote content
+- Author explainer copy for all virtues + plant-symbolism rationale + Aristotle quotes/paraphrases (mark paraphrases explicitly per spec's attribution caution).
+- Resolve the 12 vs 13 virtue-count discrepancy here or earlier.
+
+### Phase 9 — Reflection journal (post-quest)
+- New optional short textbox after quest completion; separate table from existing free-form journal (`services/journalManager.ts` untouched).
+- Rotating prompt pool ("How did it feel?", "What was hardest?", etc.).
+- Stored privately; surfaced in per-virtue detail view (Phase 12) as history.
+
+### Phase 10 — Adaptive difficulty
+- Track per-virtue completion/skip history per tier.
+- Consistent completion at a tier → surface next tier up; repeated skips/fails → ease back down.
+- Suggested tier visible + user-overridable.
+
+### Phase 11 — Mascot (Aristotle) scaffolding
 - Mascot component with expression states (happy/thoughtful/concerned) driven by app state.
 - Placeholder art: plain white PNG with "ARISTOTLE" text, generated via script (ImageMagick/sharp/Node canvas) — no image-gen tokens spent.
-- Wire mascot copy into onboarding host role and encouragement moments (reuse Phase 11 quotes).
+- Wire mascot copy into onboarding host role and encouragement moments (reuse Phase 8 quotes).
+
+### Phase 12 — Garden dashboard + plant detail view
+- Rework `app/(tabs)/index.tsx`: 12 plants, health state (thriving/growing/wilting), streak + today's quests + attention indicators.
+- Tap → detail view: virtue description, "why this plant," level/stage, progress bar, quest history, hardest quest completed, reflections list, today's suggested quest with reroll, milestone/quote note.
+- Growth animation on completion via `react-native-reanimated`.
+
+### Phase 13 — Onboarding assessment
+- Replace stub `app/onboarding.tsx` pager: author 12–24 short questions (1–2 per virtue), original wording, inspired by but not copying VIA-IS.
+- Produce baseline per-virtue score → seeds initial quest-weighting toward weaker virtues.
+- Present result as encouraging starting map, not judgment.
+- Aristotle mascot hosts the onboarding flow (Phase 11).
 
 ### Phase 14 — QA pass
 - Verify full loop end-to-end: onboarding → weighted quests → complete quest → points/level/streak/reflection update → wilting/reviving → dashboard/detail views reflect state.
